@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Podcasts – Neueste Folgen</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#101214">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root {
     --bg: #101214;
@@ -203,25 +207,28 @@
 
   audio {
     width: 100%;
-    margin-bottom: 10px;
-    height: 32px;
+    margin-bottom: 12px;
+    height: 54px;
   }
 
   .controls {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .controls button {
+    flex: 1 1 0;
+    min-width: 0;
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--text);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 13px;
+    border-radius: 10px;
+    padding: 16px 4px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     font-family: inherit;
   }
@@ -231,12 +238,8 @@
     color: var(--accent);
   }
 
-  .controls button.play {
-    background: var(--accent);
-    color: #1a1108;
-    border-color: var(--accent);
-    font-weight: 600;
-    min-width: 64px;
+  .controls button:active {
+    background: var(--accent-dim);
   }
 
   .status {
@@ -264,10 +267,10 @@
     <audio id="audio" controls></audio>
     <div class="controls">
       <button id="back10">-10s</button>
-      <button id="playpause" class="play">▶</button>
+      <button id="back5">-5s</button>
       <button id="fwd5">+5s</button>
+      <button id="fwd10">+10s</button>
       <button id="fwd30">+30s</button>
-      <button id="fwd60">+60s</button>
     </div>
   </div>
 </div>
@@ -362,10 +365,10 @@ const playerBar = document.getElementById('player-bar');
 const playerImg = document.getElementById('player-img');
 const playerPodcast = document.getElementById('player-podcast');
 const playerTitle = document.getElementById('player-title');
-const playPauseBtn = document.getElementById('playpause');
 
 let activeCard = null;       // Karte, die zuletzt geklickt/fokussiert wurde
 let activeEpisode = null;    // { podcastName, guid } der aktuell geladenen Episode
+let activeEpisodeEnded = false; // true, wenn die aktuelle Episode natürlich zu Ende gelaufen ist
 let saveProgressTimer = null;
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
@@ -461,9 +464,16 @@ function onCardClick(card) {
   const pState = getPodcastState(allState, podcastName);
 
   if (activeCard === card) {
-    // Gleiche Karte nochmal geklickt -> eine Folge zurückblättern
-    pState.currentIndex = Math.min(pState.currentIndex + 1, card.episodes.length - 1);
-    saveAllState(allState);
+    if (activeEpisodeEnded) {
+      // Folge ist gerade zu Ende gelaufen und die Anzeige wurde bereits
+      // auf die nächstältere Folge vorgerückt -> die jetzt einfach abspielen,
+      // nicht nochmal weiterspringen.
+    } else {
+      // Card ist aktiv, aber Folge läuft noch/ist pausiert -> manuell
+      // eine Folge weiter zurückblättern.
+      pState.currentIndex = Math.min(pState.currentIndex + 1, card.episodes.length - 1);
+      saveAllState(allState);
+    }
   }
   // Andere/erste Karte -> aktuellen (ggf. gespeicherten) Index einfach abspielen
 
@@ -486,6 +496,18 @@ function playEpisode(card, podcastName, index) {
 
   audio.src = episode.audioUrl;
   activeEpisode = { podcastName, guid: episode.guid };
+  activeEpisodeEnded = false;
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: episode.title || podcastName,
+      artist: podcastName,
+      album: formatDateNoYear(episode.pubDate),
+      artwork: episode.imageUrl ? [
+        { src: episode.imageUrl, sizes: '512x512', type: 'image/jpeg' }
+      ] : []
+    });
+  }
 
   const savedProgress = pState.progress[episode.guid];
   const resume = () => {
@@ -519,12 +541,28 @@ audio.addEventListener('timeupdate', () => {
 });
 audio.addEventListener('pause', persistProgress);
 audio.addEventListener('ended', () => {
-  if (!activeEpisode) return;
+  if (!activeEpisode || !activeCard) return;
+  activeEpisodeEnded = true;
+
+  const podcastName = activeEpisode.podcastName;
   const allState = loadAllState();
-  const pState = getPodcastState(allState, activeEpisode.podcastName);
+  const pState = getPodcastState(allState, podcastName);
   pState.listened[activeEpisode.guid] = true;
-  saveAllState(allState);
-  if (activeCard) renderCard(activeCard, activeEpisode.podcastName, activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid));
+
+  const finishedIndex = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
+  const nextIndex = finishedIndex + 1; // eine Folge älter
+
+  // Anzeige auf die nächstältere Folge vorrücken (nur anzeigen, nicht abspielen).
+  // Erst ein Klick auf die Karte spielt sie tatsächlich ab.
+  if (finishedIndex !== -1 && nextIndex < activeCard.episodes.length) {
+    pState.currentIndex = nextIndex;
+    saveAllState(allState);
+    renderCard(activeCard, podcastName, nextIndex);
+  } else {
+    // keine ältere Folge mehr geladen -> Karte zeigt weiterhin die gehörte Folge
+    saveAllState(allState);
+    if (finishedIndex !== -1) renderCard(activeCard, podcastName, finishedIndex);
+  }
 });
 window.addEventListener('beforeunload', persistProgress);
 
@@ -534,16 +572,94 @@ function skip(seconds) {
 }
 
 document.getElementById('back10').addEventListener('click', () => skip(-10));
+document.getElementById('back5').addEventListener('click', () => skip(-5));
 document.getElementById('fwd5').addEventListener('click', () => skip(5));
+document.getElementById('fwd10').addEventListener('click', () => skip(10));
 document.getElementById('fwd30').addEventListener('click', () => skip(30));
-document.getElementById('fwd60').addEventListener('click', () => skip(60));
 
-playPauseBtn.addEventListener('click', () => {
-  if (audio.paused) audio.play(); else audio.pause();
+/* ============================================================
+   MEDIA SESSION - externe Buttons (Lockscreen, Kopfhörer, Auto)
+   Play/Pause steuert die Wiedergabe, seekbackward/-forward sind
+   fest auf -5s / +10s gelegt (wie gewünscht, unabhängig davon,
+   was das Betriebssystem als Standardsprung vorschlägt).
+   previoustrack/nexttrack springen zur älteren/neueren Folge.
+   ============================================================ */
+
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play', () => audio.play());
+  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  navigator.mediaSession.setActionHandler('seekbackward', () => skip(-5));
+  navigator.mediaSession.setActionHandler('seekforward', () => skip(10));
+
+  navigator.mediaSession.setActionHandler('previoustrack', () => {
+    if (!activeCard || !activeEpisode) return;
+    const idx = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
+    const olderIndex = idx + 1;
+    if (idx === -1 || olderIndex >= activeCard.episodes.length) return;
+    const podcastName = activeEpisode.podcastName;
+    const allState = loadAllState();
+    const pState = getPodcastState(allState, podcastName);
+    pState.currentIndex = olderIndex;
+    saveAllState(allState);
+    renderCard(activeCard, podcastName, olderIndex);
+    playEpisode(activeCard, podcastName, olderIndex);
+  });
+
+  navigator.mediaSession.setActionHandler('nexttrack', () => {
+    if (!activeCard || !activeEpisode) return;
+    const idx = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
+    const newerIndex = idx - 1;
+    if (idx === -1 || newerIndex < 0) return;
+    const podcastName = activeEpisode.podcastName;
+    const allState = loadAllState();
+    const pState = getPodcastState(allState, podcastName);
+    pState.currentIndex = newerIndex;
+    saveAllState(allState);
+    renderCard(activeCard, podcastName, newerIndex);
+    playEpisode(activeCard, podcastName, newerIndex);
+  });
+}
+
+audio.addEventListener('play', () => {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+});
+audio.addEventListener('pause', () => {
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 });
 
-audio.addEventListener('play', () => playPauseBtn.textContent = '❚❚');
-audio.addEventListener('pause', () => playPauseBtn.textContent = '▶');
+/* ============================================================
+   WAKE LOCK - Bildschirm soll nicht einschlafen, solange die
+   Seite sichtbar/aktiv ist (z.B. Handy im Autohalter).
+   ============================================================ */
+
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+  } catch (err) {
+    console.error('Wake Lock nicht verfügbar:', err);
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+requestWakeLock();
+
+/* ============================================================
+   PWA: Service Worker registrieren (für "Zum Startbildschirm
+   hinzufügen" unter Chrome/Android)
+   ============================================================ */
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => {
+      console.error('Service Worker Registrierung fehlgeschlagen:', err);
+    });
+  });
+}
 
 /* Init */
 PODCASTS.forEach(podcast => {
