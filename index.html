@@ -47,7 +47,7 @@
   main {
     max-width: 900px;
     margin: 0 auto;
-    padding: 8px 20px 160px;
+    padding: 24px 20px 160px;
   }
 
   .grid {
@@ -97,7 +97,8 @@
   }
 
   .card-podcast {
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--accent);
@@ -114,6 +115,7 @@
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -130,13 +132,6 @@
   .card-listened {
     color: var(--accent);
     font-size: 12px;
-  }
-
-  .card-hint {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin: 2px 0 0;
-    opacity: 0.8;
   }
 
   .card.error {
@@ -253,11 +248,6 @@
 </head>
 <body>
 
-<header>
-  <h1>Podcasts</h1>
-  <p>Neueste Folge pro Sendung – anklicken zum Abspielen.</p>
-</header>
-
 <main>
   <div class="grid" id="grid"></div>
 </main>
@@ -276,7 +266,6 @@
       <button id="back10">-10s</button>
       <button id="playpause" class="play">▶</button>
       <button id="fwd5">+5s</button>
-      <button id="fwd10">+10s</button>
       <button id="fwd30">+30s</button>
       <button id="fwd60">+60s</button>
     </div>
@@ -401,7 +390,6 @@ function createCard(podcast) {
       <p class="card-podcast">${podcast.name}</p>
       <p class="card-title">Wird geladen …</p>
       <p class="card-date"></p>
-      <p class="card-hint"></p>
     </div>
   `;
   grid.appendChild(card);
@@ -465,15 +453,6 @@ function renderCard(card, podcastName, index) {
   const dateEl = card.querySelector('.card-date');
   dateEl.innerHTML = formatDateNoYear(episode.pubDate) +
     (listened ? ' <span class="card-listened">✓ gehört</span>' : '');
-
-  const hintEl = card.querySelector('.card-hint');
-  if (index > 0) {
-    hintEl.textContent = `Folge ${index + 1} von ${card.episodes.length} · nochmal klicken für ältere`;
-  } else if (card.episodes.length > 1) {
-    hintEl.textContent = 'Nochmal klicken für ältere Folgen';
-  } else {
-    hintEl.textContent = '';
-  }
 }
 
 function onCardClick(card) {
@@ -556,7 +535,6 @@ function skip(seconds) {
 
 document.getElementById('back10').addEventListener('click', () => skip(-10));
 document.getElementById('fwd5').addEventListener('click', () => skip(5));
-document.getElementById('fwd10').addEventListener('click', () => skip(10));
 document.getElementById('fwd30').addEventListener('click', () => skip(30));
 document.getElementById('fwd60').addEventListener('click', () => skip(60));
 
