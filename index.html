@@ -122,6 +122,21 @@
     font-size: 12px;
     color: var(--text-dim);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .card-listened {
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  .card-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin: 2px 0 0;
+    opacity: 0.8;
   }
 
   .card.error {
@@ -282,8 +297,71 @@ const PODCASTS = [
   {
     name: "HeuteMorgen",
     feed: "https://www.srf.ch/feed/podcast/sd/179ababb-4b36-40b2-951d-92d5c207fe9f.xml"
+  },
+  {
+    name: "Echo der Zeit",
+    feed: "https://www.srf.ch/feed/podcast/sd/28549e81-c453-4671-92ad-cb28796d06a8.xml"
+  },
+  {
+    name: "Handelsblatt Morning Briefing",
+    feed: "https://handelsblatt-morningbriefing.podigee.io/feed/mp3"
+  },
+  {
+    name: "Kalenderblatt",
+    feed: "https://www.deutschlandfunk.de/dlf-kalenderblatt-100.xml"
+  },
+  {
+    name: "WDR Kabarett",
+    feed: "https://www1.wdr.de/mediathek/audio/wdr2/wdr2-kabarett/kabarett-podcast-100.podcast"
+  },
+  {
+    name: "DLF Nachrichten (lang)",
+    feed: "https://www.deutschlandfunk.de/nachrichten-108.xml",
+    minDurationSeconds: 180 // nur Ausgaben ab 3 Min. - ggf. anpassen, siehe Hinweis im Chat
+  },
+  {
+    name: "Das war der Tag",
+    feed: "https://www.deutschlandfunk.de/das-war-der-tag-112.xml"
+  },
+  {
+    name: "Kommentare und Themen der Woche",
+    feed: "https://www.deutschlandfunk.de/kommentar-100.xml"
   }
 ];
+
+/* ============================================================
+   PERSISTENZ (localStorage)
+   ============================================================ */
+
+const STORAGE_KEY = 'podcastPlayerState_v2';
+
+function loadAllState() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveAllState(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('localStorage-Fehler', e);
+  }
+}
+
+function getPodcastState(allState, podcastName) {
+  if (!allState[podcastName]) {
+    allState[podcastName] = {
+      lastSeenGuid: null,
+      currentIndex: 0,
+      progress: {},   // guid -> Sekunden
+      listened: {}    // guid -> true
+    };
+  }
+  return allState[podcastName];
+}
 
 /* ============================================================
    LOGIK
@@ -297,12 +375,21 @@ const playerPodcast = document.getElementById('player-podcast');
 const playerTitle = document.getElementById('player-title');
 const playPauseBtn = document.getElementById('playpause');
 
-function formatDate(pubDate) {
+let activeCard = null;       // Karte, die zuletzt geklickt/fokussiert wurde
+let activeEpisode = null;    // { podcastName, guid } der aktuell geladenen Episode
+let saveProgressTimer = null;
+
+const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+function formatDateNoYear(pubDate) {
   if (!pubDate) return '';
   const d = new Date(pubDate);
   if (isNaN(d)) return pubDate;
-  return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
-         ', ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+  const wd = WEEKDAYS[d.getDay()];
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const time = d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+  return `${wd}, ${day}.${month}., ${time}`;
 }
 
 function createCard(podcast) {
@@ -314,6 +401,7 @@ function createCard(podcast) {
       <p class="card-podcast">${podcast.name}</p>
       <p class="card-title">Wird geladen …</p>
       <p class="card-date"></p>
+      <p class="card-hint"></p>
     </div>
   `;
   grid.appendChild(card);
@@ -322,11 +410,12 @@ function createCard(podcast) {
 
 async function loadPodcast(podcast, card) {
   try {
-    const url = PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed);
+    const url = PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
+      (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
     const res = await fetch(url);
     const data = await res.json();
 
-    if (data.error || !data.audioUrl) {
+    if (data.error || !data.episodes || data.episodes.length === 0) {
       card.classList.remove('loading');
       card.classList.add('error');
       card.querySelector('.card-title').textContent = data.error || 'Kein Audio gefunden';
@@ -334,18 +423,26 @@ async function loadPodcast(podcast, card) {
     }
 
     card.classList.remove('loading');
-    card.dataset.audioUrl = data.audioUrl;
     card.dataset.podcastName = podcast.name;
-    card.dataset.episodeTitle = data.episodeTitle || '';
-    card.dataset.imageUrl = data.imageUrl || '';
+    card.episodes = data.episodes; // neueste zuerst, Index 0 = neueste
 
-    const img = card.querySelector('img');
-    if (data.imageUrl) img.src = data.imageUrl;
+    const allState = loadAllState();
+    const pState = getPodcastState(allState, podcast.name);
+    const newestGuid = data.episodes[0].guid;
 
-    card.querySelector('.card-title').textContent = data.episodeTitle || '(ohne Titel)';
-    card.querySelector('.card-date').textContent = formatDate(data.pubDate);
+    // Neue Episode seit letztem Besuch? -> immer die neueste zeigen
+    if (pState.lastSeenGuid !== newestGuid) {
+      pState.lastSeenGuid = newestGuid;
+      pState.currentIndex = 0;
+    }
+    // Falls gespeicherter Index nicht mehr existiert (Feed kürzer geworden)
+    if (pState.currentIndex >= data.episodes.length) {
+      pState.currentIndex = 0;
+    }
+    saveAllState(allState);
 
-    card.addEventListener('click', () => playEpisode(card));
+    renderCard(card, podcast.name, pState.currentIndex);
+    card.addEventListener('click', () => onCardClick(card));
   } catch (err) {
     card.classList.remove('loading');
     card.classList.add('error');
@@ -354,19 +451,103 @@ async function loadPodcast(podcast, card) {
   }
 }
 
-function playEpisode(card) {
+function renderCard(card, podcastName, index) {
+  const episode = card.episodes[index];
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, podcastName);
+
+  const img = card.querySelector('img');
+  if (episode.imageUrl) img.src = episode.imageUrl;
+
+  card.querySelector('.card-title').textContent = episode.title || '(ohne Titel)';
+
+  const listened = !!pState.listened[episode.guid];
+  const dateEl = card.querySelector('.card-date');
+  dateEl.innerHTML = formatDateNoYear(episode.pubDate) +
+    (listened ? ' <span class="card-listened">✓ gehört</span>' : '');
+
+  const hintEl = card.querySelector('.card-hint');
+  if (index > 0) {
+    hintEl.textContent = `Folge ${index + 1} von ${card.episodes.length} · nochmal klicken für ältere`;
+  } else if (card.episodes.length > 1) {
+    hintEl.textContent = 'Nochmal klicken für ältere Folgen';
+  } else {
+    hintEl.textContent = '';
+  }
+}
+
+function onCardClick(card) {
+  const podcastName = card.dataset.podcastName;
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, podcastName);
+
+  if (activeCard === card) {
+    // Gleiche Karte nochmal geklickt -> eine Folge zurückblättern
+    pState.currentIndex = Math.min(pState.currentIndex + 1, card.episodes.length - 1);
+    saveAllState(allState);
+  }
+  // Andere/erste Karte -> aktuellen (ggf. gespeicherten) Index einfach abspielen
+
+  renderCard(card, podcastName, pState.currentIndex);
+  playEpisode(card, podcastName, pState.currentIndex);
+  activeCard = card;
+}
+
+function playEpisode(card, podcastName, index) {
   document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
   card.classList.add('active');
 
-  playerImg.src = card.dataset.imageUrl || '';
-  playerPodcast.textContent = card.dataset.podcastName;
-  playerTitle.textContent = card.dataset.episodeTitle;
+  const episode = card.episodes[index];
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, podcastName);
 
-  audio.src = card.dataset.audioUrl;
+  playerImg.src = episode.imageUrl || '';
+  playerPodcast.textContent = podcastName;
+  playerTitle.textContent = (episode.title || '') + '  ·  ' + formatDateNoYear(episode.pubDate);
+
+  audio.src = episode.audioUrl;
+  activeEpisode = { podcastName, guid: episode.guid };
+
+  const savedProgress = pState.progress[episode.guid];
+  const resume = () => {
+    if (savedProgress && savedProgress > 5 && (!audio.duration || savedProgress < audio.duration - 15)) {
+      audio.currentTime = savedProgress;
+    }
+    audio.removeEventListener('loadedmetadata', resume);
+  };
+  audio.addEventListener('loadedmetadata', resume);
+
   audio.play();
-
   playerBar.classList.add('visible');
 }
+
+function persistProgress() {
+  if (!activeEpisode || !audio.duration) return;
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, activeEpisode.podcastName);
+  pState.progress[activeEpisode.guid] = audio.currentTime;
+
+  if (audio.currentTime / audio.duration > 0.95) {
+    pState.listened[activeEpisode.guid] = true;
+    if (activeCard) renderCard(activeCard, activeEpisode.podcastName, activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid));
+  }
+  saveAllState(allState);
+}
+
+audio.addEventListener('timeupdate', () => {
+  clearTimeout(saveProgressTimer);
+  saveProgressTimer = setTimeout(persistProgress, 3000);
+});
+audio.addEventListener('pause', persistProgress);
+audio.addEventListener('ended', () => {
+  if (!activeEpisode) return;
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, activeEpisode.podcastName);
+  pState.listened[activeEpisode.guid] = true;
+  saveAllState(allState);
+  if (activeCard) renderCard(activeCard, activeEpisode.podcastName, activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid));
+});
+window.addEventListener('beforeunload', persistProgress);
 
 function skip(seconds) {
   if (!audio.src) return;
