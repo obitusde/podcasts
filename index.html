@@ -138,6 +138,18 @@
     font-size: 12px;
   }
 
+  .card-description {
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--text-dim);
+    margin: 4px 0 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   .card.error {
     opacity: 0.5;
     cursor: default;
@@ -318,6 +330,10 @@ const PODCASTS = [
   {
     name: "Kommentare und Themen der Woche",
     feed: "https://www.deutschlandfunk.de/kommentar-100.xml"
+  },
+  {
+    name: "SRF Audiobeiträge",
+    type: "srf_audio" // Sonderfall: keine feste Feed-URL, siehe loadPodcast()
   }
 ];
 
@@ -393,6 +409,7 @@ function createCard(podcast) {
       <p class="card-podcast">${podcast.name}</p>
       <p class="card-title">Wird geladen …</p>
       <p class="card-date"></p>
+      <p class="card-description"></p>
     </div>
   `;
   grid.appendChild(card);
@@ -401,8 +418,10 @@ function createCard(podcast) {
 
 async function loadPodcast(podcast, card) {
   try {
-    const url = PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
-      (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
+    const url = podcast.type === 'srf_audio'
+      ? PROXY_URL + '?mode=srfaudio'
+      : PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
+        (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
     const res = await fetch(url);
     const data = await res.json();
 
@@ -456,6 +475,29 @@ function renderCard(card, podcastName, index) {
   const dateEl = card.querySelector('.card-date');
   dateEl.innerHTML = formatDateNoYear(episode.pubDate) +
     (listened ? ' <span class="card-listened">✓ gehört</span>' : '');
+
+  card.querySelector('.card-description').textContent = episode.description || '';
+}
+
+// Aktualisiert die Player-Leiste (Titel/Bild unten), OHNE etwas abzuspielen.
+// Wird benutzt, wenn nach dem natürlichen Ende einer Folge schon die
+// nächstältere angezeigt werden soll, bevor sie angeklickt wird.
+function updatePlayerPreview(card, podcastName, index) {
+  const episode = card.episodes[index];
+  playerImg.src = episode.imageUrl || '';
+  playerPodcast.textContent = podcastName;
+  playerTitle.textContent = (episode.title || '') + '  ·  ' + formatDateNoYear(episode.pubDate);
+
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: episode.title || podcastName,
+      artist: podcastName,
+      album: formatDateNoYear(episode.pubDate),
+      artwork: episode.imageUrl ? [
+        { src: episode.imageUrl, sizes: '512x512', type: 'image/jpeg' }
+      ] : []
+    });
+  }
 }
 
 function onCardClick(card) {
@@ -558,6 +600,7 @@ audio.addEventListener('ended', () => {
     pState.currentIndex = nextIndex;
     saveAllState(allState);
     renderCard(activeCard, podcastName, nextIndex);
+    updatePlayerPreview(activeCard, podcastName, nextIndex);
   } else {
     // keine ältere Folge mehr geladen -> Karte zeigt weiterhin die gehörte Folge
     saveAllState(allState);
