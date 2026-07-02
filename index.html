@@ -318,6 +318,10 @@ const PODCASTS = [
   {
     name: "Kommentare und Themen der Woche",
     feed: "https://www.deutschlandfunk.de/kommentar-100.xml"
+  },
+  {
+    name: "DLF Audiobeiträge",
+    type: "dlf_audio" // Sonderfall: keine feste Feed-URL, siehe loadPodcast()
   }
 ];
 
@@ -402,8 +406,10 @@ function createCard(podcast) {
 
 async function loadPodcast(podcast, card) {
   try {
-    const url = PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
-      (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
+    const url = podcast.type === 'dlf_audio'
+      ? PROXY_URL + '?mode=dlfaudio'
+      : PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
+        (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
     const res = await fetch(url);
     const data = await res.json();
 
