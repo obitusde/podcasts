@@ -51,7 +51,7 @@
   main {
     max-width: 900px;
     margin: 0 auto;
-    padding: 24px 20px 160px;
+    padding: 24px 20px 100px; /* Fallback, wird per JS auf die echte Player-Höhe gesetzt */
   }
 
   .grid {
@@ -118,8 +118,8 @@
     margin: 0 0 3px;
     line-height: 1.3;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -136,18 +136,6 @@
   .card-listened {
     color: var(--accent);
     font-size: 12px;
-  }
-
-  .card-description {
-    font-size: 12px;
-    line-height: 1.35;
-    color: var(--text-dim);
-    margin: 4px 0 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
   .card.error {
@@ -330,10 +318,6 @@ const PODCASTS = [
   {
     name: "Kommentare und Themen der Woche",
     feed: "https://www.deutschlandfunk.de/kommentar-100.xml"
-  },
-  {
-    name: "SRF Audiobeiträge",
-    type: "srf_audio" // Sonderfall: keine feste Feed-URL, siehe loadPodcast()
   }
 ];
 
@@ -376,6 +360,7 @@ function getPodcastState(allState, podcastName) {
    ============================================================ */
 
 const grid = document.getElementById('grid');
+const mainEl = document.querySelector('main');
 const audio = document.getElementById('audio');
 const playerBar = document.getElementById('player-bar');
 const playerImg = document.getElementById('player-img');
@@ -409,7 +394,6 @@ function createCard(podcast) {
       <p class="card-podcast">${podcast.name}</p>
       <p class="card-title">Wird geladen …</p>
       <p class="card-date"></p>
-      <p class="card-description"></p>
     </div>
   `;
   grid.appendChild(card);
@@ -418,10 +402,8 @@ function createCard(podcast) {
 
 async function loadPodcast(podcast, card) {
   try {
-    const url = podcast.type === 'srf_audio'
-      ? PROXY_URL + '?mode=srfaudio'
-      : PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
-        (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
+    const url = PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
+      (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
     const res = await fetch(url);
     const data = await res.json();
 
@@ -461,7 +443,11 @@ async function loadPodcast(podcast, card) {
   }
 }
 
-function renderCard(card, podcastName, index) {
+// Rendert eine Karte für einen bestimmten Episoden-Index.
+// options.noOlder = true -> es gibt keine ältere Episode mehr als die
+// gerade zu Ende gehörte; zeigt das statt eines Datums an.
+function renderCard(card, podcastName, index, options) {
+  options = options || {};
   const episode = card.episodes[index];
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
@@ -471,12 +457,14 @@ function renderCard(card, podcastName, index) {
 
   card.querySelector('.card-title').textContent = episode.title || '(ohne Titel)';
 
-  const listened = !!pState.listened[episode.guid];
   const dateEl = card.querySelector('.card-date');
-  dateEl.innerHTML = formatDateNoYear(episode.pubDate) +
-    (listened ? ' <span class="card-listened">✓ gehört</span>' : '');
-
-  card.querySelector('.card-description').textContent = episode.description || '';
+  if (options.noOlder) {
+    dateEl.innerHTML = 'Keine ältere Folge geladen <span class="card-listened">✓ gehört</span>';
+  } else {
+    const listened = !!pState.listened[episode.guid];
+    dateEl.innerHTML = formatDateNoYear(episode.pubDate) +
+      (listened ? ' <span class="card-listened">✓ gehört</span>' : '');
+  }
 }
 
 // Aktualisiert die Player-Leiste (Titel/Bild unten), OHNE etwas abzuspielen.
@@ -564,6 +552,10 @@ function playEpisode(card, podcastName, index) {
   playerBar.classList.add('visible');
 }
 
+// Speichert nur die Wiedergabeposition (und markiert bei Bedarf als
+// gehört). Rendert bewusst NICHTS - das übernimmt ausschliesslich der
+// 'ended'-Handler, damit es nicht zu widersprüchlichen Neu-Renderings
+// zwischen 'pause' (das vor 'ended' feuert) und 'ended' kommt.
 function persistProgress() {
   if (!activeEpisode || !audio.duration) return;
   const allState = loadAllState();
@@ -572,7 +564,6 @@ function persistProgress() {
 
   if (audio.currentTime / audio.duration > 0.95) {
     pState.listened[activeEpisode.guid] = true;
-    if (activeCard) renderCard(activeCard, activeEpisode.podcastName, activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid));
   }
   saveAllState(allState);
 }
@@ -582,6 +573,7 @@ audio.addEventListener('timeupdate', () => {
   saveProgressTimer = setTimeout(persistProgress, 3000);
 });
 audio.addEventListener('pause', persistProgress);
+
 audio.addEventListener('ended', () => {
   if (!activeEpisode || !activeCard) return;
   activeEpisodeEnded = true;
@@ -594,19 +586,22 @@ audio.addEventListener('ended', () => {
   const finishedIndex = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
   const nextIndex = finishedIndex + 1; // eine Folge älter
 
-  // Anzeige auf die nächstältere Folge vorrücken (nur anzeigen, nicht abspielen).
-  // Erst ein Klick auf die Karte spielt sie tatsächlich ab.
   if (finishedIndex !== -1 && nextIndex < activeCard.episodes.length) {
+    // Es gibt eine ältere Folge -> Anzeige darauf vorrücken (nur anzeigen,
+    // nicht abspielen). Erst ein Klick auf die Karte spielt sie ab.
     pState.currentIndex = nextIndex;
     saveAllState(allState);
     renderCard(activeCard, podcastName, nextIndex);
     updatePlayerPreview(activeCard, podcastName, nextIndex);
   } else {
-    // keine ältere Folge mehr geladen -> Karte zeigt weiterhin die gehörte Folge
+    // Keine ältere Folge mehr geladen -> das auf der Karte anzeigen,
+    // bis neue Folgen nachkommen.
+    if (finishedIndex !== -1) pState.currentIndex = finishedIndex;
     saveAllState(allState);
-    if (finishedIndex !== -1) renderCard(activeCard, podcastName, finishedIndex);
+    renderCard(activeCard, podcastName, finishedIndex !== -1 ? finishedIndex : pState.currentIndex, { noOlder: true });
   }
 });
+
 window.addEventListener('beforeunload', persistProgress);
 
 function skip(seconds) {
@@ -690,6 +685,26 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') requestWakeLock();
 });
 requestWakeLock();
+
+/* ============================================================
+   PLAYER-LEISTE: dynamisches Bottom-Padding
+   Die Höhe der fixierten Player-Leiste kann je nach Gerät/Font-
+   Skalierung variieren. Statt eines festen Paddings wird die
+   tatsächliche Höhe laufend gemessen (ResizeObserver) und als
+   Bottom-Padding auf <main> übertragen, damit die letzte Karte nie
+   verdeckt wird.
+   ============================================================ */
+
+function syncMainPadding() {
+  mainEl.style.paddingBottom = (playerBar.offsetHeight + 24) + 'px';
+}
+
+if ('ResizeObserver' in window) {
+  new ResizeObserver(syncMainPadding).observe(playerBar);
+} else {
+  window.addEventListener('resize', syncMainPadding);
+}
+syncMainPadding();
 
 /* ============================================================
    PWA: Service Worker registrieren (für "Zum Startbildschirm
