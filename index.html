@@ -505,6 +505,21 @@ function onCardClick(card) {
   }
   // Andere/erste Karte -> aktuellen (ggf. gespeicherten) Index einfach abspielen
 
+  // Sind wir bereits bei der ältesten geladenen Folge UND die wurde schon
+  // gehört (egal ob in dieser oder einer früheren Sitzung) -> nicht erneut
+  // abspielen, sondern nur den "keine ältere Folge"-Hinweis zeigen. Ohne
+  // diese Prüfung würde ein erneuter Klick die letzte Folge endlos
+  // wiederholen, sobald man einmal ganz durch ist.
+  const currentEpisode = card.episodes[pState.currentIndex];
+  const isOldest = pState.currentIndex === card.episodes.length - 1;
+  const oldestAlreadyListened = isOldest && !!pState.listened[currentEpisode.guid];
+
+  if (oldestAlreadyListened) {
+    renderCard(card, podcastName, pState.currentIndex, { noOlder: true });
+    activeCard = card;
+    return;
+  }
+
   renderCard(card, podcastName, pState.currentIndex);
   playEpisode(card, podcastName, pState.currentIndex);
   activeCard = card;
