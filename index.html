@@ -381,6 +381,33 @@ function formatDateNoYear(pubDate) {
   return `${wd}, ${day}.${month}., ${time}`;
 }
 
+// Normalisiert die Dauer-Angabe aus dem Feed (kommt uneinheitlich an:
+// mal schon als "12:34"/"1:02:03" von itunes:duration, mal als reine
+// Sekundenzahl wie "754" bei den DLF-Audiobeiträgen) zu einem
+// einheitlichen "M:SS" bzw. "H:MM:SS"-Format fürs Anzeigen.
+function formatDuration(duration) {
+  if (!duration) return '';
+  const trimmed = String(duration).trim();
+
+  // Schon im "M:SS" oder "H:MM:SS"-Format -> unverändert übernehmen
+  if (/^\d{1,2}(:\d{2}){1,2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Reine Sekundenzahl -> in M:SS bzw. H:MM:SS umrechnen
+  const totalSeconds = parseInt(trimmed, 10);
+  if (isNaN(totalSeconds) || totalSeconds < 0) return '';
+
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 function createCard(podcast) {
   const card = document.createElement('div');
   card.className = 'card loading';
@@ -456,11 +483,14 @@ function renderCard(card, podcastName, index, options) {
   card.querySelector('.card-title').textContent = episode.title || '(ohne Titel)';
 
   const dateEl = card.querySelector('.card-date');
+  const durationText = formatDuration(episode.duration);
+  const durationPrefix = durationText ? `${durationText} · ` : '';
+
   if (options.noOlder) {
     dateEl.innerHTML = 'Keine ältere Folge geladen <span class="card-listened">✓ gehört</span>';
   } else {
     const listened = !!pState.listened[episode.guid];
-    dateEl.innerHTML = formatDateNoYear(episode.pubDate) +
+    dateEl.innerHTML = durationPrefix + formatDateNoYear(episode.pubDate) +
       (listened ? ' <span class="card-listened">✓ gehört</span>' : '');
   }
 }
