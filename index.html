@@ -251,6 +251,10 @@
 </head>
 <body>
 
+<header>
+  <h1 id="today-date"></h1>
+</header>
+
 <main>
   <div class="grid" id="grid"></div>
 </main>
@@ -406,6 +410,19 @@ function formatDuration(duration) {
     return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
   return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// Zeigt Wochentag + Datum (ohne Jahr) oben auf der Seite an, z.B.
+// "Mittwoch, 8. Juli". Wird einmal beim Laden der Seite gesetzt.
+function renderTodayHeader() {
+  const el = document.getElementById('today-date');
+  if (!el) return;
+  const today = new Date();
+  el.textContent = today.toLocaleDateString('de-CH', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
 }
 
 function createCard(podcast) {
@@ -763,6 +780,7 @@ if ('serviceWorker' in navigator) {
 }
 
 /* Init */
+renderTodayHeader();
 PODCASTS.forEach(podcast => {
   const card = createCard(podcast);
   loadPodcast(podcast, card);
