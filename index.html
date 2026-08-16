@@ -72,6 +72,9 @@
     align-items: center;
     transition: border-color 0.15s ease, transform 0.1s ease;
     text-align: left;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .card:hover {
@@ -86,6 +89,20 @@
     border-color: var(--accent);
   }
 
+  /* Reordering per Long-Press + Drag (Touch & Maus, siehe attachDragHandlers) */
+  .card.drag-armed {
+    border-color: var(--accent);
+    transform: scale(1.02);
+  }
+
+  .card.dragging {
+    opacity: 0.85;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    z-index: 20;
+    cursor: grabbing;
+    transition: none;
+  }
+
   .card img {
     width: 56px;
     height: 56px;
@@ -93,6 +110,8 @@
     object-fit: cover;
     flex-shrink: 0;
     background: var(--border);
+    -webkit-user-drag: none;
+    user-drag: none;
   }
 
   .card-text {
@@ -242,6 +261,16 @@
     background: var(--accent-dim);
   }
 
+  .mode-controls {
+    margin-top: 8px;
+  }
+
+  .mode-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
   .status {
     color: var(--text-dim);
     font-size: 13px;
@@ -275,6 +304,10 @@
       <button id="fwd5">+5s</button>
       <button id="fwd10">+10s</button>
       <button id="fwd30">+30s</button>
+    </div>
+    <div class="controls mode-controls">
+      <button id="mode-series" class="mode-btn">Ganze Serie</button>
+      <button id="mode-roundrobin" class="mode-btn">Reihum, je 1 Folge</button>
     </div>
   </div>
 </div>
@@ -321,11 +354,39 @@ const PODCASTS = [
   }
 ];
 
+// Wendet eine per Drag & Drop gespeicherte Reihenfolge auf PODCASTS an.
+// Podcasts ohne Eintrag in der gespeicherten Reihenfolge (z.B. neu im
+// Code hinzugefügt) werden hinten in ihrer ursprünglichen Reihenfolge
+// angehängt; Einträge in der gespeicherten Reihenfolge, die es nicht
+// mehr gibt, werden einfach ignoriert.
+function getOrderedPodcasts() {
+  let savedOrder = [];
+  try {
+    savedOrder = JSON.parse(localStorage.getItem(ORDER_KEY)) || [];
+  } catch (e) {
+    savedOrder = [];
+  }
+
+  const remaining = new Map(PODCASTS.map((p) => [p.name, p]));
+  const ordered = [];
+  savedOrder.forEach((name) => {
+    if (remaining.has(name)) {
+      ordered.push(remaining.get(name));
+      remaining.delete(name);
+    }
+  });
+  PODCASTS.forEach((p) => {
+    if (remaining.has(p.name)) ordered.push(p);
+  });
+  return ordered;
+}
+
 /* ============================================================
    PERSISTENZ (localStorage)
    ============================================================ */
 
 const STORAGE_KEY = 'podcastPlayerState_v2';
+const ORDER_KEY = 'podcastOrder_v1';
 
 function loadAllState() {
   try {
@@ -371,6 +432,7 @@ let activeCard = null;       // Karte, die zuletzt geklickt/fokussiert wurde
 let activeEpisode = null;    // { podcastName, guid } der aktuell geladenen Episode
 let activeEpisodeEnded = false; // true, wenn die aktuelle Episode natürlich zu Ende gelaufen ist
 let saveProgressTimer = null;
+let suppressClickOnCard = null; // Karte, deren nächster Klick nach einem Drag ignoriert wird
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -476,7 +538,11 @@ async function loadPodcast(podcast, card) {
     saveAllState(allState);
 
     renderCard(card, podcast.name, pState.currentIndex);
-    card.addEventListener('click', () => onCardClick(card));
+    card.addEventListener('click', () => {
+      if (suppressClickOnCard === card) return;
+      onCardClick(card);
+    });
+    attachDragHandlers(card);
   } catch (err) {
     card.classList.remove('loading');
     card.classList.add('error');
@@ -533,7 +599,132 @@ function updatePlayerPreview(card, podcastName, index) {
   }
 }
 
+/* ============================================================
+   REORDERING: Long-Press + Drag, Touch & Maus über Pointer Events
+   ============================================================ */
+
+const DRAG_HOLD_MS = 350;        // so lange still halten, bis Drag "scharf" ist
+const DRAG_MOVE_THRESHOLD = 8;   // px Bewegung vor dem Halten -> als Scroll werten, kein Drag
+
+function persistCardOrder() {
+  const order = Array.from(grid.children).map((c) => c.dataset.podcastName).filter(Boolean);
+  try {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  } catch (e) {
+    console.error('Reihenfolge konnte nicht gespeichert werden', e);
+  }
+}
+
+// Findet die Geschwister-Karte, deren Mittelpunkt dem Pointer am
+// nächsten ist, und ob vor oder nach ihr eingefügt werden soll.
+function findDropTarget(clientX, clientY, excludeCard) {
+  let closest = null;
+  let closestDist = Infinity;
+  Array.from(grid.children).forEach((sib) => {
+    if (sib === excludeCard) return;
+    const rect = sib.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dist = Math.hypot(clientX - cx, clientY - cy);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = { el: sib, cy };
+    }
+  });
+  return closest;
+}
+
+function attachDragHandlers(card) {
+  card.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const pointerId = e.pointerId;
+    let eligible = false; // DRAG_HOLD_MS ohne nennenswerte Bewegung verstrichen
+    let dragging = false; // tatsächlich verschoben, nachdem eligible
+
+    const holdTimer = setTimeout(() => {
+      eligible = true;
+      card.classList.add('drag-armed');
+    }, DRAG_HOLD_MS);
+
+    function onMove(ev) {
+      if (ev.pointerId !== pointerId) return;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+
+      if (!eligible) {
+        // Vor Ablauf der Haltezeit bewegt -> normales Scrollen, kein Drag.
+        if (Math.hypot(dx, dy) > DRAG_MOVE_THRESHOLD) {
+          clearTimeout(holdTimer);
+          cleanup();
+        }
+        return;
+      }
+
+      if (!dragging) {
+        dragging = true;
+        card.classList.remove('drag-armed');
+        card.classList.add('dragging');
+        try { card.setPointerCapture(pointerId); } catch (err) {}
+      }
+
+      ev.preventDefault();
+
+      const target = findDropTarget(ev.clientX, ev.clientY, card);
+      if (target) {
+        if (ev.clientY < target.cy) grid.insertBefore(card, target.el);
+        else grid.insertBefore(card, target.el.nextSibling);
+      }
+
+      // Transform aus der AKTUELLEN (durch das Umsortieren ggf. neuen)
+      // natürlichen Position neu berechnen - sonst "springt" die Karte
+      // relativ zum Finger weg, sobald sich ihre DOM-Position ändert.
+      card.style.transform = 'none';
+      const rect = card.getBoundingClientRect();
+      const tx = ev.clientX - (rect.left + rect.width / 2);
+      const ty = ev.clientY - (rect.top + rect.height / 2);
+      card.style.transform = `translate(${tx}px, ${ty}px)`;
+    }
+
+    function onUp(ev) {
+      if (ev.pointerId !== pointerId) return;
+      clearTimeout(holdTimer);
+      if (dragging) {
+        card.classList.remove('dragging');
+        card.style.transform = '';
+        try { card.releasePointerCapture(pointerId); } catch (err) {}
+        persistCardOrder();
+        // Der nach pointerup folgende synthetische 'click' soll die Folge
+        // nicht starten - das war ein Drag, kein Tap.
+        suppressClickOnCard = card;
+        setTimeout(() => { suppressClickOnCard = null; }, 0);
+      } else {
+        card.classList.remove('drag-armed');
+      }
+      cleanup();
+    }
+
+    function cleanup() {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+    }
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+  });
+}
+
+// Verhindert das native Long-Press-Kontextmenü (z.B. "Bild speichern"
+// auf Android), das sonst mit dem Drag-Gesture kollidieren würde.
+grid.addEventListener('contextmenu', (e) => e.preventDefault());
+
 function onCardClick(card) {
+  setAutoplayMode(null); // manueller Klick bricht einen laufenden Abspiel-Modus ab
+
   const podcastName = card.dataset.podcastName;
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
@@ -634,6 +825,99 @@ audio.addEventListener('timeupdate', () => {
 });
 audio.addEventListener('pause', persistProgress);
 
+/* ============================================================
+   ABSPIEL-MODI: zwei Buttons, die beim Folgenende automatisch
+   weiterspielen. Nur einer kann gleichzeitig aktiv sein; beide
+   stoppen sich selbst am Ende (keine Endlosschleife).
+   - "Ganze Serie": spielt ab der aktuell aktiven Kachel alle
+     älteren Folgen desselben Podcasts nacheinander durch.
+   - "Reihum, je 1 Folge": spielt ab der aktuell aktiven Kachel
+     genau eine Folge pro Podcast, einmal reihum durch alle
+     geladenen Kacheln (Grid-Reihenfolge), dann Stopp.
+   ============================================================ */
+
+let autoplayMode = null; // null | 'series' | 'round-robin'
+let roundRobinOrder = [];
+let roundRobinStartIdx = 0;
+let roundRobinStep = 0;
+
+const modeSeriesBtn = document.getElementById('mode-series');
+const modeRoundRobinBtn = document.getElementById('mode-roundrobin');
+
+function setAutoplayMode(mode) {
+  autoplayMode = mode;
+  if (modeSeriesBtn) modeSeriesBtn.classList.toggle('active', mode === 'series');
+  if (modeRoundRobinBtn) modeRoundRobinBtn.classList.toggle('active', mode === 'round-robin');
+}
+
+// Spielt die aktuell auf der Karte angezeigte Folge, ausser sie läuft
+// (bzw. ist pausiert) bereits genau so - dann nicht neu starten.
+function ensurePlaying(card) {
+  const podcastName = card.dataset.podcastName;
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, podcastName);
+  const currentEpisode = card.episodes[pState.currentIndex];
+  const alreadyPlayingThis = activeCard === card && activeEpisode &&
+    currentEpisode && activeEpisode.guid === currentEpisode.guid;
+  if (!alreadyPlayingThis) {
+    renderCard(card, podcastName, pState.currentIndex);
+    playEpisode(card, podcastName, pState.currentIndex);
+    activeCard = card;
+  }
+}
+
+if (modeSeriesBtn) {
+  modeSeriesBtn.addEventListener('click', () => {
+    if (autoplayMode === 'series') {
+      setAutoplayMode(null);
+      return;
+    }
+    if (!activeCard) return;
+    ensurePlaying(activeCard);
+    setAutoplayMode('series');
+  });
+}
+
+if (modeRoundRobinBtn) {
+  modeRoundRobinBtn.addEventListener('click', () => {
+    if (autoplayMode === 'round-robin') {
+      setAutoplayMode(null);
+      return;
+    }
+    if (!activeCard) return;
+    const order = Array.from(grid.children).filter((c) => c.episodes && c.episodes.length > 0);
+    const startIdx = order.indexOf(activeCard);
+    if (startIdx === -1) return;
+    roundRobinOrder = order;
+    roundRobinStartIdx = startIdx;
+    roundRobinStep = 0;
+    ensurePlaying(activeCard);
+    setAutoplayMode('round-robin');
+  });
+}
+
+// Springt zur nächsten Kachel der beim Start festgelegten Runde und
+// spielt deren aktuelle Folge. Nach genau einer vollen Runde (jede
+// Kachel einmal) wird der Modus automatisch beendet.
+function advanceRoundRobin() {
+  roundRobinStep++;
+  if (roundRobinStep >= roundRobinOrder.length) {
+    setAutoplayMode(null);
+    return;
+  }
+  const nextCard = roundRobinOrder[(roundRobinStartIdx + roundRobinStep) % roundRobinOrder.length];
+  const podcastName = nextCard.dataset.podcastName;
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, podcastName);
+  if (!nextCard.episodes || pState.currentIndex >= nextCard.episodes.length) {
+    setAutoplayMode(null);
+    return;
+  }
+  renderCard(nextCard, podcastName, pState.currentIndex);
+  playEpisode(nextCard, podcastName, pState.currentIndex);
+  activeCard = nextCard;
+}
+
 audio.addEventListener('ended', () => {
   if (!activeEpisode || !activeCard) return;
   activeEpisodeEnded = true;
@@ -645,20 +929,31 @@ audio.addEventListener('ended', () => {
 
   const finishedIndex = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
   const nextIndex = finishedIndex + 1; // eine Folge älter
+  const hasOlder = finishedIndex !== -1 && nextIndex < activeCard.episodes.length;
 
-  if (finishedIndex !== -1 && nextIndex < activeCard.episodes.length) {
-    // Es gibt eine ältere Folge -> Anzeige darauf vorrücken (nur anzeigen,
-    // nicht abspielen). Erst ein Klick auf die Karte spielt sie ab.
+  if (hasOlder) {
     pState.currentIndex = nextIndex;
     saveAllState(allState);
     renderCard(activeCard, podcastName, nextIndex);
-    updatePlayerPreview(activeCard, podcastName, nextIndex);
+    if (autoplayMode === 'series') {
+      // "Ganze Serie" aktiv -> ältere Folge direkt abspielen statt nur anzuzeigen.
+      playEpisode(activeCard, podcastName, nextIndex);
+    } else {
+      updatePlayerPreview(activeCard, podcastName, nextIndex);
+    }
   } else {
     // Keine ältere Folge mehr geladen -> das auf der Karte anzeigen,
     // bis neue Folgen nachkommen.
     if (finishedIndex !== -1) pState.currentIndex = finishedIndex;
     saveAllState(allState);
     renderCard(activeCard, podcastName, finishedIndex !== -1 ? finishedIndex : pState.currentIndex, { noOlder: true });
+    if (autoplayMode === 'series') {
+      setAutoplayMode(null); // Serie komplett durch -> stoppen
+    }
+  }
+
+  if (autoplayMode === 'round-robin') {
+    advanceRoundRobin();
   }
 });
 
@@ -781,7 +1076,7 @@ if ('serviceWorker' in navigator) {
 
 /* Init */
 renderTodayHeader();
-PODCASTS.forEach(podcast => {
+getOrderedPodcasts().forEach(podcast => {
   const card = createCard(podcast);
   loadPodcast(podcast, card);
 });
