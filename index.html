@@ -89,10 +89,22 @@
     border-color: var(--accent);
   }
 
-  /* Reordering per Long-Press + Drag (Touch & Maus, siehe attachDragHandlers) */
-  .card.drag-armed {
-    border-color: var(--accent);
-    transform: scale(1.02);
+  /* Reordering per Ziehgriff (Touch & Maus, siehe attachDragHandlers).
+     touch-action: none NUR auf dem Griff - sonst bleibt die Seite überall
+     normal scrollbar, nur der Griff selbst startet einen Drag statt Scroll. */
+  .drag-handle {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 44px;
+    margin: -14px -6px -14px 0;
+    color: var(--text-dim);
+    cursor: grab;
   }
 
   .card.dragging {
@@ -101,6 +113,11 @@
     z-index: 20;
     cursor: grabbing;
     transition: none;
+  }
+
+  .card.dragging .drag-handle {
+    cursor: grabbing;
+    color: var(--accent);
   }
 
   .card img {
@@ -432,7 +449,6 @@ let activeCard = null;       // Karte, die zuletzt geklickt/fokussiert wurde
 let activeEpisode = null;    // { podcastName, guid } der aktuell geladenen Episode
 let activeEpisodeEnded = false; // true, wenn die aktuelle Episode natürlich zu Ende gelaufen ist
 let saveProgressTimer = null;
-let suppressClickOnCard = null; // Karte, deren nächster Klick nach einem Drag ignoriert wird
 
 const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -497,6 +513,13 @@ function createCard(podcast) {
       <p class="card-title">Wird geladen …</p>
       <p class="card-date"></p>
     </div>
+    <span class="drag-handle" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <circle cx="6" cy="5" r="1.6"/><circle cx="14" cy="5" r="1.6"/>
+        <circle cx="6" cy="10" r="1.6"/><circle cx="14" cy="10" r="1.6"/>
+        <circle cx="6" cy="15" r="1.6"/><circle cx="14" cy="15" r="1.6"/>
+      </svg>
+    </span>
   `;
   grid.appendChild(card);
   return card;
@@ -538,11 +561,8 @@ async function loadPodcast(podcast, card) {
     saveAllState(allState);
 
     renderCard(card, podcast.name, pState.currentIndex);
-    card.addEventListener('click', () => {
-      if (suppressClickOnCard === card) return;
-      onCardClick(card);
-    });
-    attachDragHandlers(card);
+    card.addEventListener('click', () => onCardClick(card));
+    attachDragHandlers(card, card.querySelector('.drag-handle'));
   } catch (err) {
     card.classList.remove('loading');
     card.classList.add('error');
@@ -600,11 +620,15 @@ function updatePlayerPreview(card, podcastName, index) {
 }
 
 /* ============================================================
-   REORDERING: Long-Press + Drag, Touch & Maus über Pointer Events
+   REORDERING: Ziehgriff, Touch & Maus über Pointer Events.
+   Der Griff hat touch-action: none (siehe CSS) - nur dadurch lässt
+   sich das native Scrollen von Android/iOS beim Ziehen zuverlässig
+   unterdrücken. Ohne dediziertem Griff (z.B. bei Drag auf der ganzen
+   Karte) kann das Betriebssystem die Touch-Geste als Scroll kapern,
+   auch wenn preventDefault() im JS aufgerufen wird.
    ============================================================ */
 
-const DRAG_HOLD_MS = 350;        // so lange still halten, bis Drag "scharf" ist
-const DRAG_MOVE_THRESHOLD = 8;   // px Bewegung vor dem Halten -> als Scroll werten, kein Drag
+const DRAG_JITTER_PX = 6; // Mindestbewegung, bevor eine Geste als Drag zählt (Tap-Schutz)
 
 function persistCardOrder() {
   const order = Array.from(grid.children).map((c) => c.dataset.podcastName).filter(Boolean);
@@ -634,43 +658,30 @@ function findDropTarget(clientX, clientY, excludeCard) {
   return closest;
 }
 
-function attachDragHandlers(card) {
-  card.addEventListener('pointerdown', (e) => {
+function attachDragHandlers(card, handle) {
+  handle.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
 
     const startX = e.clientX;
     const startY = e.clientY;
     const pointerId = e.pointerId;
-    let eligible = false; // DRAG_HOLD_MS ohne nennenswerte Bewegung verstrichen
-    let dragging = false; // tatsächlich verschoben, nachdem eligible
+    let dragStarted = false; // erste nennenswerte Bewegung erreicht (Tap-Schutz)
 
-    const holdTimer = setTimeout(() => {
-      eligible = true;
-      card.classList.add('drag-armed');
-    }, DRAG_HOLD_MS);
+    try { handle.setPointerCapture(pointerId); } catch (err) {}
+    card.classList.add('dragging');
 
     function onMove(ev) {
       if (ev.pointerId !== pointerId) return;
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-
-      if (!eligible) {
-        // Vor Ablauf der Haltezeit bewegt -> normales Scrollen, kein Drag.
-        if (Math.hypot(dx, dy) > DRAG_MOVE_THRESHOLD) {
-          clearTimeout(holdTimer);
-          cleanup();
-        }
-        return;
-      }
-
-      if (!dragging) {
-        dragging = true;
-        card.classList.remove('drag-armed');
-        card.classList.add('dragging');
-        try { card.setPointerCapture(pointerId); } catch (err) {}
-      }
-
       ev.preventDefault();
+
+      if (!dragStarted) {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (Math.hypot(dx, dy) < DRAG_JITTER_PX) return;
+        dragStarted = true;
+      }
 
       const target = findDropTarget(ev.clientX, ev.clientY, card);
       if (target) {
@@ -690,19 +701,10 @@ function attachDragHandlers(card) {
 
     function onUp(ev) {
       if (ev.pointerId !== pointerId) return;
-      clearTimeout(holdTimer);
-      if (dragging) {
-        card.classList.remove('dragging');
-        card.style.transform = '';
-        try { card.releasePointerCapture(pointerId); } catch (err) {}
-        persistCardOrder();
-        // Der nach pointerup folgende synthetische 'click' soll die Folge
-        // nicht starten - das war ein Drag, kein Tap.
-        suppressClickOnCard = card;
-        setTimeout(() => { suppressClickOnCard = null; }, 0);
-      } else {
-        card.classList.remove('drag-armed');
-      }
+      card.classList.remove('dragging');
+      card.style.transform = '';
+      try { handle.releasePointerCapture(pointerId); } catch (err) {}
+      if (dragStarted) persistCardOrder();
       cleanup();
     }
 
@@ -716,11 +718,14 @@ function attachDragHandlers(card) {
     document.addEventListener('pointerup', onUp);
     document.addEventListener('pointercancel', onUp);
   });
-}
 
-// Verhindert das native Long-Press-Kontextmenü (z.B. "Bild speichern"
-// auf Android), das sonst mit dem Drag-Gesture kollidieren würde.
-grid.addEventListener('contextmenu', (e) => e.preventDefault());
+  // Ein Klick auf den Griff soll nie die Kachel als "Karte angeklickt"
+  // behandeln (würde sonst die Folge starten/weiterblättern).
+  handle.addEventListener('click', (e) => e.stopPropagation());
+
+  // Verhindert das native Long-Press-Kontextmenü auf dem Griff.
+  handle.addEventListener('contextmenu', (e) => e.preventDefault());
+}
 
 function onCardClick(card) {
   setAutoplayMode(null); // manueller Klick bricht einen laufenden Abspiel-Modus ab
