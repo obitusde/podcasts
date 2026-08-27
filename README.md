@@ -100,6 +100,23 @@ Der Wert lässt sich einfach durch Ausprobieren finden: Feed im Browser öffnen,
 (`<itunes:duration>`) der Episoden anschauen, Schwelle so setzen, dass sie kurze und
 lange Ausgaben sauber trennt.
 
+### Optional: nur bestimmte Titel (Filter nach Text im Titel)
+
+Manche Feeds mischen mehrere Autoren/Künstler in einem Feed, wobei jede Episode den
+Namen im Titel trägt (z. B. `"Dieter Nuhr: ..."`, `"Fritz Eckenga: ..."` im WDR-2-
+Kabarett-Feed). Mit `titleContains` lässt sich der Feed auf Episoden mit diesem Text
+im Titel eingrenzen (Gross-/Kleinschreibung egal):
+
+```javascript
+{
+  name: "Dieter Nuhr",
+  feed: "https://www1.wdr.de/mediathek/audio/wdr2/wdr2-kabarett/kabarett-podcast-100.podcast",
+  titleContains: "Dieter Nuhr"
+}
+```
+
+Lässt sich mit `minDurationSeconds` kombinieren, wird aber selten gebraucht.
+
 ## Verhalten des Players
 
 ### Kacheln / Episoden-Navigation

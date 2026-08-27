@@ -357,8 +357,12 @@ const PODCASTS = [
     feed: "https://www.deutschlandfunk.de/dlf-kalenderblatt-100.xml"
   },
   {
-    name: "WDR Kabarett",
-    feed: "https://www1.wdr.de/mediathek/audio/wdr2/wdr2-kabarett/kabarett-podcast-100.podcast"
+    name: "Dieter Nuhr",
+    // WDR-2-Kabarett-Feed, aber per titleContains auf Dieter Nuhrs
+    // Beiträge gefiltert (der Feed mischt mehrere Kabarettisten, jede
+    // Episode ist im Titel mit "<Name>: ..." gekennzeichnet).
+    feed: "https://www1.wdr.de/mediathek/audio/wdr2/wdr2-kabarett/kabarett-podcast-100.podcast",
+    titleContains: "Dieter Nuhr"
   },
   {
     name: "DLF Nachrichten (lang)",
@@ -530,7 +534,8 @@ async function loadPodcast(podcast, card) {
     const url = podcast.type === 'dlf_audio'
       ? PROXY_URL + '?mode=dlfaudio'
       : PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
-        (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '');
+        (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '') +
+        (podcast.titleContains ? '&titleContains=' + encodeURIComponent(podcast.titleContains) : '');
     const res = await fetch(url);
     const data = await res.json();
 
