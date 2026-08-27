@@ -74,9 +74,14 @@ function doGet(e) {
   // im Titel (z.B. "Dieter Nuhr: ..." aus dem WDR-2-Kabarett-Feed).
   var titleContains = params.titleContains ? params.titleContains.toLowerCase() : '';
 
+  // Gegenstück zu titleContains: Episoden mit diesem Text im Titel werden
+  // ausgeschlossen. Damit lässt sich z.B. aus einem Sammel-Feed eine
+  // "alle ausser X"-Kachel bauen, parallel zu einer "nur X"-Kachel.
+  var titleExcludes = params.titleExcludes ? params.titleExcludes.toLowerCase() : '';
+
   var cache = CacheService.getScriptCache();
   var cacheKey = 'feed_' + Utilities.base64EncodeWebSafe(
-    Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, feedUrl + '|' + minDuration + '|' + titleContains)
+    Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, feedUrl + '|' + minDuration + '|' + titleContains + '|' + titleExcludes)
   );
   var cached = cache.get(cacheKey);
   if (cached) {
@@ -116,9 +121,12 @@ function doGet(e) {
     // hineinschauen, damit trotz übersprungener Episoden genug zusammenkommen.
     // titleContains braucht mehr Tiefe als minDuration, weil bei einem
     // Sammel-Feed mit mehreren Künstlern oft nur jede 6.-8. Episode passt.
+    // titleExcludes wirft dagegen nur vereinzelt Episoden raus, braucht also
+    // nur wenig zusätzliche Tiefe.
     var scanMultiplier = 1;
     if (minDuration > 0) scanMultiplier = Math.max(scanMultiplier, 8);
     if (titleContains) scanMultiplier = Math.max(scanMultiplier, 15);
+    if (titleExcludes) scanMultiplier = Math.max(scanMultiplier, 2);
     var scanLimit = Math.min(items.length, MAX_EPISODES * scanMultiplier);
     var episodes = [];
 
@@ -131,6 +139,9 @@ function doGet(e) {
       var rawTitle = getText(item, 'title');
       if (titleContains && (!rawTitle || rawTitle.toLowerCase().indexOf(titleContains) === -1)) {
         continue; // Titel passt nicht zum Filter
+      }
+      if (titleExcludes && rawTitle && rawTitle.toLowerCase().indexOf(titleExcludes) !== -1) {
+        continue; // Titel matcht den Ausschluss-Filter
       }
 
       var durationText = getItunesText(item, itunesNs, 'duration');

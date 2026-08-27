@@ -117,6 +117,18 @@ im Titel eingrenzen (Gross-/Kleinschreibung egal):
 
 Lässt sich mit `minDurationSeconds` kombinieren, wird aber selten gebraucht.
 
+Das Gegenstück ist `titleExcludes`: schliesst Episoden mit diesem Text im Titel aus.
+Damit lassen sich zwei komplementäre Kacheln aus demselben Feed bauen - eine "nur X",
+eine "alle ausser X":
+
+```javascript
+{
+  name: "WDR Kabarett",
+  feed: "https://www1.wdr.de/mediathek/audio/wdr2/wdr2-kabarett/kabarett-podcast-100.podcast",
+  titleExcludes: "Dieter Nuhr"
+}
+```
+
 ## Verhalten des Players
 
 ### Kacheln / Episoden-Navigation
