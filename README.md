@@ -129,6 +129,30 @@ eine "alle ausser X":
 }
 ```
 
+### Optional: Werbung am Anfang/Ende abschneiden
+
+Podcasts mit fester Werbung vorne und hinten lassen sich zeitlich beschneiden. Die
+Werte stehen als Konstanten in `index.html` im Block `PODCAST_TRIM` (direkt unter der
+`PODCASTS`-Liste) und sind dort jederzeit von Hand änderbar:
+
+```javascript
+const PODCAST_TRIM = {
+  "Handelsblatt Morning Briefing": {
+    startSeconds: 1 * 60 + 15,  // 1:15 - davor Werbung
+    endSeconds:   9 * 60 + 5    // 9:05 - danach Werbung
+  }
+};
+```
+
+- Der Schlüssel muss exakt dem `name` in `PODCASTS` entsprechen.
+- `startSeconds: 0` bzw. `endSeconds: null` heisst "nicht abschneiden".
+- Beim Erreichen von `endSeconds` wird pausiert und die Folge genauso behandelt wie
+  am echten Dateiende: sie gilt als gehört, die Kachel zeigt die nächstältere Folge,
+  und die Autoplay-Modi spielen weiter.
+- Die `-10s`/`+30s`-Tasten springen nicht in die abgeschnittenen Bereiche hinein.
+- Die Dauer-Anzeige auf der Kachel kommt weiterhin aus dem Feed, zeigt also die
+  ungekürzte Länge.
+
 ## Verhalten des Players
 
 ### Kacheln / Episoden-Navigation

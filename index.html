@@ -382,6 +382,43 @@ const PODCASTS = [
   }
 ];
 
+// --- Werbung am Anfang/Ende abschneiden ---------------------------
+// Manche Podcasts haben vorne und hinten Werbung. Pro Podcast-Name (muss
+// exakt dem "name" oben entsprechen) lässt sich hier festlegen, ab welcher
+// Sekunde abgespielt und nach welcher Sekunde gestoppt wird. Beim Erreichen
+// von endSeconds gilt die Folge als gehört, und es geht genauso weiter wie
+// am echten Dateiende (Autoplay-Modi eingeschlossen).
+//
+// Werte einfach hier anpassen - Schreibweise "Minuten * 60 + Sekunden".
+// endSeconds: null  -> bis zum Dateiende spielen
+// startSeconds: 0   -> von Anfang an spielen
+const PODCAST_TRIM = {
+  "Handelsblatt Morning Briefing": {
+    startSeconds: 1 * 60 + 15,  // 1:15 - davor Werbung
+    endSeconds:   9 * 60 + 5    // 9:05 - danach Werbung
+  }
+};
+
+function getTrim(podcastName) {
+  return PODCAST_TRIM[podcastName] || null;
+}
+
+// Erste abzuspielende Sekunde (0, wenn für den Podcast nichts getrimmt wird).
+function getTrimStart(podcastName) {
+  const trim = getTrim(podcastName);
+  return trim && trim.startSeconds ? trim.startSeconds : 0;
+}
+
+// Letzte abzuspielende Sekunde: der konfigurierte Wert, aber nie über die
+// tatsächliche Dateilänge hinaus. Ohne Trim kommt die Dateilänge zurück
+// (bzw. Infinity, solange die Länge noch nicht bekannt ist).
+function getTrimEnd(podcastName) {
+  const trim = getTrim(podcastName);
+  const duration = audio && audio.duration && isFinite(audio.duration) ? audio.duration : Infinity;
+  if (!trim || !trim.endSeconds) return duration;
+  return Math.min(trim.endSeconds, duration);
+}
+
 // Wendet eine per Drag & Drop gespeicherte Reihenfolge auf PODCASTS an.
 // Podcasts ohne Eintrag in der gespeicherten Reihenfolge (z.B. neu im
 // Code hinzugefügt) werden hinten in ihrer ursprünglichen Reihenfolge
@@ -809,10 +846,14 @@ function playEpisode(card, podcastName, index) {
   }
 
   const savedProgress = pState.progress[episode.guid];
+  const trimStart = getTrimStart(podcastName);
   const resume = () => {
-    if (savedProgress && savedProgress > 5 && (!audio.duration || savedProgress < audio.duration - 15)) {
-      audio.currentTime = savedProgress;
-    }
+    // Gespeicherte Position nur übernehmen, wenn sie innerhalb des
+    // getrimmten Bereichs liegt - sonst am Trim-Start beginnen.
+    const trimEnd = getTrimEnd(podcastName);
+    const useSaved = savedProgress && savedProgress > trimStart + 5 && savedProgress < trimEnd - 15;
+    const startAt = useSaved ? savedProgress : trimStart;
+    if (startAt > 0) audio.currentTime = startAt;
     audio.removeEventListener('loadedmetadata', resume);
   };
   audio.addEventListener('loadedmetadata', resume);
@@ -831,13 +872,26 @@ function persistProgress() {
   const pState = getPodcastState(allState, activeEpisode.podcastName);
   pState.progress[activeEpisode.guid] = audio.currentTime;
 
-  if (audio.currentTime / audio.duration > 0.95) {
+  // "Gehört" bezieht sich auf den getrimmten Bereich, nicht auf die ganze
+  // Datei - sonst würde eine Folge mit Werbung am Schluss nie 95% erreichen.
+  const trimStart = getTrimStart(activeEpisode.podcastName);
+  const trimEnd = getTrimEnd(activeEpisode.podcastName);
+  if (trimEnd > trimStart && (audio.currentTime - trimStart) / (trimEnd - trimStart) > 0.95) {
     pState.listened[activeEpisode.guid] = true;
   }
   saveAllState(allState);
 }
 
 audio.addEventListener('timeupdate', () => {
+  // Werbung am Schluss: beim Erreichen des Trim-Endes so behandeln, als
+  // wäre die Folge regulär zu Ende gelaufen.
+  if (activeEpisode && !activeEpisodeEnded &&
+      audio.currentTime >= getTrimEnd(activeEpisode.podcastName)) {
+    audio.pause();
+    persistProgress();
+    handleEpisodeEnd();
+    return;
+  }
   clearTimeout(saveProgressTimer);
   saveProgressTimer = setTimeout(persistProgress, 3000);
 });
@@ -936,7 +990,9 @@ function advanceRoundRobin() {
   activeCard = nextCard;
 }
 
-audio.addEventListener('ended', () => {
+// Wird sowohl vom echten 'ended'-Event aufgerufen als auch dann, wenn ein
+// konfiguriertes Trim-Ende (Werbung am Schluss) erreicht ist.
+function handleEpisodeEnd() {
   if (!activeEpisode || !activeCard) return;
   activeEpisodeEnded = true;
 
@@ -973,13 +1029,18 @@ audio.addEventListener('ended', () => {
   if (autoplayMode === 'round-robin') {
     advanceRoundRobin();
   }
-});
+}
+
+audio.addEventListener('ended', handleEpisodeEnd);
 
 window.addEventListener('beforeunload', persistProgress);
 
 function skip(seconds) {
   if (!audio.src) return;
-  audio.currentTime = Math.max(0, Math.min(audio.duration || Infinity, audio.currentTime + seconds));
+  // Nicht in die weggeschnittenen Werbeblöcke hinein springen.
+  const min = activeEpisode ? getTrimStart(activeEpisode.podcastName) : 0;
+  const max = activeEpisode ? getTrimEnd(activeEpisode.podcastName) : (audio.duration || Infinity);
+  audio.currentTime = Math.max(min, Math.min(max, audio.currentTime + seconds));
 }
 
 document.getElementById('back10').addEventListener('click', () => skip(-10));
