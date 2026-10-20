@@ -11,7 +11,7 @@
 <style>
   :root {
     --bg: #0d0f11;          /* Seitenhintergrund, dunkelster Ton */
-    --bg-elevated: #23282e; /* Kacheln - deutlich heller als die Seite */
+    --bg-elevated: #2d343c; /* Kacheln - deutlich heller als die Seite */
     --border: #434b54;
     --text: #ffffff;        /* reines Weiss für maximalen Kontrast */
     --text-dim: #c3cad2;    /* Nebentext: hell genug, um gut lesbar zu sein */
@@ -56,7 +56,10 @@
   main {
     max-width: 900px;
     margin: 0 auto;
-    padding: 24px 20px 100px; /* Fallback, wird per JS auf die echte Player-Höhe gesetzt */
+    /* Seitlich fast randlos, damit die Kacheln die volle Breite nutzen.
+       Unten ist der Wert nur ein Fallback - er wird per JS auf die echte
+       Höhe der Player-Leiste gesetzt. */
+    padding: 12px 6px 100px;
   }
 
   .grid {
@@ -70,11 +73,12 @@
     background: var(--bg-elevated);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px;
+    padding: 10px 12px 12px;
     cursor: pointer;
     display: flex;
-    gap: 12px;
-    align-items: center;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
     transition: border-color 0.15s ease, transform 0.1s ease;
     text-align: left;
     -webkit-touch-callout: none;
@@ -93,6 +97,13 @@
   /* Reordering per Ziehgriff (Touch & Maus, siehe attachDragHandlers).
      touch-action: none NUR auf dem Griff - sonst bleibt die Seite überall
      normal scrollbar, nur der Griff selbst startet einen Drag statt Scroll. */
+  /* Zeile unter dem Podcast-Namen: Bild + Titel/Datum + Ziehgriff */
+  .card-body {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
   .drag-handle {
     touch-action: none;
     -webkit-user-select: none;
@@ -101,9 +112,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 44px;
-    margin: -14px -6px -14px 0;
+    width: 30px;
+    height: 56px;
+    margin: 0 -6px 0 0;
     color: var(--text-dim);
     cursor: grab;
   }
@@ -139,11 +150,11 @@
 
   .card-podcast {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--accent);
-    margin: 0 0 3px;
+    margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -596,7 +607,7 @@ const PODCASTS = [
     titleContains: "Dieter Nuhr"
   },
   {
-    name: "DLF Nachrichten (lang)",
+    name: "DLF Nachrichten",
     feed: "https://www.deutschlandfunk.de/nachrichten-108.xml",
     minDurationSeconds: 420 // nur Ausgaben ab 7 Min. - Standardausgaben sind ~5 Min., lange sind 8-10 Min.
   },
@@ -641,6 +652,76 @@ function getTrimEnd(podcastName) {
   const duration = audio && audio.duration && isFinite(audio.duration) ? audio.duration : Infinity;
   if (!trim || !trim.endSeconds) return duration;
   return Math.min(trim.endSeconds, duration);
+}
+
+// --- Titel aufräumen ----------------------------------------------------
+// Manche Feeds stellen jedem Titel immer denselben Textbaustein voran, der
+// in der schmalen Kachel nur Platz kostet. Hier lassen sich solche Muster
+// ergänzen: "vorne abschneiden, wenn der Titel so anfängt".
+const TITLE_PREFIXES_TO_STRIP = [
+  /^die\s+nachrichten\s+vom\s+/i   // DLF: "Die Nachrichten vom 20.10.2026, 14:00 Uhr"
+];
+
+function cleanEpisodeTitle(title) {
+  if (!title) return title;
+  let t = String(title).trim();
+
+  TITLE_PREFIXES_TO_STRIP.forEach((pattern) => {
+    if (!pattern.test(t)) return;
+    t = t.replace(pattern, '');
+    // Das Datum gleich mit wegwerfen - es steht ohnehin in der Datumszeile
+    // der Kachel. Übrig bleibt z.B. "14:00 Uhr".
+    t = t.replace(/^\d{1,2}\.\d{1,2}\.(\d{2,4})?\s*(um|,|-|–|·)?\s*/i, '').trim();
+  });
+
+  if (!t) return 'Nachrichten'; // falls vom Titel nichts übrig bleibt
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+// --- Umbenannte Podcasts ------------------------------------------------
+// Beim Umbenennen einer Kachel würden Reihenfolge, Hörfortschritt und
+// Cover unter dem alten Namen liegenbleiben. Diese Tabelle zieht sie beim
+// Start einmalig auf den neuen Namen um.
+const RENAMED_PODCASTS = {
+  'DLF Nachrichten (lang)': 'DLF Nachrichten'
+};
+
+function migrateRenamedPodcasts() {
+  const renames = Object.keys(RENAMED_PODCASTS);
+  if (renames.length === 0) return;
+
+  [STORAGE_KEY, IMAGE_KEY].forEach((key) => {
+    let data;
+    try {
+      data = JSON.parse(localStorage.getItem(key));
+    } catch (e) {
+      return;
+    }
+    if (!data || typeof data !== 'object') return;
+    let changed = false;
+    renames.forEach((oldName) => {
+      const newName = RENAMED_PODCASTS[oldName];
+      if (data[oldName] && !data[newName]) {
+        data[newName] = data[oldName];
+        changed = true;
+      }
+      if (data[oldName]) {
+        delete data[oldName];
+        changed = true;
+      }
+    });
+    if (changed) {
+      try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+    }
+  });
+
+  try {
+    const order = JSON.parse(localStorage.getItem(ORDER_KEY));
+    if (Array.isArray(order)) {
+      const mapped = order.map((n) => RENAMED_PODCASTS[n] || n);
+      localStorage.setItem(ORDER_KEY, JSON.stringify(mapped));
+    }
+  } catch (e) {}
 }
 
 // Wendet eine per Drag & Drop gespeicherte Reihenfolge auf PODCASTS an.
@@ -834,20 +915,24 @@ function renderTodayHeader() {
 function createCard(podcast) {
   const card = document.createElement('div');
   card.className = 'card loading';
+  // Der Podcast-Name steht als eigene Zeile ganz oben links (also auch
+  // über dem Bild) - so bleibt für Name und Titel die volle Kachelbreite.
   card.innerHTML = `
-    <img src="" alt="">
-    <div class="card-text">
-      <p class="card-podcast">${podcast.name}</p>
-      <p class="card-title">Wird geladen …</p>
-      <p class="card-date"></p>
+    <p class="card-podcast">${podcast.name}</p>
+    <div class="card-body">
+      <img src="" alt="" loading="lazy" decoding="async">
+      <div class="card-text">
+        <p class="card-title">Wird geladen …</p>
+        <p class="card-date"></p>
+      </div>
+      <span class="drag-handle" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <circle cx="6" cy="5" r="1.6"/><circle cx="14" cy="5" r="1.6"/>
+          <circle cx="6" cy="10" r="1.6"/><circle cx="14" cy="10" r="1.6"/>
+          <circle cx="6" cy="15" r="1.6"/><circle cx="14" cy="15" r="1.6"/>
+        </svg>
+      </span>
     </div>
-    <span class="drag-handle" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-        <circle cx="6" cy="5" r="1.6"/><circle cx="14" cy="5" r="1.6"/>
-        <circle cx="6" cy="10" r="1.6"/><circle cx="14" cy="10" r="1.6"/>
-        <circle cx="6" cy="15" r="1.6"/><circle cx="14" cy="15" r="1.6"/>
-      </svg>
-    </span>
   `;
   card.podcast = podcast; // für späteres Neuladen (Aktualisieren-Knopf)
   grid.appendChild(card);
@@ -872,6 +957,7 @@ async function loadPodcast(podcast, card) {
 
     card.classList.remove('loading', 'error');
     card.dataset.podcastName = podcast.name;
+    data.episodes.forEach((ep) => { ep.title = cleanEpisodeTitle(ep.title); });
     card.episodes = data.episodes; // neueste zuerst, Index 0 = neueste
 
     const allState = loadAllState();
@@ -1123,6 +1209,8 @@ function onCardClick(card) {
   // sonst würde dieser Tipp wie gewohnt eine Folge weiterblättern.
   if (activeCard === card && isPlayerBarHidden()) {
     showPlayerBar();
+    // Mit × geschlossen (= angehalten)? Dann an derselben Stelle weiterspielen.
+    if (audio.src && audio.paused && !activeEpisodeEnded) audio.play();
     return;
   }
 
@@ -1700,6 +1788,8 @@ const playerCloseBtn = document.getElementById('player-close');
 if (playerCloseBtn) {
   playerCloseBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    audio.pause();   // Schliessen heisst anhalten
+    persistProgress(); // Position merken, damit es später weitergeht
     hidePlayerBar();
   });
 }
@@ -1718,6 +1808,7 @@ if ('serviceWorker' in navigator) {
 }
 
 /* Init */
+migrateRenamedPodcasts();
 renderTodayHeader();
 applyPlaybackRate();
 updatePlayPauseIcon();

@@ -195,10 +195,13 @@ dem Handy zu klein und lassen sich nicht vergrössern):
 - **Eigene Hintergrundfarbe** (`--player-bg`, deutlich heller als Seite und Kacheln)
   plus Schatten nach oben, damit die Leiste klar von der Podcast-Liste absteht.
 - **Ausblenden:** Wischt man nach oben (um einen anderen Podcast auszusuchen), fährt
-  die Leiste weg - und bleibt weg, auch beim Weiterscrollen. Dasselbe macht der
-  `×`-Knopf in der Leiste. Die Wiedergabe läuft in beiden Fällen weiter.
-- **Zurückholen:** Tipp auf die *laufende* Kachel holt nur die Leiste zurück (ohne
-  eine Folge weiterzublättern), Tipp auf eine *andere* Kachel startet diesen Podcast.
+  die Leiste weg - und bleibt weg, auch beim Weiterscrollen. Die Wiedergabe läuft
+  dabei weiter.
+- **`×`-Knopf:** blendet die Leiste aus **und hält die Wiedergabe an** (Position
+  wird gemerkt).
+- **Zurückholen:** Tipp auf die *laufende* Kachel holt die Leiste zurück, ohne eine
+  Folge weiterzublättern; war mit `×` angehalten worden, läuft es an derselben
+  Stelle weiter. Tipp auf eine *andere* Kachel startet diesen Podcast.
 - **Hover nur mit Maus:** Alle Hover-Effekte stehen in einer
   `@media (hover: hover)`-Regel. Ohne das blieb auf dem Handy nach einem Tap ein
   klebender :hover zurück (Knöpfe dauerhaft orange, aktiver Modus-Knopf unlesbar).
@@ -229,6 +232,21 @@ jeweiligen Episode zu nehmen. Dadurch bleibt die Bild-URL über neue Folgen hinw
 stabil, der Service-Worker-Cache (`sw.js`, cache-first für Bilder) greift, und im
 Normalbetrieb lädt der Browser überhaupt kein Cover mehr nach. Die Dauer steht in
 `index.html` als `IMAGE_MAX_AGE_MS`.
+
+### Kachel-Layout und Titel
+
+- Der Podcast-Name steht als eigene Zeile ganz oben links - also auch über dem
+  Cover. Darunter folgt die Zeile mit Cover, Episodentitel, Datum und Ziehgriff.
+  So stehen Name und Titel über die volle Kachelbreite zur Verfügung.
+- `<main>` hat seitlich fast keinen Rand mehr, die Kacheln nutzen die Bildschirm-
+  breite aus.
+- Immer gleiche Titel-Vorsätze werden im Frontend abgeschnitten
+  (`TITLE_PREFIXES_TO_STRIP` in `index.html`). Aktuell: "Die Nachrichten vom
+  20.10.2026, 14:00 Uhr" wird zu "14:00 Uhr" (das Datum steht ohnehin eine Zeile
+  tiefer). Weitere Muster lassen sich dort als reguläre Ausdrücke ergänzen.
+- Wird eine Kachel umbenannt, trägt man das Paar in `RENAMED_PODCASTS` ein; dann
+  ziehen Reihenfolge, Hörfortschritt und Cover beim nächsten Start automatisch auf
+  den neuen Namen um, statt verloren zu gehen.
 
 ## Bekannte Einschränkungen
 
