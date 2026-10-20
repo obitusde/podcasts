@@ -180,8 +180,24 @@ Für jeden Podcast wird gespeichert:
 
 ### Bedienung
 
-- Buttons in einer Zeile: `-10s`, `-5s`, `+5s`, `+10s`, `+30s`.
-- Native Wiedergabeleiste (Play/Pause, Scrubber) kommt vom Browser (`<audio controls>`).
+Die Player-Leiste ist bewusst selbst gebaut (die nativen `<audio controls>` sind auf
+dem Handy zu klein und lassen sich nicht vergrössern):
+
+- **Fortschrittsbalken** mit verstrichener Zeit links und Restzeit rechts. Beides
+  bezieht sich auf den hörbaren Bereich - weggeschnittene Werbung (`PODCAST_TRIM`)
+  zählt nicht mit.
+- **Grosser runder Play/Pause-Knopf** (78 px) in der Mitte, flankiert von
+  `◀ älter` / `neuer ▶` für die Folgen-Navigation innerhalb desselben Podcasts.
+- Sprung-Zeile: `-10s`, `-5s`, `+5s`, `+10s`, `+30s` - diese Sprünge bleiben
+  innerhalb des getrimmten Bereichs.
+- **Tempo-Knopf** (`1,0×` … `2,0×`): schaltet beim Tippen weiter durch 1 / 1,1 /
+  1,25 / 1,5 / 1,75 / 2 und merkt sich die Wahl (`localStorage`).
+- **Automatisches Ausblenden:** Scrollt man nach oben (um einen anderen Podcast
+  auszuwählen), fährt die Leiste nach unten weg; beim Scrollen nach unten oder beim
+  Starten einer Folge kommt sie zurück. Die Wiedergabe läuft dabei weiter.
+- **Hover nur mit Maus:** Alle Hover-Effekte stehen in einer
+  `@media (hover: hover)`-Regel. Ohne das blieb auf dem Handy nach einem Tap ein
+  klebender :hover zurück (Knöpfe dauerhaft orange, aktiver Modus-Knopf unlesbar).
 - **Media Session API**: externe Bedienung über Sperrbildschirm, Kopfhörer oder
   Auto-Bedienelemente funktioniert:
   - Play/Pause steuern die Wiedergabe direkt.
@@ -189,9 +205,26 @@ Für jeden Podcast wird gespeichert:
     +10s** gelegt.
   - "Vorheriger/Nächster Titel" (z. B. Lenkradtasten) springt zur nächstälteren bzw.
     nächstneueren geladenen Folge und spielt sie sofort ab.
+  - Position und Länge werden gemeldet (`setPositionState`), ebenfalls bezogen auf
+    den getrimmten Bereich; Scrubben von aussen (`seekto`) wird umgerechnet.
+  - Titel, Podcast-Name und Cover werden ans Betriebssystem übergeben. Ob das
+    **Autoradio** das Cover anzeigt, hängt vom Bluetooth-Profil des Radios ab
+    (Cover-Art gibt es erst ab AVRCP 1.6); Titel und Name kommen praktisch überall an.
+- **Aktualisieren-Knopf** (`↻` oben rechts): lädt alle Feeds neu, ohne die Seite neu
+  zu laden - eine laufende Folge spielt weiter. Eine Kachel mit Ladefehler kann man
+  direkt antippen, um sie allein erneut zu versuchen.
 - **Wake Lock**: Der Bildschirm schläft nicht ein, solange die Seite sichtbar ist.
 - Als installierte PWA sollte die Wiedergabe auch bei ausgeschaltetem Bildschirm
   weiterlaufen (abhängig vom Verhalten von Chrome/Android).
+
+### Cover-Bilder (werden nur einmal pro Jahr geladen)
+
+Pro Podcast wird die zuerst gesehene Cover-URL in `localStorage` (`podcastImages_v1`)
+festgehalten und **ein Jahr lang** weiterverwendet, statt wie früher das Bild der
+jeweiligen Episode zu nehmen. Dadurch bleibt die Bild-URL über neue Folgen hinweg
+stabil, der Service-Worker-Cache (`sw.js`, cache-first für Bilder) greift, und im
+Normalbetrieb lädt der Browser überhaupt kein Cover mehr nach. Die Dauer steht in
+`index.html` als `IMAGE_MAX_AGE_MS`.
 
 ## Bekannte Einschränkungen
 

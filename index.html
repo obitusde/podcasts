@@ -77,10 +77,6 @@
     user-select: none;
   }
 
-  .card:hover {
-    border-color: var(--accent-dim);
-  }
-
   .card:active {
     transform: scale(0.98);
   }
@@ -179,8 +175,6 @@
     cursor: default;
   }
 
-  .card.error:hover { border-color: var(--border); }
-
   .card.loading .card-title { color: var(--text-dim); }
 
   /* Player */
@@ -198,6 +192,13 @@
 
   #player-bar.visible {
     transform: translateY(0);
+  }
+
+  /* Beim Scrollen nach oben (Podcast aussuchen) fährt die Leiste weg und
+     gibt die Kacheln frei; beim Scrollen nach unten kommt sie zurück.
+     Die ID vorne sorgt dafür, dass diese Regel .visible überstimmt. */
+  #player-bar.visible.scrolled-away {
+    transform: translateY(100%);
   }
 
   .player-inner {
@@ -241,10 +242,160 @@
     text-overflow: ellipsis;
   }
 
+  /* Das <audio>-Element bleibt unsichtbar: die nativen Controls sind auf
+     dem Handy klein und lassen sich nicht vergrössern. Gesteuert wird
+     über die eigenen Knöpfe darunter. */
   audio {
-    width: 100%;
-    margin-bottom: 12px;
-    height: 54px;
+    display: none;
+  }
+
+  /* Fortschrittsbalken mit Zeitangaben */
+  .seek-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .seek-row .time {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    min-width: 44px;
+    text-align: center;
+  }
+
+  #seek {
+    flex: 1 1 auto;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    height: 30px; /* grosse Trefferfläche für den Finger */
+    margin: 0;
+    cursor: pointer;
+  }
+
+  #seek::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+  }
+
+  #seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    margin-top: -8px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+  }
+
+  #seek::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+  }
+
+  #seek::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Grosser Play/Pause-Knopf, flankiert von Folgen-Navigation */
+  .transport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .play-btn {
+    width: 78px;
+    height: 78px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #101214;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .play-btn svg {
+    width: 38px;
+    height: 38px;
+    fill: currentColor;
+  }
+
+  .play-btn:active {
+    transform: scale(0.96);
+  }
+
+  .ep-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 16px 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .ep-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .ep-btn:not(:disabled):active {
+    background: var(--accent-dim);
+  }
+
+  /* Kopfzeile mit Aktualisieren-Knopf */
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .icon-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+
+  .icon-btn.busy {
+    opacity: 0.4;
+  }
+
+  /* Modus-Zeile: etwas kleinere Schrift, damit "Reihum, je 1 Folge"
+     neben dem Tempo-Knopf auf eine Zeile passt. */
+  .mode-controls button {
+    font-size: 14px;
+    padding: 14px 4px;
+  }
+
+  #speed {
+    flex: 0 0 64px;
   }
 
   .controls {
@@ -269,11 +420,6 @@
     font-family: inherit;
   }
 
-  .controls button:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
   .controls button:active {
     background: var(--accent-dim);
   }
@@ -282,10 +428,32 @@
     margin-top: 8px;
   }
 
+  /* Aktiver Modus: dunkle Schrift auf Orange. Weiss auf Orange war zu
+     kontrastarm, und zusammen mit einem klebenden :hover (orange Schrift
+     auf orangem Grund) war der Knopf gar nicht mehr lesbar. */
   .mode-btn.active {
     background: var(--accent);
     border-color: var(--accent);
-    color: #fff;
+    color: #101214;
+  }
+
+  /* Hover/Tap-Verhalten
+     --------------------
+     Mobile Browser lassen :hover nach einem Tap "kleben" - Knöpfe blieben
+     dadurch dauerhaft orange. Hover-Effekte deshalb nur auf Geräten mit
+     echtem Zeiger (Maus/Trackpad); auf Touch zählt nur :active, das
+     ausschliesslich beim Drücken gilt. */
+  button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover { border-color: var(--accent-dim); }
+    .card.error:hover { border-color: var(--border); }
+    .controls button:hover { border-color: var(--accent); color: var(--accent); }
+    .mode-btn.active:hover { color: #101214; }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
   }
 
   .status {
@@ -298,7 +466,10 @@
 <body>
 
 <header>
-  <h1 id="today-date"></h1>
+  <div class="header-row">
+    <h1 id="today-date"></h1>
+    <button id="refresh" class="icon-btn" aria-label="Folgen neu laden" title="Folgen neu laden">&#x21bb;</button>
+  </div>
 </header>
 
 <main>
@@ -314,7 +485,20 @@
         <p id="player-title"></p>
       </div>
     </div>
-    <audio id="audio" controls></audio>
+    <audio id="audio" preload="metadata"></audio>
+
+    <div class="seek-row">
+      <span id="time-current" class="time">0:00</span>
+      <input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Position in der Folge">
+      <span id="time-remaining" class="time">-0:00</span>
+    </div>
+
+    <div class="transport">
+      <button id="prev-episode" class="ep-btn" aria-label="Ältere Folge">&#9664; älter</button>
+      <button id="playpause" class="play-btn" aria-label="Abspielen"></button>
+      <button id="next-episode" class="ep-btn" aria-label="Neuere Folge">neuer &#9654;</button>
+    </div>
+
     <div class="controls">
       <button id="back10">-10s</button>
       <button id="back5">-5s</button>
@@ -325,6 +509,7 @@
     <div class="controls mode-controls">
       <button id="mode-series" class="mode-btn">Ganze Serie</button>
       <button id="mode-roundrobin" class="mode-btn">Reihum, je 1 Folge</button>
+      <button id="speed" aria-label="Abspielgeschwindigkeit">1,0&times;</button>
     </div>
   </div>
 </div>
@@ -452,6 +637,54 @@ function getOrderedPodcasts() {
 
 const STORAGE_KEY = 'podcastPlayerState_v2';
 const ORDER_KEY = 'podcastOrder_v1';
+const IMAGE_KEY = 'podcastImages_v1';
+
+// --- Cover-Bilder: pro Podcast EINE feste URL, ein Jahr lang -------------
+// Vorher wurde das Bild der jeweiligen Episode benutzt. Da sich diese URL
+// mit jeder neuen Folge ändert, musste der Browser jedes Mal ein neues Bild
+// herunterladen. Jetzt wird pro Podcast die zuerst gesehene Cover-URL in
+// localStorage festgehalten und ein Jahr lang weiterverwendet - dadurch ist
+// die URL stabil, der Service-Worker-Cache greift (siehe sw.js) und es
+// entsteht im Normalbetrieb überhaupt kein Bild-Download mehr.
+const IMAGE_MAX_AGE_MS = 365 * 24 * 3600 * 1000;
+
+function loadImageCache() {
+  try {
+    return JSON.parse(localStorage.getItem(IMAGE_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveImageCache(cache) {
+  try {
+    localStorage.setItem(IMAGE_KEY, JSON.stringify(cache));
+  } catch (e) {
+    console.error('Cover-Cache konnte nicht gespeichert werden', e);
+  }
+}
+
+// Liefert die gemerkte Cover-URL des Podcasts. Ist noch keine gemerkt oder
+// ist der Eintrag älter als ein Jahr, wird die aktuelle URL aus dem Feed
+// übernommen und neu gemerkt.
+function getPodcastImage(podcastName, feedImageUrl) {
+  const cache = loadImageCache();
+  const entry = cache[podcastName];
+  const fresh = entry && entry.url && (Date.now() - (entry.ts || 0)) < IMAGE_MAX_AGE_MS;
+  if (fresh) return entry.url;
+  if (!feedImageUrl) return entry && entry.url ? entry.url : '';
+  cache[podcastName] = { url: feedImageUrl, ts: Date.now() };
+  saveImageCache(cache);
+  return feedImageUrl;
+}
+
+// Setzt das Bild nur, wenn sich die URL wirklich ändert - ein erneutes
+// Zuweisen derselben src lässt den Browser sonst kurz neu dekodieren
+// (sichtbares Flackern beim Umblättern der Folgen).
+function setImageSrc(imgEl, url) {
+  if (!imgEl || !url) return;
+  if (imgEl.getAttribute('src') !== url) imgEl.src = url;
+}
 
 function loadAllState() {
   try {
@@ -492,6 +725,14 @@ const playerBar = document.getElementById('player-bar');
 const playerImg = document.getElementById('player-img');
 const playerPodcast = document.getElementById('player-podcast');
 const playerTitle = document.getElementById('player-title');
+const playPauseBtn = document.getElementById('playpause');
+const prevEpisodeBtn = document.getElementById('prev-episode');
+const nextEpisodeBtn = document.getElementById('next-episode');
+const seekEl = document.getElementById('seek');
+const timeCurrentEl = document.getElementById('time-current');
+const timeRemainingEl = document.getElementById('time-remaining');
+const speedBtn = document.getElementById('speed');
+const refreshBtn = document.getElementById('refresh');
 
 let activeCard = null;       // Karte, die zuletzt geklickt/fokussiert wurde
 let activeEpisode = null;    // { podcastName, guid } der aktuell geladenen Episode
@@ -569,6 +810,7 @@ function createCard(podcast) {
       </svg>
     </span>
   `;
+  card.podcast = podcast; // für späteres Neuladen (Aktualisieren-Knopf)
   grid.appendChild(card);
   return card;
 }
@@ -585,13 +827,11 @@ async function loadPodcast(podcast, card) {
     const data = await res.json();
 
     if (data.error || !data.episodes || data.episodes.length === 0) {
-      card.classList.remove('loading');
-      card.classList.add('error');
-      card.querySelector('.card-title').textContent = data.error || 'Kein Audio gefunden';
+      showCardError(card, podcast, data.error || 'Kein Audio gefunden');
       return;
     }
 
-    card.classList.remove('loading');
+    card.classList.remove('loading', 'error');
     card.dataset.podcastName = podcast.name;
     card.episodes = data.episodes; // neueste zuerst, Index 0 = neueste
 
@@ -599,10 +839,14 @@ async function loadPodcast(podcast, card) {
     const pState = getPodcastState(allState, podcast.name);
     const newestGuid = data.episodes[0].guid;
 
+    // Läuft gerade eine Folge dieser Kachel, darf ein Neuladen die Anzeige
+    // nicht wegspringen lassen - dann bleibt der aktuelle Index stehen.
+    const isPlayingThisCard = activeEpisode && activeEpisode.podcastName === podcast.name && !audio.paused;
+
     // Neue Episode seit letztem Besuch? -> immer die neueste zeigen
     if (pState.lastSeenGuid !== newestGuid) {
       pState.lastSeenGuid = newestGuid;
-      pState.currentIndex = 0;
+      if (!isPlayingThisCard) pState.currentIndex = 0;
     }
     // Falls gespeicherter Index nicht mehr existiert (Feed kürzer geworden)
     if (pState.currentIndex >= data.episodes.length) {
@@ -610,16 +854,69 @@ async function loadPodcast(podcast, card) {
     }
     saveAllState(allState);
 
+    // Läuft eine Folge dieser Kachel, den Index auf genau diese Folge
+    // nachziehen (im Feed kann sie durch neue Folgen verschoben sein).
+    if (isPlayingThisCard) {
+      const playingIdx = data.episodes.findIndex(e => e.guid === activeEpisode.guid);
+      if (playingIdx !== -1) pState.currentIndex = playingIdx;
+      saveAllState(allState);
+    }
+
     renderCard(card, podcast.name, pState.currentIndex);
-    card.addEventListener('click', () => onCardClick(card));
-    attachDragHandlers(card, card.querySelector('.drag-handle'));
+
+    // Klick-/Drag-Handler nur beim ersten erfolgreichen Laden anhängen,
+    // damit ein Neuladen keine doppelten Handler erzeugt.
+    if (!card.dataset.wired) {
+      card.dataset.wired = '1';
+      card.addEventListener('click', () => onCardClick(card));
+      attachDragHandlers(card, card.querySelector('.drag-handle'));
+    }
+    updateEpisodeNavButtons();
   } catch (err) {
-    card.classList.remove('loading');
-    card.classList.add('error');
-    card.querySelector('.card-title').textContent = 'Fehler beim Laden';
+    showCardError(card, podcast, 'Fehler beim Laden - tippen für neuen Versuch');
     console.error(podcast.name, err);
   }
 }
+
+// Fehler auf der Kachel anzeigen. Ein Tipp darauf versucht es erneut -
+// vorher musste man dafür die ganze Seite neu laden.
+function showCardError(card, podcast, message) {
+  card.classList.remove('loading');
+  card.classList.add('error');
+  card.querySelector('.card-title').textContent = message;
+  if (!card.dataset.retryWired) {
+    card.dataset.retryWired = '1';
+    card.addEventListener('click', () => {
+      if (!card.classList.contains('error')) return;
+      card.classList.remove('error');
+      card.classList.add('loading');
+      card.querySelector('.card-title').textContent = 'Wird geladen …';
+      loadPodcast(card.podcast || podcast, card);
+    });
+  }
+}
+
+/* ============================================================
+   AKTUALISIEREN: alle Feeds neu abfragen, ohne die Seite neu zu
+   laden (eine laufende Folge spielt dabei weiter).
+   ============================================================ */
+
+let isRefreshing = false;
+
+async function refreshAll() {
+  if (isRefreshing) return;
+  isRefreshing = true;
+  if (refreshBtn) refreshBtn.classList.add('busy');
+  try {
+    const cards = Array.from(grid.children).filter((c) => c.podcast);
+    await Promise.all(cards.map((card) => loadPodcast(card.podcast, card)));
+  } finally {
+    isRefreshing = false;
+    if (refreshBtn) refreshBtn.classList.remove('busy');
+  }
+}
+
+if (refreshBtn) refreshBtn.addEventListener('click', refreshAll);
 
 // Rendert eine Karte für einen bestimmten Episoden-Index.
 // options.noOlder = true -> es gibt keine ältere Episode mehr als die
@@ -630,8 +927,7 @@ function renderCard(card, podcastName, index, options) {
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
 
-  const img = card.querySelector('img');
-  if (episode.imageUrl) img.src = episode.imageUrl;
+  setImageSrc(card.querySelector('img'), getPodcastImage(podcastName, episode.imageUrl));
 
   card.querySelector('.card-title').textContent = episode.title || '(ohne Titel)';
 
@@ -653,20 +949,25 @@ function renderCard(card, podcastName, index, options) {
 // nächstältere angezeigt werden soll, bevor sie angeklickt wird.
 function updatePlayerPreview(card, podcastName, index) {
   const episode = card.episodes[index];
-  playerImg.src = episode.imageUrl || '';
+  const coverUrl = getPodcastImage(podcastName, episode.imageUrl);
+  setImageSrc(playerImg, coverUrl);
   playerPodcast.textContent = podcastName;
   playerTitle.textContent = (episode.title || '') + '  ·  ' + formatDateNoYear(episode.pubDate);
+  setMediaMetadata(podcastName, episode, coverUrl);
+}
 
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: episode.title || podcastName,
-      artist: podcastName,
-      album: formatDateNoYear(episode.pubDate),
-      artwork: episode.imageUrl ? [
-        { src: episode.imageUrl, sizes: '512x512', type: 'image/jpeg' }
-      ] : []
-    });
-  }
+// Titel/Interpret/Cover für Lockscreen, Kopfhörer und Autoradio.
+// Das Cover wird dem Betriebssystem als URL übergeben; ob das Auto es
+// anzeigt, hängt vom Bluetooth-Profil des Autoradios ab (Cover-Art gibt es
+// erst ab AVRCP 1.6) - Titel und Podcast-Name kommen praktisch überall an.
+function setMediaMetadata(podcastName, episode, coverUrl) {
+  if (!('mediaSession' in navigator)) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: episode.title || podcastName,
+    artist: podcastName,
+    album: formatDateNoYear(episode.pubDate),
+    artwork: coverUrl ? [{ src: coverUrl, sizes: '512x512' }] : []
+  });
 }
 
 /* ============================================================
@@ -821,29 +1122,24 @@ function onCardClick(card) {
 function playEpisode(card, podcastName, index) {
   document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
   card.classList.add('active');
+  activeCard = card; // schon hier setzen - die Aufrufer tun es sonst erst danach,
+                     // und die Folgen-Knöpfe unten brauchen die aktive Karte
 
   const episode = card.episodes[index];
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
 
-  playerImg.src = episode.imageUrl || '';
+  const coverUrl = getPodcastImage(podcastName, episode.imageUrl);
+  setImageSrc(playerImg, coverUrl);
   playerPodcast.textContent = podcastName;
   playerTitle.textContent = (episode.title || '') + '  ·  ' + formatDateNoYear(episode.pubDate);
 
   audio.src = episode.audioUrl;
   activeEpisode = { podcastName, guid: episode.guid };
   activeEpisodeEnded = false;
+  applyPlaybackRate();
 
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: episode.title || podcastName,
-      artist: podcastName,
-      album: formatDateNoYear(episode.pubDate),
-      artwork: episode.imageUrl ? [
-        { src: episode.imageUrl, sizes: '512x512', type: 'image/jpeg' }
-      ] : []
-    });
-  }
+  setMediaMetadata(podcastName, episode, coverUrl);
 
   const savedProgress = pState.progress[episode.guid];
   const trimStart = getTrimStart(podcastName);
@@ -860,6 +1156,10 @@ function playEpisode(card, podcastName, index) {
 
   audio.play();
   playerBar.classList.add('visible');
+  playerBar.classList.remove('scrolled-away'); // beim Starten immer zeigen
+  syncMainPadding();
+  updateEpisodeNavButtons();
+  updateTransportUI();
 }
 
 // Speichert nur die Wiedergabeposition (und markiert bei Bedarf als
@@ -892,10 +1192,185 @@ audio.addEventListener('timeupdate', () => {
     handleEpisodeEnd();
     return;
   }
+  updateTransportUI();
   clearTimeout(saveProgressTimer);
   saveProgressTimer = setTimeout(persistProgress, 3000);
 });
 audio.addEventListener('pause', persistProgress);
+audio.addEventListener('loadedmetadata', updateTransportUI);
+audio.addEventListener('durationchange', updateTransportUI);
+
+/* ============================================================
+   EIGENER TRANSPORT: grosser Play/Pause-Knopf, Fortschrittsbalken
+   mit Zeitangaben, Folgen-Navigation und Geschwindigkeit.
+   Alle Zeiten beziehen sich auf den getrimmten Bereich (siehe
+   PODCAST_TRIM): abgeschnittene Werbung zählt weder im Balken
+   noch in der Restzeit mit.
+   ============================================================ */
+
+const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>';
+
+let isSeeking = false;
+
+function formatSeconds(totalSeconds) {
+  if (!isFinite(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
+  const t = Math.floor(totalSeconds);
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const sec = t % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  return `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+// Hörbares Fenster der aktuellen Folge (ohne weggeschnittene Werbung).
+function playableWindow() {
+  const name = activeEpisode ? activeEpisode.podcastName : null;
+  const start = name ? getTrimStart(name) : 0;
+  let end = name ? getTrimEnd(name) : (audio.duration || 0);
+  if (!isFinite(end)) end = audio.duration && isFinite(audio.duration) ? audio.duration : 0;
+  return { start, end, length: Math.max(0, end - start) };
+}
+
+function updatePlayPauseIcon() {
+  if (!playPauseBtn) return;
+  const paused = audio.paused;
+  playPauseBtn.innerHTML = paused ? ICON_PLAY : ICON_PAUSE;
+  playPauseBtn.setAttribute('aria-label', paused ? 'Abspielen' : 'Pause');
+}
+
+function updateTransportUI() {
+  updatePlayPauseIcon();
+  if (!seekEl) return;
+  const win = playableWindow();
+
+  if (win.length <= 0) {
+    if (!isSeeking) seekEl.value = '0';
+    timeCurrentEl.textContent = '0:00';
+    timeRemainingEl.textContent = '-0:00';
+    return;
+  }
+
+  const pos = Math.min(Math.max(audio.currentTime - win.start, 0), win.length);
+  if (!isSeeking) seekEl.value = String(Math.round((pos / win.length) * 1000));
+  timeCurrentEl.textContent = formatSeconds(pos);
+  timeRemainingEl.textContent = '-' + formatSeconds(win.length - pos);
+
+  // Position auch ans Betriebssystem melden - Lockscreen und viele
+  // Autoradios zeigen damit einen korrekten Fortschritt an.
+  if ('mediaSession' in navigator && navigator.mediaSession.setPositionState) {
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: win.length,
+        position: pos,
+        playbackRate: audio.playbackRate || 1
+      });
+    } catch (e) { /* ungültige Werte (z.B. während des Ladens) ignorieren */ }
+  }
+}
+
+function togglePlayPause() {
+  if (!audio.src) return;
+  if (audio.paused) {
+    // Nach dem Trim-Ende erneut auf Play: wieder am Anfang des hörbaren
+    // Bereichs starten statt sofort wieder zu stoppen.
+    const win = playableWindow();
+    if (win.length > 0 && audio.currentTime >= win.end - 0.5) {
+      audio.currentTime = win.start;
+      activeEpisodeEnded = false;
+    }
+    audio.play();
+  } else {
+    audio.pause();
+  }
+}
+
+if (playPauseBtn) playPauseBtn.addEventListener('click', togglePlayPause);
+
+if (seekEl) {
+  seekEl.addEventListener('pointerdown', () => { isSeeking = true; });
+  seekEl.addEventListener('input', () => {
+    isSeeking = true;
+    const win = playableWindow();
+    if (win.length <= 0) return;
+    const pos = (Number(seekEl.value) / 1000) * win.length;
+    timeCurrentEl.textContent = formatSeconds(pos);
+    timeRemainingEl.textContent = '-' + formatSeconds(win.length - pos);
+  });
+  seekEl.addEventListener('change', () => {
+    const win = playableWindow();
+    if (win.length > 0) {
+      audio.currentTime = win.start + (Number(seekEl.value) / 1000) * win.length;
+      activeEpisodeEnded = false;
+    }
+    isSeeking = false;
+    updateTransportUI();
+  });
+}
+
+// --- Folgen-Navigation ---------------------------------------------------
+// delta = +1 -> eine Folge älter, -1 -> eine Folge neuer.
+function goToEpisode(delta) {
+  if (!activeCard || !activeEpisode || !activeCard.episodes) return;
+  const idx = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
+  if (idx === -1) return;
+  const target = idx + delta;
+  if (target < 0 || target >= activeCard.episodes.length) return;
+
+  const podcastName = activeEpisode.podcastName;
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, podcastName);
+  pState.currentIndex = target;
+  saveAllState(allState);
+  renderCard(activeCard, podcastName, target);
+  playEpisode(activeCard, podcastName, target);
+}
+
+function updateEpisodeNavButtons() {
+  if (!prevEpisodeBtn || !nextEpisodeBtn) return;
+  let idx = -1;
+  let total = 0;
+  if (activeCard && activeEpisode && activeCard.episodes) {
+    idx = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
+    total = activeCard.episodes.length;
+  }
+  prevEpisodeBtn.disabled = idx === -1 || idx + 1 >= total;
+  nextEpisodeBtn.disabled = idx <= 0;
+}
+
+if (prevEpisodeBtn) prevEpisodeBtn.addEventListener('click', () => goToEpisode(1));
+if (nextEpisodeBtn) nextEpisodeBtn.addEventListener('click', () => goToEpisode(-1));
+
+// --- Abspielgeschwindigkeit (wird gemerkt) -------------------------------
+const SPEED_KEY = 'podcastSpeed_v1';
+const SPEEDS = [1, 1.1, 1.25, 1.5, 1.75, 2];
+
+function loadSpeed() {
+  const stored = parseFloat(localStorage.getItem(SPEED_KEY) || '1');
+  return SPEEDS.indexOf(stored) === -1 ? 1 : stored;
+}
+
+let playbackSpeed = loadSpeed();
+
+// Label fürs Knopf-Beschriften: 1 -> "1,0×", 1.25 -> "1,25×"
+function speedLabel(rate) {
+  const text = Number.isInteger(rate) ? rate.toFixed(1) : String(rate);
+  return text.replace('.', ',') + '×';
+}
+
+function applyPlaybackRate() {
+  audio.playbackRate = playbackSpeed;
+  if (speedBtn) speedBtn.textContent = speedLabel(playbackSpeed);
+}
+
+if (speedBtn) {
+  speedBtn.addEventListener('click', () => {
+    const next = SPEEDS[(SPEEDS.indexOf(playbackSpeed) + 1) % SPEEDS.length];
+    playbackSpeed = next;
+    try { localStorage.setItem(SPEED_KEY, String(next)); } catch (e) {}
+    applyPlaybackRate();
+  });
+}
 
 /* ============================================================
    ABSPIEL-MODI: zwei Buttons, die beim Folgenende automatisch
@@ -1029,6 +1504,9 @@ function handleEpisodeEnd() {
   if (autoplayMode === 'round-robin') {
     advanceRoundRobin();
   }
+
+  updateEpisodeNavButtons();
+  updateTransportUI();
 }
 
 audio.addEventListener('ended', handleEpisodeEnd);
@@ -1063,40 +1541,32 @@ if ('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('seekbackward', () => skip(-5));
   navigator.mediaSession.setActionHandler('seekforward', () => skip(10));
 
-  navigator.mediaSession.setActionHandler('previoustrack', () => {
-    if (!activeCard || !activeEpisode) return;
-    const idx = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
-    const olderIndex = idx + 1;
-    if (idx === -1 || olderIndex >= activeCard.episodes.length) return;
-    const podcastName = activeEpisode.podcastName;
-    const allState = loadAllState();
-    const pState = getPodcastState(allState, podcastName);
-    pState.currentIndex = olderIndex;
-    saveAllState(allState);
-    renderCard(activeCard, podcastName, olderIndex);
-    playEpisode(activeCard, podcastName, olderIndex);
-  });
+  navigator.mediaSession.setActionHandler('previoustrack', () => goToEpisode(1));  // älter
+  navigator.mediaSession.setActionHandler('nexttrack', () => goToEpisode(-1));     // neuer
 
-  navigator.mediaSession.setActionHandler('nexttrack', () => {
-    if (!activeCard || !activeEpisode) return;
-    const idx = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
-    const newerIndex = idx - 1;
-    if (idx === -1 || newerIndex < 0) return;
-    const podcastName = activeEpisode.podcastName;
-    const allState = loadAllState();
-    const pState = getPodcastState(allState, podcastName);
-    pState.currentIndex = newerIndex;
-    saveAllState(allState);
-    renderCard(activeCard, podcastName, newerIndex);
-    playEpisode(activeCard, podcastName, newerIndex);
-  });
+  // Scrubben vom Lockscreen/Autoradio aus - die Position kommt relativ zum
+  // hörbaren Bereich (ohne Werbung), muss also umgerechnet werden.
+  if ('setActionHandler' in navigator.mediaSession) {
+    try {
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (typeof details.seekTime !== 'number') return;
+        const win = playableWindow();
+        audio.currentTime = Math.min(win.end, win.start + details.seekTime);
+        activeEpisodeEnded = false;
+        updateTransportUI();
+      });
+    } catch (e) { /* vom Browser nicht unterstützt */ }
+  }
 }
 
 audio.addEventListener('play', () => {
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  applyPlaybackRate(); // manche Browser setzen die Rate beim Laden zurück
+  updatePlayPauseIcon();
 });
 audio.addEventListener('pause', () => {
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+  updatePlayPauseIcon();
 });
 
 /* ============================================================
@@ -1130,7 +1600,10 @@ requestWakeLock();
    ============================================================ */
 
 function syncMainPadding() {
-  mainEl.style.paddingBottom = (playerBar.offsetHeight + 24) + 'px';
+  // Solange noch nichts abgespielt wurde, ist die Leiste unsichtbar - dann
+  // braucht es auch keinen Platz dafür.
+  const reserved = playerBar.classList.contains('visible') ? playerBar.offsetHeight + 24 : 24;
+  mainEl.style.paddingBottom = reserved + 'px';
 }
 
 if ('ResizeObserver' in window) {
@@ -1139,6 +1612,31 @@ if ('ResizeObserver' in window) {
   window.addEventListener('resize', syncMainPadding);
 }
 syncMainPadding();
+
+/* ============================================================
+   PLAYER-LEISTE BEIM SCROLLEN AUSBLENDEN
+   Scrollt man nach oben (um einen anderen Podcast auszuwählen),
+   fährt die Leiste nach unten weg und gibt die Kacheln frei.
+   Scrollt man wieder nach unten - oder startet eine Folge -,
+   kommt sie zurück. Die Wiedergabe läuft davon unberührt weiter.
+   ============================================================ */
+
+const SCROLL_HIDE_THRESHOLD_PX = 12; // Zittern beim Halten ignorieren
+let lastScrollY = window.scrollY;
+
+window.addEventListener('scroll', () => {
+  const y = Math.max(0, window.scrollY);
+  const delta = y - lastScrollY;
+  if (Math.abs(delta) < SCROLL_HIDE_THRESHOLD_PX) return;
+  lastScrollY = y;
+
+  const atBottom = (window.innerHeight + y) >= (document.documentElement.scrollHeight - 8);
+  if (delta < 0 && !atBottom) {
+    playerBar.classList.add('scrolled-away');   // nach oben -> Leiste weg
+  } else {
+    playerBar.classList.remove('scrolled-away'); // nach unten -> Leiste zurück
+  }
+}, { passive: true });
 
 /* ============================================================
    PWA: Service Worker registrieren (für "Zum Startbildschirm
@@ -1155,6 +1653,9 @@ if ('serviceWorker' in navigator) {
 
 /* Init */
 renderTodayHeader();
+applyPlaybackRate();
+updatePlayPauseIcon();
+updateEpisodeNavButtons();
 getOrderedPodcasts().forEach(podcast => {
   const card = createCard(podcast);
   loadPodcast(podcast, card);
