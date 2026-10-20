@@ -10,17 +10,18 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root {
-    --bg: #101214;
-    --bg-elevated: #1a1d21;
-    --border: #2a2e33;
-    --text: #e8e6e1;
-    --text-dim: #8b9096;
-    --accent: #ff7a45;
-    --accent-dim: #7a3d24;
-    /* Eigener, deutlich hellerer Ton für die Player-Leiste, damit sie
-       sich klar von Seite (--bg) und Kacheln (--bg-elevated) abhebt. */
-    --player-bg: #232a33;
-    --player-border: #3a434e;
+    --bg: #0d0f11;          /* Seitenhintergrund, dunkelster Ton */
+    --bg-elevated: #23282e; /* Kacheln - deutlich heller als die Seite */
+    --border: #434b54;
+    --text: #ffffff;        /* reines Weiss für maximalen Kontrast */
+    --text-dim: #c3cad2;    /* Nebentext: hell genug, um gut lesbar zu sein */
+    --accent: #ff8b5c;
+    --accent-dim: #8a4526;
+    /* Player-Leiste: nochmals deutlich heller, damit sie sich klar von
+       Seite und Kacheln abhebt. */
+    --player-bg: #39434f;
+    --player-border: #6b7889;
+    --player-btn-bg: #151a20; /* dunkle Knöpfe auf hellem Player = hoher Kontrast */
   }
 
   * { box-sizing: border-box; }
@@ -161,7 +162,7 @@
   }
 
   .card-date {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--text-dim);
     margin: 0;
     display: flex;
@@ -180,6 +181,8 @@
   }
 
   .card.loading .card-title { color: var(--text-dim); }
+
+  .card.error { opacity: 0.75; }
 
   /* Player */
   #player-bar {
@@ -232,7 +235,8 @@
   }
 
   #player-podcast {
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--accent);
@@ -243,20 +247,27 @@
      Zurück kommt sie mit einem Tipp auf den laufenden Podcast. */
   .close-btn {
     flex-shrink: 0;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 10px;
-    background: transparent;
-    border: 1px solid var(--player-border);
-    color: var(--text-dim);
-    font-size: 22px;
+    background: var(--player-btn-bg);
+    border: 2px solid var(--text);
+    color: var(--text);
+    font-size: 26px;
+    font-weight: 700;
     line-height: 1;
     cursor: pointer;
     font-family: inherit;
   }
 
+  .close-btn:active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #101214;
+  }
+
   #player-title {
-    font-size: 13px;
+    font-size: 14px;
     margin: 2px 0 0;
     white-space: nowrap;
     overflow: hidden;
@@ -279,8 +290,9 @@
   }
 
   .seek-row .time {
-    font-size: 12px;
-    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
     min-width: 44px;
     text-align: center;
@@ -297,15 +309,15 @@
   }
 
   #seek::-webkit-slider-runnable-track {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--border);
+    height: 8px;
+    border-radius: 4px;
+    background: var(--player-btn-bg);
   }
 
   #seek::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     margin-top: -8px;
     border-radius: 50%;
     background: var(--accent);
@@ -313,9 +325,9 @@
   }
 
   #seek::-moz-range-track {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--border);
+    height: 8px;
+    border-radius: 4px;
+    background: var(--player-btn-bg);
   }
 
   #seek::-moz-range-thumb {
@@ -363,19 +375,20 @@
   .ep-btn {
     flex: 1 1 0;
     min-width: 0;
-    background: var(--bg);
+    background: var(--player-btn-bg);
     border: 1px solid var(--player-border);
     color: var(--text);
     border-radius: 10px;
     padding: 16px 6px;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
     cursor: pointer;
     font-family: inherit;
   }
 
   .ep-btn:disabled {
-    opacity: 0.3;
+    opacity: 0.45;
     cursor: default;
   }
 
@@ -408,15 +421,18 @@
     opacity: 0.4;
   }
 
-  /* Modus-Zeile: etwas kleinere Schrift, damit "Reihum, je 1 Folge"
-     neben dem Tempo-Knopf auf eine Zeile passt. */
+  /* Modus-Zeile: kleinere Schrift und kein Umbruch, damit die Beschriftung
+     neben dem Tempo-Knopf immer auf eine Zeile passt. */
   .mode-controls button {
-    font-size: 14px;
+    font-size: 13px;
     padding: 14px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   #speed {
-    flex: 0 0 64px;
+    flex: 0 0 62px;
   }
 
   .controls {
@@ -430,15 +446,16 @@
   .controls button {
     flex: 1 1 0;
     min-width: 0;
-    background: var(--bg);
+    background: var(--player-btn-bg);
     border: 1px solid var(--player-border);
     color: var(--text);
     border-radius: 10px;
     padding: 16px 4px;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     font-family: inherit;
+    white-space: nowrap;
   }
 
   .controls button:active {
@@ -530,7 +547,7 @@
     </div>
     <div class="controls mode-controls">
       <button id="mode-series" class="mode-btn">Ganze Serie</button>
-      <button id="mode-roundrobin" class="mode-btn">Reihum, je 1 Folge</button>
+      <button id="mode-roundrobin" class="mode-btn">Reihum je 1</button>
       <button id="speed" aria-label="Abspielgeschwindigkeit">1,0&times;</button>
     </div>
   </div>
