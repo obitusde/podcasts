@@ -190,11 +190,15 @@ dem Handy zu klein und lassen sich nicht vergrössern):
   `◀ älter` / `neuer ▶` für die Folgen-Navigation innerhalb desselben Podcasts.
 - Sprung-Zeile: `-10s`, `-5s`, `+5s`, `+10s`, `+30s` - diese Sprünge bleiben
   innerhalb des getrimmten Bereichs.
-- **Tempo-Knopf** (`1,0×` … `2,0×`): schaltet beim Tippen weiter durch 1 / 1,1 /
-  1,25 / 1,5 / 1,75 / 2 und merkt sich die Wahl (`localStorage`).
-- **Automatisches Ausblenden:** Scrollt man nach oben (um einen anderen Podcast
-  auszuwählen), fährt die Leiste nach unten weg; beim Scrollen nach unten oder beim
-  Starten einer Folge kommt sie zurück. Die Wiedergabe läuft dabei weiter.
+- **Tempo-Knopf**: schaltet beim Tippen reihum durch `1,0×` / `1,1×` / `1,2×` und
+  merkt sich die Wahl (`localStorage`). Die Liste steht als `SPEEDS` in `index.html`.
+- **Eigene Hintergrundfarbe** (`--player-bg`, deutlich heller als Seite und Kacheln)
+  plus Schatten nach oben, damit die Leiste klar von der Podcast-Liste absteht.
+- **Ausblenden:** Wischt man nach oben (um einen anderen Podcast auszusuchen), fährt
+  die Leiste weg - und bleibt weg, auch beim Weiterscrollen. Dasselbe macht der
+  `×`-Knopf in der Leiste. Die Wiedergabe läuft in beiden Fällen weiter.
+- **Zurückholen:** Tipp auf die *laufende* Kachel holt nur die Leiste zurück (ohne
+  eine Folge weiterzublättern), Tipp auf eine *andere* Kachel startet diesen Podcast.
 - **Hover nur mit Maus:** Alle Hover-Effekte stehen in einer
   `@media (hover: hover)`-Regel. Ohne das blieb auf dem Handy nach einem Tap ein
   klebender :hover zurück (Knöpfe dauerhaft orange, aktiver Modus-Knopf unlesbar).

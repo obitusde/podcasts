@@ -17,6 +17,10 @@
     --text-dim: #8b9096;
     --accent: #ff7a45;
     --accent-dim: #7a3d24;
+    /* Eigener, deutlich hellerer Ton für die Player-Leiste, damit sie
+       sich klar von Seite (--bg) und Kacheln (--bg-elevated) abhebt. */
+    --player-bg: #232a33;
+    --player-border: #3a434e;
   }
 
   * { box-sizing: border-box; }
@@ -183,9 +187,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--bg-elevated);
-    border-top: 1px solid var(--border);
-    padding: 12px 20px 16px;
+    background: var(--player-bg);
+    border-top: 2px solid var(--player-border);
+    box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.5);
+    padding: 10px 20px 16px;
     transform: translateY(100%);
     transition: transform 0.25s ease;
   }
@@ -232,6 +237,22 @@
     letter-spacing: 0.04em;
     color: var(--accent);
     margin: 0;
+  }
+
+  /* Schliessen-Knopf: blendet die Leiste aus, die Folge läuft weiter.
+     Zurück kommt sie mit einem Tipp auf den laufenden Podcast. */
+  .close-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--player-border);
+    color: var(--text-dim);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: inherit;
   }
 
   #player-title {
@@ -343,7 +364,7 @@
     flex: 1 1 0;
     min-width: 0;
     background: var(--bg);
-    border: 1px solid var(--border);
+    border: 1px solid var(--player-border);
     color: var(--text);
     border-radius: 10px;
     padding: 16px 6px;
@@ -410,7 +431,7 @@
     flex: 1 1 0;
     min-width: 0;
     background: var(--bg);
-    border: 1px solid var(--border);
+    border: 1px solid var(--player-border);
     color: var(--text);
     border-radius: 10px;
     padding: 16px 4px;
@@ -484,6 +505,7 @@
         <p id="player-podcast"></p>
         <p id="player-title"></p>
       </div>
+      <button id="player-close" class="close-btn" aria-label="Player ausblenden" title="Player ausblenden">&times;</button>
     </div>
     <audio id="audio" preload="metadata"></audio>
 
@@ -1079,6 +1101,14 @@ function attachDragHandlers(card, handle) {
 }
 
 function onCardClick(card) {
+  // Ist die Leiste gerade ausgeblendet (weggewischt oder mit × geschlossen)
+  // und man tippt die laufende Kachel an, soll NUR die Leiste zurückkommen -
+  // sonst würde dieser Tipp wie gewohnt eine Folge weiterblättern.
+  if (activeCard === card && isPlayerBarHidden()) {
+    showPlayerBar();
+    return;
+  }
+
   setAutoplayMode(null); // manueller Klick bricht einen laufenden Abspiel-Modus ab
 
   const podcastName = card.dataset.podcastName;
@@ -1156,7 +1186,7 @@ function playEpisode(card, podcastName, index) {
 
   audio.play();
   playerBar.classList.add('visible');
-  playerBar.classList.remove('scrolled-away'); // beim Starten immer zeigen
+  showPlayerBar(); // beim Starten einer Folge immer zeigen
   syncMainPadding();
   updateEpisodeNavButtons();
   updateTransportUI();
@@ -1343,7 +1373,7 @@ if (nextEpisodeBtn) nextEpisodeBtn.addEventListener('click', () => goToEpisode(-
 
 // --- Abspielgeschwindigkeit (wird gemerkt) -------------------------------
 const SPEED_KEY = 'podcastSpeed_v1';
-const SPEEDS = [1, 1.1, 1.25, 1.5, 1.75, 2];
+const SPEEDS = [1, 1.1, 1.2];
 
 function loadSpeed() {
   const stored = parseFloat(localStorage.getItem(SPEED_KEY) || '1');
@@ -1614,29 +1644,48 @@ if ('ResizeObserver' in window) {
 syncMainPadding();
 
 /* ============================================================
-   PLAYER-LEISTE BEIM SCROLLEN AUSBLENDEN
-   Scrollt man nach oben (um einen anderen Podcast auszuwählen),
+   PLAYER-LEISTE AUSBLENDEN
+   Wischt man nach oben (um einen anderen Podcast auszusuchen),
    fährt die Leiste nach unten weg und gibt die Kacheln frei.
-   Scrollt man wieder nach unten - oder startet eine Folge -,
-   kommt sie zurück. Die Wiedergabe läuft davon unberührt weiter.
+   Sie kommt NICHT von selbst zurück - weder beim Weiterscrollen
+   noch beim Runterwischen. Zurück kommt sie nur durch einen Tipp
+   auf eine Kachel: auf die laufende (holt nur die Leiste zurück)
+   oder auf eine andere (startet diesen Podcast).
+   Dasselbe macht der Schliessen-Knopf (×) in der Leiste; die
+   Wiedergabe läuft in beiden Fällen weiter.
    ============================================================ */
 
 const SCROLL_HIDE_THRESHOLD_PX = 12; // Zittern beim Halten ignorieren
 let lastScrollY = window.scrollY;
+
+function hidePlayerBar() {
+  playerBar.classList.add('scrolled-away');
+}
+
+function showPlayerBar() {
+  playerBar.classList.remove('scrolled-away');
+  lastScrollY = Math.max(0, window.scrollY); // sonst gilt der alte Stand als "nach oben"
+}
+
+function isPlayerBarHidden() {
+  return playerBar.classList.contains('scrolled-away');
+}
 
 window.addEventListener('scroll', () => {
   const y = Math.max(0, window.scrollY);
   const delta = y - lastScrollY;
   if (Math.abs(delta) < SCROLL_HIDE_THRESHOLD_PX) return;
   lastScrollY = y;
-
-  const atBottom = (window.innerHeight + y) >= (document.documentElement.scrollHeight - 8);
-  if (delta < 0 && !atBottom) {
-    playerBar.classList.add('scrolled-away');   // nach oben -> Leiste weg
-  } else {
-    playerBar.classList.remove('scrolled-away'); // nach unten -> Leiste zurück
-  }
+  if (delta < 0) hidePlayerBar(); // Wischen nach oben -> Leiste weg
 }, { passive: true });
+
+const playerCloseBtn = document.getElementById('player-close');
+if (playerCloseBtn) {
+  playerCloseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    hidePlayerBar();
+  });
+}
 
 /* ============================================================
    PWA: Service Worker registrieren (für "Zum Startbildschirm
