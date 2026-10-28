@@ -248,6 +248,51 @@ Normalbetrieb lädt der Browser überhaupt kein Cover mehr nach. Die Dauer steht
   ziehen Reihenfolge, Hörfortschritt und Cover beim nächsten Start automatisch auf
   den neuen Namen um, statt verloren zu gehen.
 
+## Werbung überspringen und Themen (automatische Erkennung)
+
+Für ausgewählte Podcasts (aktuell nur das Handelsblatt Morning Briefing, Liste
+`AD_DETECT_PODCASTS` in `Code.gs`) analysiert das Backend die neuesten Folgen:
+
+1. MP3 laden, an den Transkriptions-Endpunkt von OpenRouter schicken
+   (`openai/whisper-large-v3-turbo`, ca. 0,2 Cent für 10 Minuten Audio).
+2. Das Transkript mit Zeitstempeln an ein günstiges Textmodell geben. Das nennt
+   die **Zeilennummern** der Werbeblöcke und der Themen - nicht die Sekunden.
+   Die Sekunden setzt `Code.gs` selbst aus dem Transkript ein.
+3. Ergebnis pro Folge speichern (`episodeAnalysis_v1`, die letzten 20 Folgen)
+   und in `doGet` an die Episoden hängen: `adRanges` und `chapters`.
+
+Der Umweg über die Zeilennummern ist der Kern: Lässt man ein Sprachmodell die
+Audiodatei direkt anhören und nach Sekunden fragen, liegen die Werte weit daneben.
+
+Das läuft am Ende von `refreshDlfAudioCache()` mit - **kein zusätzlicher
+Zeit-Trigger nötig**. Mit `testAdDetection()` lässt sich der Lauf von Hand
+anstossen; das Protokoll zeigt Werbeblöcke, Themen, Modell und Laufzeit.
+
+### Was das Frontend daraus macht
+
+- **Werbung wird übersprungen**, egal wo sie liegt: Landet die Wiedergabe in
+  einem `adRange`, springt der Player ans Ende dieses Blocks. Liegt danach nur
+  noch Werbung, gilt die Folge als zu Ende (wie am Dateiende).
+- **Alle Zeiten rechnen in "Hörzeit ohne Werbung"**: Fortschrittsbalken,
+  verstrichene Zeit, Restzeit, die Sprungknöpfe (`+30s` springt 30 Sekunden
+  *Inhalt* weiter, nicht in einen Werbeblock) und die Meldung ans Betriebssystem.
+  Dafür sorgen `realToPlayable()` / `playableToReal()` in `index.html`.
+- **Themen**: Über dem Fortschrittsbalken stehen nur das laufende und das
+  nächste Thema, dazu der Knopf `Thema ⏭`. Mehr Themen würden zu viel Platz
+  kosten. Gibt es für eine Folge keine Themen, verschwindet die Zeile ganz.
+- **Ohne Analyse** (ältere Folgen, anderer Podcast, Backend noch nicht
+  aktualisiert) greifen die festen Werte aus `PODCAST_TRIM` - sie werden intern
+  in genau dieselben Werbebereiche umgerechnet.
+
+### Einmalige Schritte im Apps Script
+
+1. Script Properties prüfen: `OPENROUTER_API_KEY` muss gesetzt sein (wird schon
+   für die DLF-Dubletten benutzt).
+2. Inhalt von `Code.gs` aus diesem Repo in den Apps-Script-Editor kopieren.
+3. Bereitstellen → Bereitstellungen verwalten → vorhandene Bereitstellung
+   bearbeiten → Version "Neu" → Bereitstellen (so bleibt die `/exec`-URL gleich).
+4. Einmal `testAdDetection()` ausführen und das Protokoll ansehen.
+
 ## Bekannte Einschränkungen
 
 - Manche Podcast-Anbieter (z. B. ARD Audiothek) haben keinen klassischen öffentlichen

@@ -169,6 +169,8 @@ function doGet(e) {
       return jsonResponse({ error: 'Keine Episode mit Audio-Datei gefunden' });
     }
 
+    attachAdMarks(episodes); // erkannte Werbe-Grenzen (falls vorhanden) mitliefern
+
     var result = {
       podcastTitle: channelTitle,
       episodes: episodes
@@ -608,6 +610,15 @@ function refreshDlfAudioCache() {
     });
 
   saveDlfAudioResult({ podcastTitle: 'DLF Audiobeiträge', episodes: episodes, lastUpdated: new Date().toISOString() });
+
+  // Werbe-Erkennung im selben Trigger-Lauf mitnehmen, damit kein zweiter
+  // Zeit-Trigger eingerichtet werden muss. Fehler hier dürfen den
+  // DLF-Teil nicht nachträglich kaputtmachen.
+  try {
+    refreshAdMarks();
+  } catch (err) {
+    Logger.log('Werbe-Erkennung fehlgeschlagen: ' + err);
+  }
 }
 
 // Fragt OpenRouter, welche Beiträge im Pool dasselbe Thema behandeln.
@@ -715,4 +726,404 @@ function loadPropertyChunked(baseKey) {
     parts.push(props.getProperty(baseKey + '_' + i) || '');
   }
   return parts.join('');
+}
+/**
+ * WERBE-ERKENNUNG UND THEMEN-GLIEDERUNG
+ * ------------------------------------------------------------------------
+ * Transkribiert die neuesten Folgen ausgewählter Podcasts und bestimmt
+ * daraus zwei Dinge:
+ *   1. adRanges  - Zeitbereiche mit Werbung (Anfang, Mitte, Ende), die der
+ *                  Player beim Abspielen automatisch überspringt
+ *   2. chapters  - die Themen der Folge mit Startzeit, damit man im Player
+ *                  "Thema überspringen" drücken kann
+ *
+ * Ablauf pro Folge (Kosten < 1 Cent, Dauer ca. 15-30 Sek.):
+ *   MP3 laden -> OpenRouter-Transkription (Whisper, mit Zeitstempeln)
+ *   -> ein kleiner Text-Aufruf an ein günstiges LLM, das die Werbeblöcke
+ *      und Themen MIT ZEILENNUMMERN benennt (nicht mit Sekunden!)
+ *   -> die Sekunden holen wir uns selbst aus dem Transkript.
+ *
+ * Genau daran war der direkte Weg ("Modell hört die MP3 und nennt die
+ * Sekunde") gescheitert: Sprachmodelle schätzen Zeitpunkte im Audio
+ * schlecht. Über die Zeilennummern im Transkript sind die Sekunden exakt.
+ *
+ * Läuft automatisch am Ende von refreshDlfAudioCache() mit, es ist also
+ * KEIN zusätzlicher Zeit-Trigger nötig.
+ */
+
+// Welche Podcasts analysiert werden sollen. Weitere Einträge sind möglich -
+// jede analysierte Folge kostet rund 0,2 Cent.
+var AD_DETECT_PODCASTS = [
+  {
+    name: 'Handelsblatt Morning Briefing',
+    feed: 'https://handelsblatt-morningbriefing.podigee.io/feed/mp3',
+    episodes: 2   // wie viele der neuesten Folgen pro Lauf geprüft werden
+  }
+];
+
+var AD_DETECT_STT_MODEL     = 'openai/whisper-large-v3-turbo'; // ca. $0.000003/Sek. Audio
+var AD_DETECT_STT_FALLBACK  = 'openai/whisper-large-v3';       // falls Turbo keine Zeitstempel liefert
+var AD_DETECT_TEXT_MODEL    = 'google/gemini-3.1-flash-lite';  // findet Werbung/Themen im Transkript
+var AD_DETECT_PROP_KEY      = 'episodeAnalysis_v1';
+var AD_DETECT_KEEP          = 20;   // so viele analysierte Folgen werden aufbewahrt
+var AD_DETECT_MAX_AUDIO_MB  = 30;   // grössere Dateien werden übersprungen
+var AD_DETECT_MIN_CONTENT   = 120;  // Plausibilität: mind. 2 Min. redaktioneller Teil
+var AD_PAD_BEFORE           = 0.3;  // Sekunden Vorlauf, damit kein erstes Wort abgeschnitten wird
+var AD_PAD_AFTER            = 0.4;  // Sekunden Nachlauf am Ende eines Beitrags
+
+/**
+ * Einstiegspunkt: analysiert die neuesten, noch nicht analysierten Folgen.
+ * Wird von refreshDlfAudioCache() mit aufgerufen.
+ */
+function refreshAdMarks() {
+  var store = loadEpisodeAnalysis();
+  var changed = false;
+
+  AD_DETECT_PODCASTS.forEach(function(cfg) {
+    var episodes;
+    try {
+      episodes = fetchEpisodesForAnalysis(cfg.feed);
+    } catch (err) {
+      Logger.log('Feed für Analyse nicht ladbar (' + cfg.name + '): ' + err);
+      return;
+    }
+
+    episodes.slice(0, cfg.episodes || 1).forEach(function(ep) {
+      if (store[ep.guid]) return; // schon analysiert
+      try {
+        var analysis = analyzeEpisode(ep);
+        if (analysis) {
+          store[ep.guid] = analysis;
+          changed = true;
+        }
+      } catch (err) {
+        Logger.log('Analyse fehlgeschlagen (' + ep.title + '): ' + err);
+      }
+    });
+  });
+
+  if (changed) {
+    saveEpisodeAnalysis(pruneAnalysis(store));
+  }
+}
+
+/**
+ * Testlauf von Hand: analysiert die neueste Folge des ersten Eintrags aus
+ * AD_DETECT_PODCASTS neu (auch wenn sie schon analysiert wurde) und
+ * schreibt alles ins Protokoll.
+ *
+ * Im Apps-Script-Editor oben die Funktion "testAdDetection" auswählen und
+ * auf "Ausführen" klicken, danach unten "Ausführungsprotokoll" ansehen.
+ */
+function testAdDetection() {
+  var cfg = AD_DETECT_PODCASTS[0];
+  var started = new Date().getTime();
+  var episodes = fetchEpisodesForAnalysis(cfg.feed);
+
+  if (episodes.length === 0) {
+    Logger.log('Keine Episode im Feed gefunden.');
+    return;
+  }
+
+  var ep = episodes[0];
+  Logger.log('Folge: ' + ep.title);
+  Logger.log('Audio: ' + ep.audioUrl);
+
+  var analysis = analyzeEpisode(ep, true);
+  var seconds = Math.round((new Date().getTime() - started) / 100) / 10;
+
+  if (!analysis) {
+    Logger.log('Keine brauchbare Analyse - der Player benutzt weiter die festen Werte.');
+    return;
+  }
+
+  Logger.log('Dauer des Laufs: ' + seconds + ' Sek.');
+  Logger.log('Modell: ' + analysis.model);
+  Logger.log('--- Werbeblöcke (werden übersprungen) ---');
+  analysis.adRanges.forEach(function(r) {
+    Logger.log('  ' + formatSecondsForLog(r[0]) + ' - ' + formatSecondsForLog(r[1]) +
+      ' (' + Math.round(r[1] - r[0]) + ' Sek.)');
+  });
+  Logger.log('--- Themen ---');
+  analysis.chapters.forEach(function(c) {
+    Logger.log('  ' + formatSecondsForLog(c.start) + '  ' + c.title);
+  });
+
+  // Ergebnis gleich speichern, damit die App es sofort benutzen kann
+  var store = loadEpisodeAnalysis();
+  store[ep.guid] = analysis;
+  saveEpisodeAnalysis(pruneAnalysis(store));
+  Logger.log('Gespeichert. Die App benutzt die Werte beim nächsten Laden (ggf. bis zu 10 Min. Cache).');
+}
+
+function formatSecondsForLog(totalSeconds) {
+  var t = Math.round(totalSeconds);
+  var m = Math.floor(t / 60);
+  var sec = t % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+// Liest einen Feed und gibt die Episoden (neueste zuerst) in der Form
+// zurück, die die Analyse braucht.
+function fetchEpisodesForAnalysis(feedUrl) {
+  var resp = UrlFetchApp.fetch(feedUrl, { muteHttpExceptions: true, followRedirects: true });
+  if (resp.getResponseCode() >= 400) throw new Error('HTTP ' + resp.getResponseCode());
+
+  var channel = XmlService.parse(resp.getContentText()).getRootElement().getChild('channel');
+  if (!channel) throw new Error('Kein <channel> im Feed');
+
+  var itunesNs = XmlService.getNamespace('itunes', 'http://www.itunes.com/dtds/podcast-1.0.dtd');
+  var items = channel.getChildren('item');
+  var out = [];
+
+  for (var i = 0; i < items.length && out.length < 5; i++) {
+    var item = items[i];
+    var enclosure = item.getChild('enclosure');
+    var audioUrl = enclosure && enclosure.getAttribute('url') ? enclosure.getAttribute('url').getValue() : null;
+    if (!audioUrl) continue;
+
+    var guidEl = item.getChild('guid');
+    out.push({
+      guid: guidEl ? guidEl.getText() : audioUrl,
+      title: getText(item, 'title'),
+      audioUrl: audioUrl,
+      durationSeconds: parseDurationToSeconds(getItunesText(item, itunesNs, 'duration'))
+    });
+  }
+  return out;
+}
+
+/**
+ * Analysiert eine einzelne Folge. Gibt null zurück, wenn das Ergebnis
+ * unplausibel ist - dann bleibt es bei den festen Werten im Frontend.
+ */
+function analyzeEpisode(ep, verbose) {
+  var audioResp = UrlFetchApp.fetch(ep.audioUrl, { muteHttpExceptions: true, followRedirects: true });
+  if (audioResp.getResponseCode() >= 400) throw new Error('Audio HTTP ' + audioResp.getResponseCode());
+
+  var blob = audioResp.getBlob();
+  var sizeMb = blob.getBytes().length / (1024 * 1024);
+  if (verbose) Logger.log('Audio geladen: ' + Math.round(sizeMb * 10) / 10 + ' MB');
+  if (sizeMb > AD_DETECT_MAX_AUDIO_MB) throw new Error('Audio zu gross: ' + Math.round(sizeMb) + ' MB');
+
+  var segments = transcribeWithOpenRouter(blob, AD_DETECT_STT_MODEL, verbose);
+  var usedModel = AD_DETECT_STT_MODEL;
+
+  if (segments.length === 0) {
+    if (verbose) Logger.log('Keine Zeitstempel vom Turbo-Modell - versuche ' + AD_DETECT_STT_FALLBACK);
+    segments = transcribeWithOpenRouter(blob, AD_DETECT_STT_FALLBACK, verbose);
+    usedModel = AD_DETECT_STT_FALLBACK;
+  }
+  if (segments.length === 0) throw new Error('Transkription ohne Zeitstempel');
+
+  var duration = ep.durationSeconds || segments[segments.length - 1].end;
+  var found = findAdsAndChapters(segments, verbose);
+
+  var adRanges = normalizeRangeList(found.ads, duration);
+  var chapters = found.chapters;
+
+  // Plausibilitätsprüfung: bleibt genug redaktioneller Inhalt übrig?
+  var adSeconds = 0;
+  adRanges.forEach(function(r) { adSeconds += (r[1] - r[0]); });
+  if (duration - adSeconds < AD_DETECT_MIN_CONTENT) {
+    Logger.log('Analyse verworfen: nur ' + Math.round(duration - adSeconds) + ' Sek. Inhalt übrig');
+    return null;
+  }
+
+  return {
+    adRanges: adRanges,
+    chapters: chapters,
+    durationSeconds: Math.round(duration),
+    model: usedModel,
+    detectedAt: new Date().toISOString()
+  };
+}
+
+/**
+ * Schickt die Audiodatei an den Transkriptions-Endpunkt von OpenRouter
+ * und gibt die Abschnitte mit Zeitstempeln zurück.
+ */
+function transcribeWithOpenRouter(blob, model, verbose) {
+  var apiKey = getOpenRouterKey();
+  var payload = {
+    model: model,
+    input_audio: {
+      data: Utilities.base64Encode(blob.getBytes()),
+      format: 'mp3'
+    },
+    response_format: 'verbose_json',
+    timestamp_granularities: ['segment']
+  };
+
+  var resp = UrlFetchApp.fetch('https://openrouter.ai/api/v1/audio/transcriptions', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + apiKey },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+
+  if (resp.getResponseCode() >= 400) {
+    throw new Error('OpenRouter (Transkription) HTTP ' + resp.getResponseCode() + ': ' +
+      resp.getContentText().substring(0, 300));
+  }
+
+  var data = JSON.parse(resp.getContentText());
+  var raw = data.segments ||
+            (data.verbose_json && data.verbose_json.segments) ||
+            (data.transcription && data.transcription.segments) || [];
+
+  var segments = [];
+  raw.forEach(function(seg) {
+    var start = typeof seg.start === 'number' ? seg.start : parseFloat(seg.start);
+    var end = typeof seg.end === 'number' ? seg.end : parseFloat(seg.end);
+    var text = (seg.text || '').trim();
+    if (isNaN(start) || !text) return;
+    segments.push({ start: start, end: isNaN(end) ? start : end, text: text });
+  });
+
+  if (verbose) Logger.log('Transkript: ' + segments.length + ' Abschnitte (' + model + ')');
+  return segments;
+}
+
+/**
+ * Lässt ein günstiges Textmodell im Transkript die Werbeblöcke und die
+ * Themen benennen - und zwar über ZEILENNUMMERN. Die Sekunden setzen wir
+ * anschliessend selbst aus dem Transkript ein, damit sie exakt sind.
+ */
+function findAdsAndChapters(segments, verbose) {
+  var apiKey = getOpenRouterKey();
+
+  var lines = segments.map(function(seg, idx) {
+    return '[' + idx + '] ' + Math.round(seg.start) + 's: ' + seg.text;
+  }).join('\n');
+
+  var prompt =
+    'Das ist das Transkript einer deutschen Podcast-Folge (Wirtschafts-Briefing). ' +
+    'Jede Zeile hat die Form "[Nummer] Sekunde: Text".\n\n' +
+    'Aufgabe 1 - Werbung: Finde ALLE Werbeblöcke: Sponsorenhinweise ("präsentiert von", ' +
+    '"unterstützt von", "Werbung"), beworbene Produkte/Firmen, Eigenwerbung, Abo- und ' +
+    'Newsletter-Hinweise, Podcast-Empfehlungen. Werbung kann am Anfang, mitten in der ' +
+    'Folge und am Ende stehen. Intro-Jingle und Begrüssung des Moderators zählen NICHT ' +
+    'als Werbung, ebenso wenig normale journalistische Berichte über Firmen.\n\n' +
+    'Aufgabe 2 - Themen: Gliedere den redaktionellen Teil in 3 bis 10 Themen. Gib für ' +
+    'jedes Thema die Zeilennummer an, bei der es beginnt, und einen kurzen deutschen ' +
+    'Titel (höchstens 40 Zeichen, keine Anführungszeichen).\n\n' +
+    'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:\n' +
+    '{"ads":[{"von":0,"bis":4}],"themen":[{"zeile":5,"titel":"Zollstreit mit China"}]}\n\n' +
+    'Transkript:\n' + lines;
+
+  var resp = UrlFetchApp.fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + apiKey },
+    payload: JSON.stringify({
+      model: AD_DETECT_TEXT_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0
+    }),
+    muteHttpExceptions: true
+  });
+
+  if (resp.getResponseCode() >= 400) {
+    throw new Error('OpenRouter (Analyse) HTTP ' + resp.getResponseCode() + ': ' +
+      resp.getContentText().substring(0, 300));
+  }
+
+  var data = JSON.parse(resp.getContentText());
+  var text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!text) throw new Error('Keine Antwort vom Analyse-Modell');
+
+  var parsed = JSON.parse(text.replace(/```json/gi, '').replace(/```/g, '').trim());
+  if (verbose) Logger.log('Antwort des Analyse-Modells: ' + JSON.stringify(parsed));
+
+  var ads = [];
+  (parsed.ads || []).forEach(function(a) {
+    var from = segments[a.von];
+    var to = segments[a.bis !== undefined ? a.bis : a.von];
+    if (!from || !to) return;
+    // Werbeblock minimal weiter fassen, damit kein Werbesatz durchrutscht
+    ads.push([Math.max(0, from.start - AD_PAD_BEFORE), to.end + AD_PAD_AFTER]);
+  });
+
+  var chapters = [];
+  (parsed.themen || []).forEach(function(c) {
+    var seg = segments[c.zeile];
+    if (!seg || !c.titel) return;
+    chapters.push({ start: Math.max(0, seg.start - AD_PAD_BEFORE), title: String(c.titel).substring(0, 60) });
+  });
+  chapters.sort(function(a, b) { return a.start - b.start; });
+
+  return { ads: ads, chapters: chapters };
+}
+
+// Bereiche sortieren, auf [0, Dauer] begrenzen und Überlappendes zusammenfassen.
+function normalizeRangeList(ranges, duration) {
+  var cleaned = [];
+  (ranges || []).forEach(function(r) {
+    var start = Math.max(0, Math.min(r[0], duration));
+    var end = Math.max(0, Math.min(r[1], duration));
+    if (end - start > 1) cleaned.push([start, end]);
+  });
+  cleaned.sort(function(a, b) { return a[0] - b[0]; });
+
+  var merged = [];
+  cleaned.forEach(function(r) {
+    var last = merged[merged.length - 1];
+    if (last && r[0] <= last[1] + 1) {
+      last[1] = Math.max(last[1], r[1]);
+    } else {
+      merged.push([r[0], r[1]]);
+    }
+  });
+  return merged.map(function(r) { return [Math.round(r[0] * 10) / 10, Math.round(r[1] * 10) / 10]; });
+}
+
+function getOpenRouterKey() {
+  var props = PropertiesService.getScriptProperties();
+  var apiKey = props.getProperty('OPENROUTER_API_KEY') || props.getProperty('OPENROUTER_KEY');
+  if (!apiKey) throw new Error('Kein OpenRouter API-Key in den Script Properties (OPENROUTER_API_KEY)');
+  return apiKey;
+}
+
+// Hängt gespeicherte Analysen an die Episoden eines Feeds an (doGet).
+function attachAdMarks(episodes) {
+  var store;
+  try {
+    store = loadEpisodeAnalysis();
+  } catch (err) {
+    return;
+  }
+  episodes.forEach(function(ep) {
+    var analysis = store[ep.guid];
+    if (!analysis) return;
+    ep.adRanges = analysis.adRanges;
+    ep.chapters = analysis.chapters;
+  });
+}
+
+function loadEpisodeAnalysis() {
+  var stored = loadPropertyChunked(AD_DETECT_PROP_KEY);
+  if (!stored) return {};
+  try {
+    return JSON.parse(stored) || {};
+  } catch (err) {
+    return {};
+  }
+}
+
+function saveEpisodeAnalysis(store) {
+  savePropertyChunked(AD_DETECT_PROP_KEY, JSON.stringify(store));
+}
+
+// Nur die zuletzt analysierten Folgen behalten (Speicherplatz begrenzt).
+function pruneAnalysis(store) {
+  var keys = Object.keys(store);
+  if (keys.length <= AD_DETECT_KEEP) return store;
+  keys.sort(function(a, b) {
+    return (store[b].detectedAt || '').localeCompare(store[a].detectedAt || '');
+  });
+  var kept = {};
+  keys.slice(0, AD_DETECT_KEEP).forEach(function(k) { kept[k] = store[k]; });
+  return kept;
 }

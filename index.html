@@ -292,6 +292,59 @@
     display: none;
   }
 
+  /* Themen-Zeile */
+  .chapter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .chapter-row[hidden] {
+    display: none;
+  }
+
+  .chapter-texts {
+    min-width: 0;
+    flex: 1;
+  }
+
+  #chapter-now {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #chapter-next {
+    margin: 1px 0 0;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chapter-btn {
+    flex-shrink: 0;
+    background: var(--player-btn-bg);
+    border: 1px solid var(--player-border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 12px 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+
+  .chapter-btn:active {
+    background: var(--accent-dim);
+  }
+
   /* Fortschrittsbalken mit Zeitangaben */
   .seek-row {
     display: flex;
@@ -537,6 +590,17 @@
     </div>
     <audio id="audio" preload="metadata"></audio>
 
+    <!-- Themen der Folge: nur das laufende und das nächste, mehr würde
+         zu viel Platz kosten. Wird ausgeblendet, wenn das Backend für die
+         Folge keine Themen erkannt hat. -->
+    <div id="chapter-row" class="chapter-row" hidden>
+      <div class="chapter-texts">
+        <p id="chapter-now"></p>
+        <p id="chapter-next"></p>
+      </div>
+      <button id="skip-chapter" class="chapter-btn" aria-label="Thema überspringen">Thema&nbsp;&#9197;</button>
+    </div>
+
     <div class="seek-row">
       <span id="time-current" class="time">0:00</span>
       <input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Position in der Folge">
@@ -642,20 +706,111 @@ function getTrim(podcastName) {
   return PODCAST_TRIM[podcastName] || null;
 }
 
-// Erste abzuspielende Sekunde (0, wenn für den Podcast nichts getrimmt wird).
-function getTrimStart(podcastName) {
+/* ------------------------------------------------------------------
+   WERBEBEREICHE DER LAUFENDEN FOLGE
+   Das Backend (Code.gs) erkennt pro Folge die Werbeblöcke - vorne,
+   mitten drin und hinten - und liefert sie als Liste [[von, bis], ...]
+   mit. Gibt es für eine Folge keine Analyse, werden die festen Werte
+   aus PODCAST_TRIM oben in genau dieselbe Form gebracht. Von da an
+   kennt der Player nur noch "Werbebereiche", die er überspringt.
+   ------------------------------------------------------------------ */
+
+let activeAdRanges = [];  // [[von, bis], ...] der laufenden Folge
+let activeChapters = [];  // [{start, title}, ...] der laufenden Folge
+
+// Baut die Werbebereiche einer Folge: erkannte Bereiche bevorzugt,
+// sonst die festen Werte aus PODCAST_TRIM.
+function buildAdRanges(podcastName, episode) {
+  if (episode && Array.isArray(episode.adRanges) && episode.adRanges.length > 0) {
+    return episode.adRanges
+      .map((r) => [Number(r[0]), Number(r[1])])
+      .filter((r) => isFinite(r[0]) && isFinite(r[1]) && r[1] > r[0])
+      .sort((a, b) => a[0] - b[0]);
+  }
+
   const trim = getTrim(podcastName);
-  return trim && trim.startSeconds ? trim.startSeconds : 0;
+  if (!trim) return [];
+  const ranges = [];
+  if (trim.startSeconds) ranges.push([0, trim.startSeconds]);
+  if (trim.endSeconds) ranges.push([trim.endSeconds, Number.MAX_SAFE_INTEGER]);
+  return ranges;
 }
 
-// Letzte abzuspielende Sekunde: der konfigurierte Wert, aber nie über die
-// tatsächliche Dateilänge hinaus. Ohne Trim kommt die Dateilänge zurück
-// (bzw. Infinity, solange die Länge noch nicht bekannt ist).
-function getTrimEnd(podcastName) {
-  const trim = getTrim(podcastName);
-  const duration = audio && audio.duration && isFinite(audio.duration) ? audio.duration : Infinity;
-  if (!trim || !trim.endSeconds) return duration;
-  return Math.min(trim.endSeconds, duration);
+function audioDuration() {
+  return audio.duration && isFinite(audio.duration) ? audio.duration : Infinity;
+}
+
+// Werbebereiche, auf die tatsächliche Dateilänge begrenzt.
+function adRanges() {
+  const duration = audioDuration();
+  if (!isFinite(duration)) return activeAdRanges;
+  return activeAdRanges
+    .map((r) => [Math.max(0, Math.min(r[0], duration)), Math.max(0, Math.min(r[1], duration))])
+    .filter((r) => r[1] > r[0]);
+}
+
+// Liegt dieser Zeitpunkt in einem Werbeblock? Dann den Bereich liefern.
+function adRangeAt(time) {
+  const ranges = adRanges();
+  for (let i = 0; i < ranges.length; i++) {
+    if (time >= ranges[i][0] - 0.05 && time < ranges[i][1]) return ranges[i];
+  }
+  return null;
+}
+
+// Die hörbaren Stücke zwischen den Werbeblöcken.
+function playableSegments() {
+  const duration = audioDuration();
+  if (!isFinite(duration)) return [];
+  const segments = [];
+  let cursor = 0;
+  adRanges().forEach((r) => {
+    if (r[0] > cursor) segments.push([cursor, r[0]]);
+    cursor = Math.max(cursor, r[1]);
+  });
+  if (cursor < duration) segments.push([cursor, duration]);
+  return segments.filter((seg) => seg[1] - seg[0] > 0.2);
+}
+
+function contentStart() {
+  const segments = playableSegments();
+  return segments.length > 0 ? segments[0][0] : 0;
+}
+
+function contentEnd() {
+  const segments = playableSegments();
+  return segments.length > 0 ? segments[segments.length - 1][1] : audioDuration();
+}
+
+// Gesamtlänge ohne Werbung - das ist die Länge, die im Player steht.
+function playableLength() {
+  return playableSegments().reduce((sum, seg) => sum + (seg[1] - seg[0]), 0);
+}
+
+// Echte Position in der Datei -> Position ohne Werbung (für Anzeige/Balken).
+function realToPlayable(time) {
+  let sum = 0;
+  const segments = playableSegments();
+  for (let i = 0; i < segments.length; i++) {
+    const [from, to] = segments[i];
+    if (time < from) return sum;
+    if (time <= to) return sum + (time - from);
+    sum += to - from;
+  }
+  return sum;
+}
+
+// Umgekehrter Weg: Position ohne Werbung -> echte Position in der Datei.
+function playableToReal(position) {
+  let remaining = Math.max(0, position);
+  const segments = playableSegments();
+  for (let i = 0; i < segments.length; i++) {
+    const [from, to] = segments[i];
+    const length = to - from;
+    if (remaining <= length) return from + remaining;
+    remaining -= length;
+  }
+  return segments.length > 0 ? segments[segments.length - 1][1] : 0;
 }
 
 // --- Titel aufräumen ----------------------------------------------------
@@ -857,6 +1012,10 @@ const timeCurrentEl = document.getElementById('time-current');
 const timeRemainingEl = document.getElementById('time-remaining');
 const speedBtn = document.getElementById('speed');
 const refreshBtn = document.getElementById('refresh');
+const chapterRow = document.getElementById('chapter-row');
+const chapterNowEl = document.getElementById('chapter-now');
+const chapterNextEl = document.getElementById('chapter-next');
+const skipChapterBtn = document.getElementById('skip-chapter');
 
 let activeCard = null;       // Karte, die zuletzt geklickt/fokussiert wurde
 let activeEpisode = null;    // { podcastName, guid } der aktuell geladenen Episode
@@ -1078,6 +1237,11 @@ function renderCard(card, podcastName, index, options) {
 // nächstältere angezeigt werden soll, bevor sie angeklickt wird.
 function updatePlayerPreview(card, podcastName, index) {
   const episode = card.episodes[index];
+  // Themen/Werbebereiche gleich auf die angezeigte Folge umstellen, sonst
+  // stünde noch das Thema der gerade beendeten Folge in der Leiste.
+  activeAdRanges = buildAdRanges(podcastName, episode);
+  activeChapters = Array.isArray(episode.chapters) ? episode.chapters.slice() : [];
+  updateChapterUI();
   const coverUrl = getPodcastImage(podcastName, episode.imageUrl);
   setImageSrc(playerImg, coverUrl);
   playerPodcast.textContent = podcastName;
@@ -1276,20 +1440,26 @@ function playEpisode(card, podcastName, index) {
   audio.src = episode.audioUrl;
   activeEpisode = { podcastName, guid: episode.guid };
   activeEpisodeEnded = false;
+  activeAdRanges = buildAdRanges(podcastName, episode);
+  activeChapters = Array.isArray(episode.chapters) ? episode.chapters.slice() : [];
   applyPlaybackRate();
 
   setMediaMetadata(podcastName, episode, coverUrl);
 
   const savedProgress = pState.progress[episode.guid];
-  const trimStart = getTrimStart(podcastName);
   const resume = () => {
-    // Gespeicherte Position nur übernehmen, wenn sie innerhalb des
-    // getrimmten Bereichs liegt - sonst am Trim-Start beginnen.
-    const trimEnd = getTrimEnd(podcastName);
-    const useSaved = savedProgress && savedProgress > trimStart + 5 && savedProgress < trimEnd - 15;
-    const startAt = useSaved ? savedProgress : trimStart;
+    // Gespeicherte Position nur übernehmen, wenn sie im hörbaren Bereich
+    // liegt und nicht praktisch am Ende - sonst beim Inhalt anfangen.
+    const start = contentStart();
+    const end = contentEnd();
+    const useSaved = savedProgress &&
+      savedProgress > start + 5 &&
+      savedProgress < end - 15 &&
+      !adRangeAt(savedProgress);
+    const startAt = useSaved ? savedProgress : start;
     if (startAt > 0) audio.currentTime = startAt;
     audio.removeEventListener('loadedmetadata', resume);
+    updateTransportUI();
   };
   audio.addEventListener('loadedmetadata', resume);
 
@@ -1311,25 +1481,39 @@ function persistProgress() {
   const pState = getPodcastState(allState, activeEpisode.podcastName);
   pState.progress[activeEpisode.guid] = audio.currentTime;
 
-  // "Gehört" bezieht sich auf den getrimmten Bereich, nicht auf die ganze
-  // Datei - sonst würde eine Folge mit Werbung am Schluss nie 95% erreichen.
-  const trimStart = getTrimStart(activeEpisode.podcastName);
-  const trimEnd = getTrimEnd(activeEpisode.podcastName);
-  if (trimEnd > trimStart && (audio.currentTime - trimStart) / (trimEnd - trimStart) > 0.95) {
+  // "Gehört" bezieht sich auf den hörbaren Teil ohne Werbung - sonst würde
+  // eine Folge mit Werbung am Schluss nie 95% erreichen.
+  const total = playableLength();
+  if (total > 0 && realToPlayable(audio.currentTime) / total > 0.95) {
     pState.listened[activeEpisode.guid] = true;
   }
   saveAllState(allState);
 }
 
 audio.addEventListener('timeupdate', () => {
-  // Werbung am Schluss: beim Erreichen des Trim-Endes so behandeln, als
-  // wäre die Folge regulär zu Ende gelaufen.
-  if (activeEpisode && !activeEpisodeEnded &&
-      audio.currentTime >= getTrimEnd(activeEpisode.podcastName)) {
-    audio.pause();
-    persistProgress();
-    handleEpisodeEnd();
-    return;
+  if (activeEpisode && !activeEpisodeEnded) {
+    // Mitten in einem Werbeblock gelandet (am Anfang, zwischendrin oder am
+    // Schluss)? Dann sofort ans Ende dieses Blocks springen.
+    const ad = adRangeAt(audio.currentTime);
+    if (ad) {
+      if (ad[1] >= contentEnd() - 0.2) {
+        // Nach diesem Block kommt nur noch Werbung -> Folge ist zu Ende.
+        audio.pause();
+        persistProgress();
+        handleEpisodeEnd();
+        return;
+      }
+      audio.currentTime = ad[1] + 0.05;
+      updateTransportUI();
+      return;
+    }
+
+    if (audio.currentTime >= contentEnd() - 0.05) {
+      audio.pause();
+      persistProgress();
+      handleEpisodeEnd();
+      return;
+    }
   }
   updateTransportUI();
   clearTimeout(saveProgressTimer);
@@ -1362,13 +1546,9 @@ function formatSeconds(totalSeconds) {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-// Hörbares Fenster der aktuellen Folge (ohne weggeschnittene Werbung).
+// Fortschrittsbalken und Zeiten rechnen in "Hörzeit ohne Werbung".
 function playableWindow() {
-  const name = activeEpisode ? activeEpisode.podcastName : null;
-  const start = name ? getTrimStart(name) : 0;
-  let end = name ? getTrimEnd(name) : (audio.duration || 0);
-  if (!isFinite(end)) end = audio.duration && isFinite(audio.duration) ? audio.duration : 0;
-  return { start, end, length: Math.max(0, end - start) };
+  return { start: contentStart(), end: contentEnd(), length: playableLength() };
 }
 
 function updatePlayPauseIcon() {
@@ -1390,13 +1570,15 @@ function updateTransportUI() {
     return;
   }
 
-  const pos = Math.min(Math.max(audio.currentTime - win.start, 0), win.length);
+  const pos = Math.min(Math.max(realToPlayable(audio.currentTime), 0), win.length);
   if (!isSeeking) seekEl.value = String(Math.round((pos / win.length) * 1000));
   timeCurrentEl.textContent = formatSeconds(pos);
   timeRemainingEl.textContent = '-' + formatSeconds(win.length - pos);
 
   // Position auch ans Betriebssystem melden - Lockscreen und viele
   // Autoradios zeigen damit einen korrekten Fortschritt an.
+  updateChapterUI();
+
   if ('mediaSession' in navigator && navigator.mediaSession.setPositionState) {
     try {
       navigator.mediaSession.setPositionState({
@@ -1411,11 +1593,10 @@ function updateTransportUI() {
 function togglePlayPause() {
   if (!audio.src) return;
   if (audio.paused) {
-    // Nach dem Trim-Ende erneut auf Play: wieder am Anfang des hörbaren
-    // Bereichs starten statt sofort wieder zu stoppen.
-    const win = playableWindow();
-    if (win.length > 0 && audio.currentTime >= win.end - 0.5) {
-      audio.currentTime = win.start;
+    // Am Ende des Inhalts erneut auf Play: wieder vorne anfangen statt
+    // sofort wieder zu stoppen.
+    if (playableLength() > 0 && audio.currentTime >= contentEnd() - 0.5) {
+      audio.currentTime = contentStart();
       activeEpisodeEnded = false;
     }
     audio.play();
@@ -1439,13 +1620,79 @@ if (seekEl) {
   seekEl.addEventListener('change', () => {
     const win = playableWindow();
     if (win.length > 0) {
-      audio.currentTime = win.start + (Number(seekEl.value) / 1000) * win.length;
+      // Der Balken kennt nur Hörzeit ohne Werbung - zurückrechnen.
+      audio.currentTime = playableToReal((Number(seekEl.value) / 1000) * win.length);
       activeEpisodeEnded = false;
     }
     isSeeking = false;
     updateTransportUI();
   });
 }
+
+/* ------------------------------------------------------------------
+   THEMEN (KAPITEL)
+   Das Backend gliedert die Folge in Themen. Angezeigt werden bewusst
+   nur zwei: das laufende und das nächste. "Thema ⏭" springt zum
+   Anfang des nächsten Themas; liegt dazwischen Werbung, überspringt
+   der Player sie wie gewohnt automatisch.
+   ------------------------------------------------------------------ */
+
+// Index des Themas, das gerade läuft (-1, wenn es keine Themen gibt).
+function currentChapterIndex() {
+  if (activeChapters.length === 0) return -1;
+  let idx = 0;
+  for (let i = 0; i < activeChapters.length; i++) {
+    if (audio.currentTime + 0.25 >= activeChapters[i].start) idx = i;
+  }
+  return idx;
+}
+
+function updateChapterUI() {
+  if (!chapterRow) return;
+
+  if (activeChapters.length === 0) {
+    chapterNowEl.textContent = '';
+    chapterNextEl.textContent = '';
+    if (!chapterRow.hasAttribute('hidden')) {
+      chapterRow.setAttribute('hidden', '');
+      syncMainPadding();
+    }
+    return;
+  }
+
+  const idx = currentChapterIndex();
+  const next = activeChapters[idx + 1];
+  chapterNowEl.textContent = activeChapters[idx] ? activeChapters[idx].title : '';
+  chapterNextEl.textContent = next ? 'Danach: ' + next.title : 'Letztes Thema';
+  if (skipChapterBtn) skipChapterBtn.disabled = false;
+
+  if (chapterRow.hasAttribute('hidden')) {
+    chapterRow.removeAttribute('hidden');
+    syncMainPadding();
+  }
+}
+
+// Zum nächsten Thema springen. Gibt es keines mehr, ans Ende des Inhalts
+// springen - dann greift die normale "Folge zu Ende"-Behandlung.
+function skipToNextChapter() {
+  if (activeChapters.length === 0) return;
+  const idx = currentChapterIndex();
+  const next = activeChapters[idx + 1];
+
+  if (next) {
+    audio.currentTime = next.start;
+    activeEpisodeEnded = false;
+    if (audio.paused) audio.play();
+    updateTransportUI();
+    return;
+  }
+
+  audio.pause();
+  persistProgress();
+  handleEpisodeEnd();
+}
+
+if (skipChapterBtn) skipChapterBtn.addEventListener('click', skipToNextChapter);
 
 // --- Folgen-Navigation ---------------------------------------------------
 // delta = +1 -> eine Folge älter, -1 -> eine Folge neuer.
@@ -1654,10 +1901,15 @@ window.addEventListener('beforeunload', persistProgress);
 
 function skip(seconds) {
   if (!audio.src) return;
-  // Nicht in die weggeschnittenen Werbeblöcke hinein springen.
-  const min = activeEpisode ? getTrimStart(activeEpisode.podcastName) : 0;
-  const max = activeEpisode ? getTrimEnd(activeEpisode.podcastName) : (audio.duration || Infinity);
-  audio.currentTime = Math.max(min, Math.min(max, audio.currentTime + seconds));
+  // In Hörzeit springen, damit übersprungene Werbung nicht mitzählt und
+  // man nicht in einem Werbeblock landet.
+  const total = playableLength();
+  if (total <= 0) {
+    audio.currentTime = Math.max(0, audio.currentTime + seconds);
+    return;
+  }
+  const target = Math.max(0, Math.min(total - 0.5, realToPlayable(audio.currentTime) + seconds));
+  audio.currentTime = playableToReal(target);
 }
 
 document.getElementById('back10').addEventListener('click', () => skip(-10));
@@ -1689,8 +1941,7 @@ if ('mediaSession' in navigator) {
     try {
       navigator.mediaSession.setActionHandler('seekto', (details) => {
         if (typeof details.seekTime !== 'number') return;
-        const win = playableWindow();
-        audio.currentTime = Math.min(win.end, win.start + details.seekTime);
+        audio.currentTime = playableToReal(details.seekTime);
         activeEpisodeEnded = false;
         updateTransportUI();
       });
