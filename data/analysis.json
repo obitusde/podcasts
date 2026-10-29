@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T08:56:38.061Z",
+  "updatedAt": "2026-10-29T08:59:00.739Z",
   "episodes": {
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
@@ -8,11 +8,15 @@
       "adRanges": [
         [
           37.4,
-          87.4
+          97.2
         ],
         [
-          562.1,
-          600
+          292.2,
+          308.3
+        ],
+        [
+          570.1,
+          615.1
         ]
       ],
       "chapters": [
@@ -21,37 +25,41 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 87.5,
-          "title": "Israel: Politische Lage"
+          "start": 97.3,
+          "title": "Israelische Parlamentswahl"
         },
         {
-          "start": 211.8,
-          "title": "Merz: Asienreise und Handelspolitik"
+          "start": 219.8,
+          "title": "Merz auf Asienreise"
         },
         {
-          "start": 285.6,
-          "title": "USA: Trump-Anhänger"
+          "start": 315.6,
+          "title": "US-Wahl und Trump-Fans"
         },
         {
-          "start": 360.4,
-          "title": "E.ON: Investitionen und Sparprogramm"
+          "start": 375.3,
+          "title": "E.ON Investitionen"
         },
         {
-          "start": 429.4,
-          "title": "Mercedes: Gewinnwarnung"
+          "start": 440,
+          "title": "Mercedes Gewinnwarnung"
         },
         {
-          "start": 474.3,
-          "title": "Börse: Handel rund um die Uhr"
+          "start": 461.9,
+          "title": "Tarifstreit Metallindustrie"
         },
         {
-          "start": 515.8,
-          "title": "Sport: Blockade in Essen"
+          "start": 482.3,
+          "title": "Börsenhandel rund um die Uhr"
+        },
+        {
+          "start": 523.7,
+          "title": "Kurioses aus Essen"
         }
       ],
-      "durationSeconds": 600,
+      "durationSeconds": 615,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T08:56:38.056Z"
+      "detectedAt": "2026-10-29T08:59:00.732Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -59,12 +67,12 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
       "adRanges": [
         [
-          37.9,
-          95.3
+          43.1,
+          93.7
         ],
         [
-          559.7,
-          594.2
+          559.4,
+          593.1
         ]
       ],
       "chapters": [
@@ -73,16 +81,12 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 95.4,
-          "title": "Bundespräsidentenwahl"
+          "start": 93.8,
+          "title": "Debatte um Bundespräsidentenamt"
         },
         {
-          "start": 241.2,
-          "title": "Zinsentscheid der FED"
-        },
-        {
-          "start": 259.4,
-          "title": "EZB und Inflation"
+          "start": 233.2,
+          "title": "Notenbanken und Zinspolitik"
         },
         {
           "start": 286.4,
@@ -93,21 +97,21 @@
           "title": "Gesundheitspolitik"
         },
         {
-          "start": 402.4,
-          "title": "Audi und der Trump-Deal"
+          "start": 402.7,
+          "title": "Audi und die US-Politik"
         },
         {
-          "start": 456.3,
-          "title": "Alphabet Quartalszahlen"
+          "start": 457.2,
+          "title": "Alphabet und KI-Investitionen"
         },
         {
-          "start": 507.5,
-          "title": "Weinmarkt und Weltwirtschaft"
+          "start": 511.3,
+          "title": "Handelspolitik und Weinpreise"
         }
       ],
-      "durationSeconds": 594,
+      "durationSeconds": 593,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T08:56:16.974Z"
+      "detectedAt": "2026-10-29T08:58:34.448Z"
     }
   }
 }
