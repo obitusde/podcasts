@@ -568,7 +568,7 @@ function buildBlockPrompt(blocks, structure) {
     '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
     'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
     '',
-    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Fange dabei immer beim ERSTEN WORT DES ERSTEN SATZES an, nie mitten im Satz: "Zum Schluss schauen wir nach" ist richtig, "schauen wir nach Düsseldorf, wo" ist falsch. Die Themen werden oft mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi.") - dann ist der Abschnitt gemeint, in dem dieses Schlagwort steht, und "beginnt" fängt mit diesem Schlagwort an. Ein Thema darf nicht in einem Werbeabschnitt beginnen. 3 bis 12 Themen.',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Fange dabei immer beim ERSTEN WORT DES ERSTEN SATZES an, nie mitten im Satz: "Zum Schluss schauen wir nach" ist richtig, "schauen wir nach Düsseldorf, wo" ist falsch. Die Themen werden oft mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi.") - dann ist der Abschnitt gemeint, in dem dieses Schlagwort steht, und "beginnt" fängt mit diesem Schlagwort an. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Nenne JEDES Thema, auch kurz abgehandelte - im Zweifel lieber eines mehr. Bei zehn Minuten Sendung sind es meist sechs bis zehn.',
     '',
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
     '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China","beginnt":"Zollstreit. Die Europäische Union hat"}]}',
@@ -607,7 +607,7 @@ function findPhraseStart(words, phrase, near) {
       for (let j = 0; j < len; j++) {
         if (normWord(words[i + j].text) !== needle[j]) { passt = false; break; }
       }
-      if (passt) treffer.push(words[i].start);
+      if (passt) treffer.push(i);   // der Index, nicht die Zeit - der Satzanfang wird daran gesucht
     }
     if (treffer.length > 0) {
       treffer.sort((a, b) => Math.abs(words[a].start - near) - Math.abs(words[b].start - near));
