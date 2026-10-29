@@ -844,23 +844,29 @@ async function loadAnalysisFile() {
   try {
     // Zeitstempel in der Adresse: so liefert der Browser-Cache nie einen
     // alten Stand, wenn die Action gerade neu geschrieben hat.
-    const res = await fetch(ANALYSIS_URL + '?t=' + Math.floor(Date.now() / 60000));
-    if (!res.ok) return;
+    const res = await fetch(ANALYSIS_URL + '?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
+    if (!res.ok) {
+      console.error('Analyse-Datei: HTTP ' + res.status);
+      return;
+    }
     const data = await res.json();
     EPISODE_ANALYSIS = (data && data.episodes) || {};
+    console.log('Analyse geladen:', Object.keys(EPISODE_ANALYSIS).length, 'Folgen, Stand', data && data.updatedAt);
   } catch (err) {
     console.error('Analyse-Datei nicht ladbar', err);
   }
 }
 
-// Analyse zu einer Folge: zuerst die Datei (immer der neueste Stand),
-// sonst das, was der Apps-Script-Proxy mitgeliefert hat.
+// Analyse zu einer Folge - ausschliesslich aus data/analysis.json.
+//
+// Der Apps-Script-Proxy liefert zu manchen Folgen noch eine eigene,
+// veraltete Analyse mit (ein früherer Versuch, der im Backend lief). Die
+// wird bewusst NICHT mehr benutzt: Zwei Quellen für dieselbe Sache führen
+// dazu, dass man bei falschen Zeiten nicht weiss, woher sie stammen.
+// Gibt es hier nichts, gelten die festen Werte aus PODCAST_TRIM.
 function analysisFor(episode) {
   if (!episode) return null;
-  const fromFile = EPISODE_ANALYSIS[episode.guid];
-  if (fromFile) return fromFile;
-  if (Array.isArray(episode.adRanges) || Array.isArray(episode.chapters)) return episode;
-  return null;
+  return EPISODE_ANALYSIS[episode.guid] || null;
 }
 
 // --- Titel aufräumen ----------------------------------------------------
@@ -1714,6 +1720,7 @@ function updateChapterUI() {
   const idx = currentChapterIndex();
   const next = activeChapters[idx + 1];
   chapterNowEl.textContent = activeChapters[idx] ? activeChapters[idx].title : '';
+  chapterRow.title = 'Themen und Werbezeiten aus der automatischen Analyse';
   chapterNextEl.textContent = next ? 'Danach: ' + next.title : 'Letztes Thema';
   if (skipChapterBtn) skipChapterBtn.disabled = false;
 
