@@ -1,7 +1,8 @@
 {
-  "updatedAt": "2026-10-29T12:21:53.223Z",
+  "updatedAt": "2026-10-29T12:34:58.413Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
+      "podcast": "Handelsblatt Morning Briefing",
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
       "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
@@ -15,31 +16,35 @@
             "title": "Themenüberblick"
           },
           {
-            "start": 37.71,
-            "title": "Bundespräsident"
+            "start": 35.78,
+            "title": "Nachfolge des Bundespräsidenten"
           },
           {
-            "start": 172.44,
-            "title": "Notenbanken"
+            "start": 178.1,
+            "title": "Zinsentscheidungen der Notenbanken"
           },
           {
-            "start": 338.03,
-            "title": "Audi"
+            "start": 287.32,
+            "title": "Reformen in der Gesundheitspolitik"
           },
           {
-            "start": 441,
-            "title": "Handelspolitik"
+            "start": 347.4,
+            "title": "Audi und der Trump-Deal"
+          },
+          {
+            "start": 402.2,
+            "title": "Börsenreaktion auf Tech-Giganten"
+          },
+          {
+            "start": 458.05,
+            "title": "Anekdote zu Zöllen und Wein"
           }
         ]
       },
       "feedDurationSeconds": 506,
       "adRanges": [
         [
-          37.7,
-          106.3
-        ],
-        [
-          572.1,
+          504.4,
           999999
         ]
       ],
@@ -49,25 +54,33 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 106.31043100000001,
-          "title": "Bundespräsident"
+          "start": 35.78229,
+          "title": "Nachfolge des Bundespräsidenten"
         },
         {
-          "start": 241.03877599999998,
-          "title": "Notenbanken"
+          "start": 178.1,
+          "title": "Zinsentscheidungen der Notenbanken"
         },
         {
-          "start": 406.626009,
-          "title": "Audi"
+          "start": 287.32172299999996,
+          "title": "Reformen in der Gesundheitspolitik"
         },
         {
-          "start": 509.602857,
-          "title": "Handelspolitik"
+          "start": 347.4,
+          "title": "Audi und der Trump-Deal"
+        },
+        {
+          "start": 402.2,
+          "title": "Börsenreaktion auf Tech-Giganten"
+        },
+        {
+          "start": 458.054014,
+          "title": "Anekdote zu Zöllen und Wein"
         }
       ],
-      "durationSeconds": 605,
+      "durationSeconds": 506,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T12:21:52.932Z"
+      "detectedAt": "2026-10-29T12:34:58.020Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
