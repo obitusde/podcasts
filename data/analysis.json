@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T14:13:23.610Z",
+  "updatedAt": "2026-10-29T14:17:20.197Z",
   "episodes": {
     "38e16133-0dc4-38ad-b831-329ec32eae10": {
       "podcastId": "echo-der-zeit",
@@ -28,16 +28,12 @@
           "title": "Wahl in Israel"
         },
         {
-          "start": 731.0728750000001,
-          "title": "Regierungsbildung in Israel"
-        },
-        {
           "start": 1098.070125,
-          "title": "Nachfolge UNO-Generalsekretär"
+          "title": "Nachfolge von UNO-Generalsekretär"
         },
         {
           "start": 1343.715729,
-          "title": "Britischer Haushalt"
+          "title": "Budget in Grossbritannien"
         },
         {
           "start": 1632.5,
@@ -49,12 +45,12 @@
         },
         {
           "start": 2151.8,
-          "title": "US-Zwischenwahlen"
+          "title": "Midterms in den USA"
         }
       ],
       "durationSeconds": 2550,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T14:13:23.093Z"
+      "detectedAt": "2026-10-29T14:17:19.556Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "podcast": "Handelsblatt Morning Briefing",
