@@ -347,6 +347,7 @@ async function analyzeEpisode(ep, structure) {
   return {
     title: ep.title,
     pubDate: ep.pubDate || null,
+    audioUrl: ep.audioUrl, // damit sich jede Analyse von Hand nachhören lässt
     adRanges,
     chapters,
     durationSeconds: Math.round(duration),
