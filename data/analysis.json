@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T10:31:56.457Z",
+  "updatedAt": "2026-10-29T10:36:01.357Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -8,10 +8,10 @@
       "adRanges": [
         [
           38.2,
-          100.5
+          107.2
         ],
         [
-          568.1,
+          575,
           999999
         ]
       ],
@@ -21,37 +21,33 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 100.5,
-          "title": "Suche nach Bundespräsident"
+          "start": 108.5,
+          "title": "Nachfolge des Bundespräsidenten"
         },
         {
-          "start": 247.8,
-          "title": "Zinsentscheide von Fed und EZB"
+          "start": 248.1,
+          "title": "Zinsentscheide und Bankengewinne"
         },
         {
-          "start": 291.5,
-          "title": "Rekordgewinne der Banken"
+          "start": 355.6,
+          "title": "Linnemanns Gesundheitspolitik"
         },
         {
-          "start": 347.5,
-          "title": "Gesundheitspolitik von Linnemann"
+          "start": 417.3,
+          "title": "Döllners Trump-Deal wackelt"
         },
         {
-          "start": 409.2,
-          "title": "Audi-Chef Döllner und Trump"
+          "start": 472.2,
+          "title": "Zahlen von Alphabet und Microsoft"
         },
         {
-          "start": 464,
-          "title": "Quartalszahlen von Big Tech"
-        },
-        {
-          "start": 518.7,
-          "title": "Handelspolitik und Weinpreise"
+          "start": 526.8,
+          "title": "Folgen der Handelspolitik"
         }
       ],
-      "durationSeconds": 600,
+      "durationSeconds": 606,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T10:31:56.450Z"
+      "detectedAt": "2026-10-29T10:36:01.352Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
