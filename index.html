@@ -725,6 +725,7 @@ function getTrim(podcastName) {
 let activeAdRanges = [];  // [[von, bis], ...] der laufenden Folge
 let activeChapters = [];  // [{start, title}, ...] der laufenden Folge
 let activeAnalysis = null; // die zugrunde liegende Analyse (für die Längenprüfung)
+let activeClean = null;    // die geschnittene Fassung, wenn eine gespielt wird
 
 // Baut die Werbebereiche einer Folge: erkannte Bereiche bevorzugt,
 // sonst die festen Werte aus PODCAST_TRIM.
@@ -738,6 +739,29 @@ function buildAdRanges(podcastName, episode) {
   }
 
   return buildAdRangesFromTrim(podcastName);
+}
+
+/**
+ * Die werbefrei geschnittene Fassung dieser Folge, falls es eine gibt.
+ *
+ * Der Anbieter baut die Werbung bei jedem Abruf neu ein - dieselbe Adresse
+ * lieferte innerhalb von zehn Minuten 595, 506 und 592 Sekunden lange
+ * Dateien. Zeitmarken können dagegen nicht ankommen. Deshalb schneidet die
+ * Analyse die Werbung heraus und legt die fertige Datei ab; hier wird sie
+ * bevorzugt.
+ */
+function cleanVersion(episode) {
+  const analysis = analysisFor(episode);
+  if (!analysis || !analysis.clean || !analysis.clean.url) return null;
+  return analysis.clean;
+}
+
+function cleanChapters(clean) {
+  if (!Array.isArray(clean.chapters)) return [];
+  return clean.chapters
+    .filter((c) => c && isFinite(Number(c.start)) && c.title)
+    .map((c) => ({ start: Number(c.start), title: String(c.title) }))
+    .sort((a, b) => a.start - b.start);
 }
 
 // Themen der Folge (leer, wenn es keine Analyse gibt).
@@ -1545,19 +1569,41 @@ function playEpisode(card, podcastName, index) {
   playerPodcast.textContent = podcastName;
   playerTitle.textContent = (episode.title || '') + '  ·  ' + formatDateNoYear(episode.pubDate);
 
-  audio.src = episode.audioUrl;
+  // Liegt eine werbefrei geschnittene Fassung bereit, wird die gespielt.
+  // Dann gibt es nichts zu überspringen und die Themenmarken stimmen
+  // sekundengenau - sie wurden an genau dieser Datei gemessen.
+  const clean = cleanVersion(episode);
+  activeClean = clean;
+  audio.src = clean ? clean.url : episode.audioUrl;
   activeEpisode = { podcastName, guid: episode.guid };
   activeEpisodeEnded = false;
-  activeAdRanges = buildAdRanges(podcastName, episode);
-  activeChapters = buildChapters(episode);
+  activeAdRanges = clean ? [] : buildAdRanges(podcastName, episode);
+  activeChapters = clean ? cleanChapters(clean) : buildChapters(episode);
   activeAnalysis = analysisFor(episode);
   applyPlaybackRate();
+
+  // Fällt die geschnittene Datei aus (gelöscht, noch nicht hochgeladen),
+  // wird einmal auf die Originaldatei zurückgeschaltet.
+  if (clean) {
+    const fallback = () => {
+      audio.removeEventListener('error', fallback);
+      if (activeClean !== clean) return;
+      console.log('Geschnittene Fassung nicht erreichbar - Originaldatei wird benutzt');
+      activeClean = null;
+      activeAdRanges = buildAdRanges(podcastName, episode);
+      activeChapters = buildChapters(episode);
+      audio.src = episode.audioUrl;
+      audio.load();
+      audio.play().catch(() => {});
+    };
+    audio.addEventListener('error', fallback);
+  }
 
   setMediaMetadata(podcastName, episode, coverUrl);
 
   const savedProgress = pState.progress[episode.guid];
   const resume = () => {
-    checkAnalysisFitsFile(podcastName, episode);
+    if (!activeClean) checkAnalysisFitsFile(podcastName, episode);
     // Gespeicherte Position nur übernehmen, wenn sie im hörbaren Bereich
     // liegt und nicht praktisch am Ende - sonst beim Inhalt anfangen.
     const start = contentStart();

@@ -19,7 +19,7 @@
  * index.html liest diese Datei und überspringt damit die Werbung.
  */
 
-import { readFile, writeFile, unlink } from 'node:fs/promises';
+import { readFile, writeFile, unlink, copyFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -64,6 +64,13 @@ const CONFIG_PATH = 'tools/podcasts.config.json';
 const OUT_PATH = 'data/analysis.json';
 
 const KEEP_EPISODES = 60;      // so viele Analysen bleiben in der Datei
+
+// Die werbefrei geschnittenen Folgen werden als Anhänge einer GitHub-
+// Veröffentlichung abgelegt - nicht im Repository selbst, sonst würde seine
+// Geschichte mit jeder Folge um rund 9 MB wachsen und liesse sich nie
+// wieder verkleinern. Anhänge lassen sich dagegen löschen.
+const RELEASE_TAG = 'audio';
+const KEEP_AUDIO = 3;          // so viele geschnittene Folgen bleiben liegen
 // Nur frische Folgen werden analysiert: Ist die neueste Folge älter als
 // das hier, gibt es heute keine neue Ausgabe (Wochenende, Feiertag) und
 // der Lauf endet sofort wieder - ohne Kosten.
@@ -952,6 +959,142 @@ function fixChapters(chapters, adRanges, duration) {
   return cleaned.map((c) => ({ start: Math.round(c.start * 10) / 10, title: c.title }));
 }
 
+/* --------------------------------------------- Werbung herausschneiden */
+
+/**
+ * Warum überhaupt schneiden?
+ *
+ * Der Anbieter baut die Werbung bei jedem Abruf neu ein. Gemessen an
+ * derselben Adresse: 11:49 Uhr 595 Sekunden, 11:52 Uhr 506 Sekunden (ganz
+ * ohne Werbung), 11:58 Uhr 592 Sekunden - jedes Mal eine andere Datei.
+ * Zeitmarken, die hier um 6 Uhr gemessen werden, passen deshalb nicht zu
+ * der Datei, die das Handy um halb sieben lädt.
+ *
+ * Also wird die Arbeit hier zu Ende gebracht: Die Werbung wird aus der
+ * analysierten Datei herausgeschnitten und genau diese Fassung abgelegt.
+ * Dann stimmen die Themenmarken sekundengenau, weil Analyse und
+ * Wiedergabe dieselbe Datei meinen.
+ */
+
+// Die hörbaren Stücke zwischen den Werbeblöcken.
+function keepSegments(adRanges, duration) {
+  const ads = adRanges
+    .map(([a, b]) => [Math.max(0, a), Math.min(b, duration)])
+    .filter(([a, b]) => b > a)
+    .sort((a, b) => a[0] - b[0]);
+  const keep = [];
+  let pos = 0;
+  for (const [a, b] of ads) {
+    if (a > pos) keep.push([pos, a]);
+    pos = Math.max(pos, b);
+  }
+  if (pos < duration) keep.push([pos, duration]);
+  return keep.filter(([a, b]) => b - a > 0.5);
+}
+
+/**
+ * Schneidet die Werbung heraus. Die Tonspur wird dabei nur umkopiert,
+ * nicht neu berechnet - das dauert Sekunden und kostet keine Qualität.
+ */
+async function cutAds(audioPath, keep, outPath) {
+  const parts = [];
+  try {
+    for (let i = 0; i < keep.length; i++) {
+      const [from, to] = keep[i];
+      const part = join(tmpdir(), `teil-${process.pid}-${i}.mp3`);
+      await run('ffmpeg', [
+        '-hide_banner', '-loglevel', 'error', '-y',
+        '-ss', from.toFixed(3),
+        '-t', (to - from).toFixed(3),
+        '-i', audioPath,
+        '-c', 'copy',
+        part
+      ]);
+      parts.push(part);
+    }
+
+    if (parts.length === 1) {
+      await copyFile(parts[0], outPath);
+    } else {
+      const listPath = join(tmpdir(), `liste-${process.pid}.txt`);
+      await writeFile(listPath, parts.map((f) => `file '${f}'`).join('\n') + '\n');
+      await run('ffmpeg', [
+        '-hide_banner', '-loglevel', 'error', '-y',
+        '-f', 'concat', '-safe', '0', '-i', listPath,
+        '-c', 'copy',
+        outPath
+      ]);
+      await unlink(listPath).catch(() => {});
+    }
+  } finally {
+    for (const f of parts) await unlink(f).catch(() => {});
+  }
+}
+
+// Die Themenmarken gelten für die Originaldatei. In der geschnittenen
+// Fassung liegt jedes Thema um die Werbung früher, die davor lag.
+function shiftChapters(chapters, adRanges, duration) {
+  const ads = adRanges
+    .map(([a, b]) => [Math.max(0, a), Math.min(b, duration)])
+    .filter(([a, b]) => b > a);
+  const entferntVor = (t) => ads
+    .filter(([, b]) => b <= t)
+    .reduce((summe, [a, b]) => summe + (b - a), 0);
+  return chapters
+    .filter((c) => !ads.some(([a, b]) => c.start >= a && c.start < b))
+    .map((c) => ({ start: Math.max(0, +(c.start - entferntVor(c.start)).toFixed(2)), title: c.title }))
+    .sort((a, b) => a.start - b.start);
+}
+
+/**
+ * Legt die geschnittene Datei als Anhang einer GitHub-Veröffentlichung ab
+ * und liefert ihre Adresse zurück. Ohne GitHub (etwa beim Ausprobieren auf
+ * dem eigenen Rechner) passiert nichts und es bleibt bei der Originaldatei.
+ */
+async function publishAudio(filePath, name) {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo || !process.env.GH_TOKEN) {
+    log('   (keine GitHub-Umgebung - geschnittene Datei wird nicht abgelegt)');
+    return null;
+  }
+  try {
+    await run('gh', ['release', 'view', RELEASE_TAG, '--repo', repo]);
+  } catch {
+    await run('gh', [
+      'release', 'create', RELEASE_TAG,
+      '--repo', repo,
+      '--title', 'Werbefrei geschnittene Folgen',
+      '--notes', 'Wird von der Action gefüllt. Ältere Folgen werden automatisch gelöscht.'
+    ]);
+    log(`   Veröffentlichung "${RELEASE_TAG}" angelegt`);
+  }
+  // gh benennt den Anhang nach der Datei - sie heisst deshalb schon richtig.
+  await run('gh', ['release', 'upload', RELEASE_TAG, filePath, '--clobber', '--repo', repo]);
+  return `https://github.com/${repo}/releases/download/${RELEASE_TAG}/${name}`;
+}
+
+// Anhänge löschen, die zu keiner behaltenen Folge mehr gehören.
+async function pruneAudio(behalteNamen) {
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo || !process.env.GH_TOKEN) return;
+  let assets = [];
+  try {
+    const { stdout } = await run('gh', ['release', 'view', RELEASE_TAG, '--repo', repo, '--json', 'assets']);
+    assets = JSON.parse(stdout).assets || [];
+  } catch {
+    return;
+  }
+  for (const a of assets) {
+    if (behalteNamen.has(a.name)) continue;
+    try {
+      await run('gh', ['release', 'delete-asset', RELEASE_TAG, a.name, '--yes', '--repo', repo]);
+      log(`   alte Tondatei gelöscht: ${a.name}`);
+    } catch (err) {
+      log(`   konnte ${a.name} nicht löschen: ${err.message}`);
+    }
+  }
+}
+
 /* ----------------------------------------------------------- Hauptprogramm */
 
 async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
@@ -971,7 +1114,6 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   await writeFile(audioPath, buffer);
   const silences = await detectSilences(audioPath);
   const fileDuration = await probeDuration(audioPath);
-  await unlink(audioPath).catch(() => {});
   log(`   Pausen gemessen: ${silences.length}`);
   log(`   Dateilänge gemessen: ${fileDuration ? fmt(fileDuration) : 'nicht messbar'}`);
 
@@ -1102,10 +1244,41 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   log('   Themen:');
   chapters.forEach((c) => log(`     ${fmt(c.start)}  ${c.title}`));
 
+  // Jetzt die Werbung wirklich herausschneiden und die fertige Fassung
+  // ablegen. Scheitert das, bleibt es bei der Originaldatei und den
+  // Marken - die App kommt mit beidem zurecht.
+  let clean = null;
+  const cleanPath = join(tmpdir(), `${ep.guid}.mp3`);
+  try {
+    const keep = keepSegments(adRanges, duration);
+    const werbeZeit = Math.round(duration - keep.reduce((sum, [a, b]) => sum + (b - a), 0));
+    await cutAds(audioPath, keep, cleanPath);
+    const cleanDuration = await probeDuration(cleanPath);
+    log(`   Geschnitten: ${fmt(duration)} -> ${fmt(cleanDuration)} (${werbeZeit} Sek. Werbung entfernt)`);
+    const url = await publishAudio(cleanPath, `${ep.guid}.mp3`);
+    if (url) {
+      clean = {
+        url,
+        file: `${ep.guid}.mp3`,
+        durationSeconds: Math.round(cleanDuration),
+        chapters: shiftChapters(chapters, adRanges, duration)
+      };
+      log(`   Abgelegt: ${url}`);
+      log('   Themen in der geschnittenen Fassung:');
+      clean.chapters.forEach((c) => log(`     ${fmt(c.start)}  ${c.title}`));
+    }
+  } catch (err) {
+    log(`   Schneiden fehlgeschlagen: ${err.message} - es bleibt bei der Originaldatei`);
+  } finally {
+    await unlink(cleanPath).catch(() => {});
+    await unlink(audioPath).catch(() => {});
+  }
+
   return {
     title: ep.title,
     pubDate: ep.pubDate || null,
     audioUrl: ep.audioUrl, // damit sich jede Analyse von Hand nachhören lässt
+    clean,
     // Länge der analysierten Datei und die Angabe aus dem Feed. Podigee
     // schaltet Werbung dynamisch dazu: dieselbe Adresse lieferte einmal
     // 10:06 (mit Werbung) und einmal 8:26 (ohne). Mit beiden Werten kann
@@ -1176,6 +1349,14 @@ async function main() {
     .slice(0, KEEP_EPISODES);
   const kept = {};
   for (const k of keys) kept[k] = episodesStore[k];
+
+  // Tondateien nur für die neuesten Folgen behalten
+  const audioKeys = keys.slice(0, KEEP_AUDIO);
+  const behalten = new Set(audioKeys.map((k) => kept[k].clean && kept[k].clean.file).filter(Boolean));
+  for (const k of keys.slice(KEEP_AUDIO)) {
+    if (kept[k].clean) kept[k] = { ...kept[k], clean: null };
+  }
+  await pruneAudio(behalten);
 
   await writeFile(OUT_PATH, JSON.stringify({ updatedAt: new Date().toISOString(), episodes: kept }, null, 2) + '\n');
   log(`\nGespeichert: ${OUT_PATH} (${keys.length} Folgen)`);

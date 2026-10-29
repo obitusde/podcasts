@@ -63,6 +63,8 @@ jobs:
       - name: Folgen analysieren
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # Damit die geschnittene Tondatei als Anhang abgelegt werden kann
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FORCE: ${{ inputs.force && '1' || '0' }}
           EPISODES: ${{ inputs.episodes }}
           DEBUG: ${{ inputs.debug && '1' || '0' }}
