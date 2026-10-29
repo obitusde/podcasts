@@ -1,6 +1,53 @@
 {
-  "updatedAt": "2026-10-29T14:33:50.215Z",
+  "updatedAt": "2026-10-29T22:45:01.908Z",
   "episodes": {
+    "6a832de2-e470-3517-b34d-6d2eaf163c02": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "SBB-Kadermann wegen Betrug zu Freiheitstrafe verurteilt",
+      "pubDate": "Thu, 29 Oct 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/10/Echo_der_Zeit_radio_AUDI20261029_RS_0066_e30838e366964e74ab30f8fb67d77764.mp3?d=ap&amp;assetId=6a832de2-e470-3517-b34d-6d2eaf163c02",
+      "clean": null,
+      "feedDurationSeconds": 2568,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Betrugsprozess gegen SBB-Manager"
+        },
+        {
+          "start": 332.421521,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 681.188562,
+          "title": "Reparationen für Sklavenhandel"
+        },
+        {
+          "start": 1242.3,
+          "title": "Waffenruhe in der Ukraine"
+        },
+        {
+          "start": 1500.4,
+          "title": "Vorzeitiger Abtritt von EZB-Chefin"
+        },
+        {
+          "start": 1717.237812,
+          "title": "Zugunglück und Proteste in Spanien"
+        },
+        {
+          "start": 1946.1,
+          "title": "Hohe Medikamentenpreise"
+        },
+        {
+          "start": 2222.7,
+          "title": "Zertifikatehandel für Artenschutz"
+        }
+      ],
+      "durationSeconds": 2568,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-29T22:45:01.325Z"
+    },
     "38e16133-0dc4-38ad-b831-329ec32eae10": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
