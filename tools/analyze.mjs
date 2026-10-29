@@ -390,6 +390,30 @@ async function detectSilencesAt(filePath, db, min) {
   return silences;
 }
 
+/**
+ * Die echte Länge der Datei, gemessen mit ffprobe.
+ *
+ * Darauf kommt es an: Der Player vergleicht später diese Länge mit der
+ * Datei, die er selbst geladen hat. Weicht sie ab, hat der Anbieter eine
+ * andere Fassung ausgeliefert und die Marken gelten nicht. Die Länge aus
+ * dem Transkript taugt dafür nicht - Whisper erfindet am Dateiende gern
+ * noch ein paar Sekunden.
+ */
+async function probeDuration(filePath) {
+  try {
+    const { stdout } = await run('ffprobe', [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=noprint_wrappers=1:nokey=1',
+      filePath
+    ]);
+    const seconds = Number(String(stdout).trim());
+    return isFinite(seconds) && seconds > 0 ? seconds : 0;
+  } catch (err) {
+    return 0;
+  }
+}
+
 async function detectSilences(filePath) {
   let best = [];
   for (const step of SILENCE_LADDER) {
@@ -946,8 +970,10 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   const audioPath = join(tmpdir(), `episode-${Date.now()}.mp3`);
   await writeFile(audioPath, buffer);
   const silences = await detectSilences(audioPath);
+  const fileDuration = await probeDuration(audioPath);
   await unlink(audioPath).catch(() => {});
   log(`   Pausen gemessen: ${silences.length}`);
+  log(`   Dateilänge gemessen: ${fileDuration ? fmt(fileDuration) : 'nicht messbar'}`);
 
   const base64 = buffer.toString('base64');
 
@@ -972,11 +998,15 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   log(`   Transkript: ${lines.length} Zeilen (aus ${source}, ${model})`);
 
   // Die Längenangabe im Feed ist nicht verlässlich (beim Handelsblatt rund
-  // 1,5 Minuten zu kurz). Das Transkript kennt die echte Länge - sonst
-  // würde der Werbeblock am Schluss einfach abgeschnitten.
+  // 1,5 Minuten zu kurz, weil die Werbung dort nicht mitgezählt wird).
+  // Es gilt die mit ffprobe gemessene Länge; nur wenn die Messung
+  // fehlschlägt, zählen Feed und Transkript.
   const feedDuration = ep.durationSeconds || 0;
   const transcriptEnd = lines[lines.length - 1].end;
-  const duration = Math.max(feedDuration, transcriptEnd);
+  const duration = fileDuration || Math.max(feedDuration, transcriptEnd);
+  if (fileDuration && transcriptEnd > fileDuration + 2) {
+    log(`   Hinweis: Transkript endet bei ${fmt(transcriptEnd)}, die Datei aber schon bei ${fmt(fileDuration)}`);
+  }
 
   if (DEBUG) {
     log('   --- Transkript ---');
