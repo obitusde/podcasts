@@ -1063,12 +1063,17 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   // Werbeblock am Anfang bekannt ist, muss einer gefunden worden sein.
   // Sonst würde die Folge mit Werbung starten - genau das, was nicht
   // passieren soll. Dann lieber keine Analyse und die festen Werte.
-  if (expectOpeningAd) {
+  // Ausnahme: Ist die Datei nur so lang, wie der Feed es angibt, wurde die
+  // Fassung ohne Werbung ausgeliefert. Dann ist "keine Werbung gefunden"
+  // die richtige Antwort und kein Fehler.
+  const werbefrei = feedDuration > 0 && duration <= feedDuration + 10;
+  if (expectOpeningAd && !werbefrei) {
     const hasOpeningAd = adRanges.some(([a]) => a < 180);
     if (!hasOpeningAd) {
       throw new Error('verworfen - kein Werbeblock am Anfang gefunden (Zeitachse unplausibel)');
     }
   }
+  if (werbefrei) log('   Diese Auslieferung enthält keine Werbung (Länge = Feed-Angabe)');
 
   let chapters = fixChapters(found.chapters, adRanges, duration);
 
