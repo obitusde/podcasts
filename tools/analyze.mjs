@@ -256,6 +256,37 @@ function findWordStart(words, firstWords, lineStart) {
   return best ? best.start : null;
 }
 
+/**
+ * Zieht einen Themenstart auf das Ankündigungs-Schlagwort zurück.
+ *
+ * Die Sendung kündigt jedes Thema mit einem einzelnen Wort an: "Notenbanken.",
+ * "Audi.", "Börse.", "Mercedes.". Das Textmodell nennt mal dieses Wort als
+ * Themenanfang, mal erst den Satz danach - dann setzt der Sprung ein paar
+ * Sekunden zu spät ein und man landet mitten im Satz davor.
+ * Deshalb hier ohne Modell: Steht unmittelbar vor dem gefundenen Start ein
+ * Wort, das für sich allein einen Satz bildet, beginnt das Thema dort.
+ */
+function snapToHeadline(words, startTime) {
+  const idx = words.findIndex((w) => w.start >= startTime - 0.05);
+  if (idx < 2) return startTime;
+
+  const endsSentence = (w) => /[.!?:]$/.test(w.text);
+  // Ein Füllwort aus dem Jingle ("Musik") trennt genauso wie ein Satzende.
+  const isBoundary = (w) => isFiller(w.text) || endsSentence(w);
+
+  for (let back = 1; back <= 2; back++) {
+    const candidate = words[idx - back];
+    const before = words[idx - back - 1];
+    if (!candidate || !before) break;
+    if (startTime - candidate.start > 8) break;        // zu weit weg
+    if (isFiller(candidate.text)) continue;            // "Musik" o.ä. überspringen
+    if (endsSentence(candidate) && isBoundary(before)) {
+      return candidate.start;                          // allein stehender Satz = Schlagwort
+    }
+  }
+  return startTime;
+}
+
 function linesFromWords(words) {
   const lines = [];
   let current = null;
@@ -458,9 +489,10 @@ async function findAdsAndChapters(lines, words, structure, endMarker) {
       if (!line || !c.titel) return null;
       // Zuerst die Wort-Zeit versuchen, sonst den Zeilenanfang nehmen.
       const wordStart = findWordStart(words, c.start, line.start);
-      const start = wordStart !== null ? wordStart : line.start;
-      if (wordStart !== null && Math.abs(wordStart - line.start) > 0.6) {
-        log(`   Thema "${c.titel}": ${fmt(line.start)} (Zeile) -> ${fmt(wordStart)} (erstes Wort)`);
+      const raw = wordStart !== null ? wordStart : line.start;
+      const start = snapToHeadline(words, raw);
+      if (Math.abs(start - line.start) > 0.6) {
+        log(`   Thema "${c.titel}": ${fmt(line.start)} (Zeile) -> ${fmt(start)}${start !== raw ? ' (Schlagwort)' : ' (erstes Wort)'}`);
       }
       return { start: Math.max(0, start - PAD_BEFORE), title: String(c.titel).slice(0, 60) };
     })
