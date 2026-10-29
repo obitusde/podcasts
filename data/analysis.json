@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T12:34:58.413Z",
+  "updatedAt": "2026-10-29T12:44:15.166Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "podcast": "Handelsblatt Morning Briefing",
@@ -16,35 +16,43 @@
             "title": "Themenüberblick"
           },
           {
-            "start": 35.78,
+            "start": 37.71,
             "title": "Nachfolge des Bundespräsidenten"
           },
           {
-            "start": 178.1,
-            "title": "Zinsentscheidungen der Notenbanken"
+            "start": 177.2,
+            "title": "Zinsentscheide von Fed und EZB"
           },
           {
-            "start": 287.32,
-            "title": "Reformen in der Gesundheitspolitik"
+            "start": 230.7,
+            "title": "Ergebnisse der Großbanken"
           },
           {
-            "start": 347.4,
-            "title": "Audi und der Trump-Deal"
+            "start": 284.7,
+            "title": "Gesundheitspolitik und Zuzahlungen"
           },
           {
-            "start": 402.2,
-            "title": "Börsenreaktion auf Tech-Giganten"
+            "start": 346.5,
+            "title": "Zweifel an Audi-Deal mit Trump"
           },
           {
-            "start": 458.05,
-            "title": "Anekdote zu Zöllen und Wein"
+            "start": 401.3,
+            "title": "Zahlen von Alphabet und Microsoft"
+          },
+          {
+            "start": 453.72,
+            "title": "Anekdote zu Weinpreisen"
           }
         ]
       },
       "feedDurationSeconds": 506,
       "adRanges": [
         [
-          504.4,
+          37.7,
+          108.7
+        ],
+        [
+          574.5,
           999999
         ]
       ],
@@ -54,33 +62,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 35.78229,
+          "start": 108.713696,
           "title": "Nachfolge des Bundespräsidenten"
         },
         {
-          "start": 178.1,
-          "title": "Zinsentscheidungen der Notenbanken"
+          "start": 248.2,
+          "title": "Zinsentscheide von Fed und EZB"
         },
         {
-          "start": 287.32172299999996,
-          "title": "Reformen in der Gesundheitspolitik"
+          "start": 301.7,
+          "title": "Ergebnisse der Großbanken"
         },
         {
-          "start": 347.4,
-          "title": "Audi und der Trump-Deal"
+          "start": 355.7,
+          "title": "Gesundheitspolitik und Zuzahlungen"
         },
         {
-          "start": 402.2,
-          "title": "Börsenreaktion auf Tech-Giganten"
+          "start": 417.5,
+          "title": "Zweifel an Audi-Deal mit Trump"
         },
         {
-          "start": 458.054014,
-          "title": "Anekdote zu Zöllen und Wein"
+          "start": 472.3,
+          "title": "Zahlen von Alphabet und Microsoft"
+        },
+        {
+          "start": 524.71585,
+          "title": "Anekdote zu Weinpreisen"
         }
       ],
-      "durationSeconds": 506,
+      "durationSeconds": 604,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T12:34:58.020Z"
+      "detectedAt": "2026-10-29T12:44:14.754Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
