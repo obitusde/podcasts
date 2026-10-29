@@ -1,6 +1,57 @@
 {
-  "updatedAt": "2026-10-29T12:44:15.166Z",
+  "updatedAt": "2026-10-29T13:51:56.206Z",
   "episodes": {
+    "38e16133-0dc4-38ad-b831-329ec32eae10": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Schweres Zugunglück in Spanien wirft viele Fragen auf",
+      "pubDate": "Wed, 28 Oct 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/10/Echo_der_Zeit_radio_AUDI20261028_RS_0060_32eb3791eaaa47c2af59a690e01ce262.mp3?d=ap&amp;assetId=38e16133-0dc4-38ad-b831-329ec32eae10",
+      "clean": null,
+      "feedDurationSeconds": 2551,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 101.9,
+          "title": "Zugunglück in Spanien"
+        },
+        {
+          "start": 275.991104,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 540.4,
+          "title": "Wahlen in Israel"
+        },
+        {
+          "start": 1175.6911460000001,
+          "title": "Nachfolge UNO-Generalsekretär"
+        },
+        {
+          "start": 1343.715729,
+          "title": "Britisches Budget"
+        },
+        {
+          "start": 1632.5,
+          "title": "Schweizer Luftabwehr"
+        },
+        {
+          "start": 1820.417667,
+          "title": "Missbrauch in der Kirche"
+        },
+        {
+          "start": 2151.8,
+          "title": "US-Zwischenwahlen"
+        }
+      ],
+      "durationSeconds": 2550,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-29T13:51:55.599Z"
+    },
     "62faa662abdc627404ef0d5e582d2174": {
       "podcast": "Handelsblatt Morning Briefing",
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
