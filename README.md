@@ -281,6 +281,30 @@ Ablauf:
    geschnittene Fassung, spielt der Player sie; fehlt sie, fällt er auf die
    Originaldatei mit den festen Werten zurück.
 
+### Wo die Themenerkennung an ihre Grenze stösst
+
+Eine Marke pro Folge liegt gelegentlich daneben, und das ist kein Fehler,
+den man wegprogrammiert. Bei Echo der Zeit pendelte die Marke für ein Thema
+über sechs Läufe zwischen zwei Stellen: 19:02 (die Anmoderation im Studio)
+und 19:35 (der Anfang des Beitrags). Beides ist eine vertretbare Antwort auf
+"wo beginnt dieses Thema", und das Modell entscheidet sich mal so, mal so.
+
+Messen hilft hier nicht weiter: Auch vor 18:18 liegt eine lange Pause - dort
+bedankt sich die Moderation beim Korrespondenten. Eine lange Pause ist also
+nicht gleichbedeutend mit einem Themenwechsel. Die Unterscheidung zwischen
+"Abschluss des alten Themas" und "Ankündigung des neuen" ist inhaltlich,
+nicht akustisch, und damit auf das Modell angewiesen.
+
+Was dagegen hilft und eingebaut ist: Das Modell nennt Anmoderation und
+Beitragsanfang getrennt (es muss sich also nicht entscheiden), die Antwort
+wird auf brauchbare Anfangsworte geprüft und notfalls einmal nachgefragt,
+und gesucht wird in einem Zeitfenster statt in einer festen Zahl von
+Abschnitten. Damit sassen beim letzten Stand acht von neun Marken richtig.
+
+Weiteres Nachschärfen am Prompt hat in beide Richtungen ausgeschlagen und
+dabei Marken kaputtgemacht, die vorher sassen. Wer hier wieder ansetzt:
+erst ein Testfall, dann die Änderung - nicht umgekehrt.
+
 ### Konfiguration: die Google-Tabelle
 
 Welche Podcasts es gibt, in welcher Reihenfolge sie erscheinen und was mit
