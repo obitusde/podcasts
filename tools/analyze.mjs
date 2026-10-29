@@ -584,13 +584,44 @@ function buildBlocks(words, silences, duration) {
 
 /* --------------------------------- Werbung und Themen auf Abschnitts-Basis */
 
+/**
+ * Welche Abschnitte beginnen nach einer auffällig langen Pause?
+ *
+ * Abschnitte entstehen schon ab einer kurzen Pause (BLOCK_PAUSE) - das ist
+ * meist nur eine Satzgrenze. Ein Themenwechsel klingt anders: Die Moderation
+ * setzt deutlich länger ab, oft liegt ein Jingle dazwischen. Diese Grenze
+ * wird nicht geraten, sondern aus der Folge selbst bestimmt (oberes Viertel
+ * aller gemessenen Pausen). So passt sie sich einem schnellen wie einem
+ * ruhigen Sprechstil an.
+ */
+function longPauseThreshold(blocks) {
+  const laengen = blocks
+    .map((b) => (b.pauseBefore ? b.pauseBefore[1] - b.pauseBefore[0] : 0))
+    .filter((x) => x > 0)
+    .sort((a, b) => a - b);
+  if (laengen.length < 8) return Infinity;
+  const p75 = laengen[Math.floor(laengen.length * 0.75)];
+  return Math.max(BLOCK_PAUSE + 0.15, p75);
+}
+
 function buildBlockPrompt(blocks, structure) {
+  const schwelle = longPauseThreshold(blocks);
+  let markiert = 0;
   const list = blocks
-    .map((b, i) => `[${i}] ${fmt(b.start)} ${b.text.slice(0, 220)}`)
+    .map((b, i) => {
+      const pause = b.pauseBefore ? b.pauseBefore[1] - b.pauseBefore[0] : 0;
+      const lang = pause >= schwelle;
+      if (lang) markiert++;
+      return `[${i}] ${fmt(b.start)} ${lang ? '¶ ' : ''}${b.text.slice(0, 220)}`;
+    })
     .join('\n');
+  if (isFinite(schwelle)) {
+    log(`   Lange Pausen ab ${schwelle.toFixed(2)}s: ${markiert} von ${blocks.length} Abschnitten markiert`);
+  }
 
   return [
     'Das ist eine deutsche Podcast-Folge, zerlegt in Abschnitte. Die Abschnitte wurden an den Sprechpausen getrennt; jede Zeile ist ein Abschnitt in der Form "[Nummer] Zeit Text". "[Musik oder Stille]" heisst: dort wird nicht gesprochen.',
+    'Ein ¶ vor dem Text heisst: Vor diesem Abschnitt wurde eine auffällig LANGE Sprechpause gemessen. Solche Stellen sind die Nahtstellen der Sendung - ein Themenwechsel oder ein Werbeblock beginnt fast immer bei einem ¶-Abschnitt, nicht mittendrin.',
     structure ? `\nAufbau dieser Sendung: ${structure}` : '',
     '',
     'Aufgabe 1 - Werbung: Nenne die Nummern ALLER Abschnitte, die zur Werbung gehören. Werbung ist:',
@@ -601,14 +632,14 @@ function buildBlockPrompt(blocks, structure) {
     '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
     'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
     '',
-    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Nenne JEDES Thema, auch kurz abgehandelte - im Zweifel lieber eines mehr. Ein Thema darf nicht in einem Werbeabschnitt beginnen.',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Gemeint sind die Hauptthemen der Sendung, nicht jede einzelne Meldung: Eine Nachrichtenübersicht mit mehreren Kurzmeldungen ist EIN Thema, und Börsenkurse oder Wetter sind kein eigenes Thema. Eine Themenvorstellung am Anfang, in der die Sendung ihre Themen aufzählt, ist ebenfalls EIN Thema - die einzelnen Themen beginnen erst danach. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Bei einer Sendung von zehn Minuten sind es meist sechs bis zehn Themen, bei vierzig Minuten acht bis zwölf.',
     '',
     'WO GENAU EIN THEMA BEGINNT - darauf kommt es an:',
     '- Ein Thema beginnt mit der ANMODERATION: dem ersten Satz, in dem die Moderation im Studio das neue Thema ankündigt oder einordnet. NICHT mit dem Beitrag, NICHT mit der ersten Frage an einen Gast oder Korrespondenten, NICHT mit dem ersten Satz einer eingespielten Reportage.',
     '  Richtig: "Die Suche nach einer Nachfolge für" - so kündigt die Moderation das Thema an.',
     '  Falsch: "Zunächst stiegen acht Kandidatinnen und" - das steht schon mitten im Beitrag.',
     '  Falsch: "Was genau ist heute passiert?" - das ist die erste Frage an den Korrespondenten.',
-    '- Die Abschnittsnummer ist die des Abschnitts, in dem diese Anmoderation steht.',
+    '- Die Abschnittsnummer ist die des Abschnitts, in dem diese Anmoderation steht. Steht die Anmoderation in einem ¶-Abschnitt, nimm diesen - nicht einen späteren.',
     '- Fange immer beim ERSTEN WORT DES ERSTEN SATZES an, nie mitten im Satz: "Zum Schluss schauen wir nach" ist richtig, "schauen wir nach Düsseldorf, wo" ist falsch.',
     '- Wird ein Thema nur mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi."), beginnt es bei diesem Schlagwort.',
     '',
