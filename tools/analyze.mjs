@@ -25,7 +25,12 @@ import { existsSync } from 'node:fs';
 const API = 'https://openrouter.ai/api/v1';
 const STT_MODEL = 'openai/whisper-large-v3-turbo'; // ca. 0,2 Cent je 10 Min. Audio
 const STT_FALLBACK = 'openai/whisper-large-v3';    // falls keine Zeitstempel kommen
-const TEXT_MODEL = 'google/gemini-3.1-flash-lite'; // findet Werbung/Themen im Text
+// Das Textmodell entscheidet, was Werbung ist. Die Lite-Variante hat bei
+// identischem Transkript unterschiedlich geantwortet (mal fehlte der
+// Schlussblock, mal wurde ein Beitrag fälschlich als Werbung markiert),
+// deshalb das grössere Modell - der Unterschied sind Bruchteile eines Cents.
+const TEXT_MODEL = 'google/gemini-3.1-flash';
+const TEXT_MODEL_FALLBACK = 'google/gemini-3.1-flash-lite';
 
 const CONFIG_PATH = 'tools/podcasts.config.json';
 const OUT_PATH = 'data/analysis.json';
@@ -220,18 +225,29 @@ function buildPrompt(lines, structure) {
   ].join('\n');
 }
 
-async function findAdsAndChapters(lines, structure) {
+async function askTextModel(prompt, model) {
   const res = await fetch(`${API}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: TEXT_MODEL,
-      messages: [{ role: 'user', content: buildPrompt(lines, structure) }],
+      model,
+      messages: [{ role: 'user', content: prompt }],
       temperature: 0
     })
   });
+  return { ok: res.ok, status: res.status, text: await res.text() };
+}
 
-  const text = await res.text();
+async function findAdsAndChapters(lines, structure, endMarker) {
+  const prompt = buildPrompt(lines, structure);
+
+  let res = await askTextModel(prompt, TEXT_MODEL);
+  if (!res.ok) {
+    log(`   ${TEXT_MODEL} antwortet mit HTTP ${res.status} - zweiter Versuch mit ${TEXT_MODEL_FALLBACK}`);
+    res = await askTextModel(prompt, TEXT_MODEL_FALLBACK);
+  }
+
+  const text = res.text;
   if (!res.ok) throw new Error(`Analyse HTTP ${res.status}: ${text.slice(0, 300)}`);
 
   const content = JSON.parse(text).choices?.[0]?.message?.content;
@@ -263,6 +279,20 @@ async function findAdsAndChapters(lines, structure) {
       return [Math.max(0, start), end];
     })
     .filter(Boolean);
+
+  // Feste Regel pro Podcast: Ab der Verabschiedung des Moderators kommt nur
+  // noch Werbung. Das Modell übersieht diesen Block manchmal - diese Zeile
+  // findet ihn verlässlich, ganz ohne Modell.
+  if (endMarker) {
+    const needle = endMarker.toLowerCase();
+    const idx = lines.findIndex((l) => l.text.toLowerCase().includes(needle));
+    if (idx !== -1) {
+      ads.push([lines[idx].start, lines[lines.length - 1].end + 1]);
+      log(`   Schlussmarker "${endMarker}" in Zeile ${idx} (${fmt(lines[idx].start)}) - ab dort Werbung`);
+    } else {
+      log(`   Hinweis: Schlussmarker "${endMarker}" nicht gefunden`);
+    }
+  }
 
   const chapters = (parsed.themen || [])
     .map((c) => {
@@ -328,7 +358,7 @@ function fixChapters(chapters, adRanges, duration) {
 
 /* ----------------------------------------------------------- Hauptprogramm */
 
-async function analyzeEpisode(ep, structure) {
+async function analyzeEpisode(ep, structure, endMarker) {
   log(`\n-> ${ep.title}`);
   if (ep.pubDate) log(`   erschienen: ${ep.pubDate}`);
   log(`   ${ep.audioUrl}`);
@@ -367,7 +397,7 @@ async function analyzeEpisode(ep, structure) {
   if (feedDuration && Math.abs(feedDuration - transcriptEnd) > 20) {
     log(`   Hinweis: Feed meldet ${fmt(feedDuration)}, Transkript endet bei ${fmt(transcriptEnd)} - es gilt das Transkript`);
   }
-  const found = await findAdsAndChapters(lines, structure);
+  const found = await findAdsAndChapters(lines, structure, endMarker);
 
   const adRanges = normalizeRanges(found.ads, duration);
   const adSeconds = adRanges.reduce((sum, [a, b]) => sum + (b - a), 0);
@@ -441,7 +471,7 @@ async function main() {
         continue;
       }
       try {
-        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast.structure || '');
+        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast.structure || '', podcast.endMarker || '');
         changed = true;
       } catch (err) {
         log(`   FEHLER: ${err.message}`);
