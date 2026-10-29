@@ -76,8 +76,22 @@ jobs:
           git add data/analysis.json
           if git diff --staged --quiet; then
             echo "Keine Änderung."
-          else
-            git commit -m "Werbe- und Themen-Analyse aktualisiert"
-            git pull --rebase origin main
-            git push
+            exit 0
           fi
+          git commit -m "Werbe- und Themen-Analyse aktualisiert"
+
+          # Beim Schreiben kann in der Zwischenzeit ein anderer Lauf
+          # geschrieben haben. Dann gewinnt die eigene, frisch berechnete
+          # Fassung (-X theirs bezieht sich beim Rebase auf den eigenen
+          # Commit). Drei Versuche, danach lieber abbrechen als Murks
+          # committen.
+          for versuch in 1 2 3; do
+            if git push; then
+              echo "Gespeichert (Versuch $versuch)."
+              exit 0
+            fi
+            echo "Push fehlgeschlagen - neuer Stand wird geholt."
+            git pull --rebase -X theirs origin main || git rebase --abort
+          done
+          echo "::error::Konnte das Ergebnis nicht speichern."
+          exit 1
