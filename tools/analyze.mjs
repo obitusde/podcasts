@@ -634,22 +634,20 @@ function buildBlockPrompt(blocks, structure) {
     '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
     'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
     '',
-    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Gemeint sind die Hauptthemen der Sendung, nicht jede einzelne Meldung: Eine Nachrichtenübersicht mit mehreren Kurzmeldungen ist EIN Thema, und Börsenkurse oder Wetter sind kein eigenes Thema. Eine Themenvorstellung am Anfang, in der die Sendung ihre Themen aufzählt, ist ebenfalls EIN Thema - die einzelnen Themen beginnen erst danach. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Bei einer Sendung von zehn Minuten sind es meist sechs bis zehn Themen, bei vierzig Minuten acht bis zwölf.',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es beginnt, und einen kurzen deutschen Titel (höchstens 40 Zeichen). Gemeint sind die Hauptthemen der Sendung, nicht jede einzelne Meldung: Eine Nachrichtenübersicht mit mehreren Kurzmeldungen ist EIN Thema, Börsenkurse und Wetter sind kein eigenes Thema. Eine Themenvorstellung am Anfang, in der die Sendung ihre Themen aufzählt, ist ebenfalls EIN Thema - die einzelnen Themen beginnen erst danach, dort wo die Sendung sie ausführlich behandelt. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Bei zehn Minuten Sendung sind es meist sechs bis zehn Themen, bei vierzig Minuten acht bis zwölf.',
     '',
-    'WO GENAU EIN THEMA BEGINNT - darauf kommt es an:',
-    '- Ein Thema beginnt mit der ANMODERATION: dem ersten Satz, in dem die Moderation im Studio das neue Thema ankündigt oder einordnet. NICHT mit dem Beitrag, NICHT mit der ersten Frage an einen Gast oder Korrespondenten, NICHT mit dem ersten Satz einer eingespielten Reportage.',
-    '  Richtig: "Die Suche nach einer Nachfolge für" - so kündigt die Moderation das Thema an.',
-    '  Falsch: "Zunächst stiegen acht Kandidatinnen und" - das steht schon mitten im Beitrag.',
-    '  Falsch: "Was genau ist heute passiert?" - das ist die erste Frage an den Korrespondenten.',
-    '- Die Abschnittsnummer ist die des Abschnitts, in dem diese Anmoderation steht. Steht die Anmoderation in einem ¶-Abschnitt, nimm diesen - nicht einen späteren.',
+    'Zu jedem Thema gehören ZWEI Textstellen, wortwörtlich aus dem Abschnittstext abgeschrieben, jeweils MINDESTENS VIER zusammenhängende Wörter:',
+    '- "anmoderation": die ersten Wörter des Satzes, mit dem die Moderation im Studio das Thema ANKÜNDIGT oder einordnet.',
+    '- "beitrag": die ersten Wörter des Beitrags selbst - der Reportage, des Gesprächs oder der ersten Frage an einen Korrespondenten. Gibt es keinen eigenen Beitrag, wiederhole hier die Anmoderation.',
+    'Beispiel aus einer echten Sendung: "anmoderation" = "Die Suche nach einer Nachfolge für", "beitrag" = "Zunächst stiegen acht Kandidatinnen und". Beides gehört zum selben Thema, die Anmoderation kommt zuerst.',
+    '',
+    'Weiteres zu den Textstellen:',
     '- Fange immer beim ERSTEN WORT DES ERSTEN SATZES an, nie mitten im Satz: "Zum Schluss schauen wir nach" ist richtig, "schauen wir nach Düsseldorf, wo" ist falsch.',
-    '- Wird ein Thema nur mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi."), beginnt es bei diesem Schlagwort.',
-    '- Ein Thema, das in der Themenvorstellung am Anfang nur kurz angekündigt wird, beginnt NICHT dort, sondern erst an der Stelle, an der die Sendung es später ausführlich behandelt.',
-    '',
-    'Bei JEDEM Thema muss unter "beginnt" eine Folge von MINDESTENS VIER WÖRTERN stehen, wortwörtlich aus dem Abschnittstext. Ein einzelnes Wort oder eine Abkürzung ist unbrauchbar.',
+    '- Wird ein Thema nur mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi."), beginnt die Anmoderation bei diesem Schlagwort.',
+    '- Die Abschnittsnummer ist die des Abschnitts, in dem die Anmoderation steht. Steht sie in einem ¶-Abschnitt, nimm diesen.',
     '',
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
-    '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China","beginnt":"Zollstreit. Die Europäische Union hat"}]}',
+    '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China","anmoderation":"Zollstreit. Die Europäische Union hat","beitrag":"In Brüssel herrscht seit Wochen"}]}',
     '',
     'Abschnitte:',
     list
@@ -747,22 +745,26 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
   // nicht zuverlässig: In einem Lauf stand bei einem Thema nur "Der ", und
   // die Marke fiel auf den Abschnittsanfang zurück, 44 Sekunden daneben.
   // Deshalb wird die Antwort geprüft und notfalls einmal nachgefragt.
-  const zuKurz = (parsed.themen || []).filter(
-    (c) => String(c.beginnt || '').trim().split(/\s+/).filter(Boolean).length < 3
-  );
+  const worte = (x) => String(x || '').trim().split(/\s+/).filter(Boolean).length;
+  // Ältere Antworten kannten nur ein Feld - das zählt als Anmoderation.
+  (parsed.themen || []).forEach((c) => {
+    if (!c.anmoderation && c.beginnt) c.anmoderation = c.beginnt;
+  });
+  const zuKurz = (parsed.themen || []).filter((c) => worte(c.anmoderation) < 3);
   if (zuKurz.length > 0) {
     log(`   ${zuKurz.length} Thema/Themen ohne brauchbare Anfangsworte (${zuKurz.map((c) => `"${c.titel}": "${c.beginnt || ''}"`).join(', ')}) - einmal nachfragen`);
     const nachfrage = prompt +
       '\n\nDeine letzte Antwort war unvollständig: Bei ' +
       zuKurz.map((c) => `"${c.titel}"`).join(' und ') +
-      ' standen unter "beginnt" zu wenige Wörter. Antworte noch einmal vollständig und gib bei JEDEM Thema MINDESTENS VIER zusammenhängende Wörter an, wortwörtlich aus dem Abschnittstext abgeschrieben.';
+      ' standen unter "anmoderation" zu wenige Wörter. Antworte noch einmal vollständig und gib bei JEDEM Thema unter "anmoderation" UND unter "beitrag" MINDESTENS VIER zusammenhängende Wörter an, wortwörtlich aus dem Abschnittstext abgeschrieben.';
     const zweite = await askTextModel(nachfrage, model);
     if (zweite.ok) {
       try {
         const neuerVersuch = auswerten(zweite.text);
-        const nochZuKurz = (neuerVersuch.themen || []).filter(
-          (c) => String(c.beginnt || '').trim().split(/\s+/).filter(Boolean).length < 3
-        ).length;
+        (neuerVersuch.themen || []).forEach((c) => {
+          if (!c.anmoderation && c.beginnt) c.anmoderation = c.beginnt;
+        });
+        const nochZuKurz = (neuerVersuch.themen || []).filter((c) => worte(c.anmoderation) < 3).length;
         log(`   Nachfrage: ${nochZuKurz === 0 ? 'jetzt vollständig' : nochZuKurz + ' weiterhin zu kurz'}`);
         if (nochZuKurz < zuKurz.length) parsed = neuerVersuch;
       } catch (err) {
@@ -828,20 +830,35 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
       blocks.forEach((b) => {
         if (b.end >= von && b.start <= bis) umgebung.push(...b.words);
       });
-      const idx = findPhraseStart(umgebung, c.beginnt, block.start);
-      let treffer = null;
-      if (idx !== null) {
+      // Die Zeit zu einer zitierten Textstelle: Wort suchen, dann auf den
+      // Satzanfang zurück, damit die Marke nicht mitten im Satz sitzt.
+      const zeitZu = (phrase) => {
+        const idx = findPhraseStart(umgebung, phrase, block.start);
+        if (idx === null) return null;
         const satzIdx = sentenceStartIndex(umgebung, idx);
-        treffer = umgebung[satzIdx].start;
-        if (satzIdx !== idx) {
-          log(`   Thema "${titel}": "${c.beginnt}" steht mitten im Satz (${fmt(umgebung[idx].start)}) - zurück auf den Satzanfang ${fmt(treffer)}`);
-        }
+        const t = umgebung[satzIdx].start;
+        return t >= von - 0.5 && t <= bis + 0.5 ? t : null;
+      };
+
+      // Es gilt die Anmoderation - sie sagt dem Hörer erst, worum es geht.
+      // Der Beitragsanfang ist nur die Rückfallebene, wenn die Anmoderation
+      // nicht wiederzufinden ist.
+      const tAn = zeitZu(c.anmoderation);
+      const tBei = zeitZu(c.beitrag);
+      let treffer = tAn;
+      if (tAn === null && tBei !== null) {
+        log(`   Thema "${titel}": Anmoderation nicht wiedergefunden - es gilt der Beitragsanfang ${fmt(tBei)}`);
+        treffer = tBei;
+      } else if (tAn !== null && tBei !== null && tBei < tAn - 1) {
+        log(`   Thema "${titel}": Beitrag (${fmt(tBei)}) liegt vor der Anmoderation (${fmt(tAn)}) - es gilt der frühere Wert`);
+        treffer = tBei;
       }
-      const gefunden = treffer !== null && treffer >= von - 0.5 && treffer <= bis + 0.5;
+
+      const gefunden = treffer !== null;
       if (gefunden && Math.abs(treffer - block.start) > 0.5) {
-        log(`   Thema "${titel}": Abschnitt ${c.block} beginnt ${fmt(block.start)}, die Worte aber ${fmt(treffer)} - es gelten die Worte`);
-      } else if (!gefunden && c.beginnt) {
-        log(`   Thema "${titel}": "${c.beginnt}" nicht wiedergefunden - es gilt der Abschnittsanfang ${fmt(block.start)}`);
+        log(`   Thema "${titel}": Abschnitt ${c.block} beginnt ${fmt(block.start)}, die Anmoderation aber ${fmt(treffer)} - es gelten die Worte`);
+      } else if (!gefunden) {
+        log(`   Thema "${titel}": weder Anmoderation noch Beitrag wiedergefunden - es gilt der Abschnittsanfang ${fmt(block.start)}`);
       }
 
       const start = gefunden ? treffer : block.start;
