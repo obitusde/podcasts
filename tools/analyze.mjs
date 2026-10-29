@@ -565,14 +565,53 @@ function buildBlockPrompt(blocks, structure) {
     '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
     'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
     '',
-    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, und einen kurzen deutschen Titel (höchstens 40 Zeichen). Die Themen werden oft mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi.") - dann ist der Abschnitt gemeint, in dem dieses Schlagwort steht. Ein Thema darf nicht in einem Werbeabschnitt beginnen. 3 bis 12 Themen.',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Die Themen werden oft mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi.") - dann ist der Abschnitt gemeint, in dem dieses Schlagwort steht, und "beginnt" fängt mit diesem Schlagwort an. Ein Thema darf nicht in einem Werbeabschnitt beginnen. 3 bis 12 Themen.',
     '',
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
-    '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China"}]}',
+    '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China","beginnt":"Zollstreit. Die Europäische Union hat"}]}',
     '',
     'Abschnitte:',
     list
   ].join('\n');
+}
+
+// Vergleichsform eines Wortes: nur Buchstaben und Ziffern, klein.
+function normWord(text) {
+  return String(text).toLowerCase().replace(/[^a-zäöüß0-9]+/g, '');
+}
+
+/**
+ * Sucht die vom Modell genannten Anfangswörter im gemessenen Wortstrom und
+ * liefert die Zeit des ersten Wortes.
+ *
+ * Warum: Die Abschnittsgrenze ist nur so genau wie die Wahl des Abschnitts.
+ * Nennt das Modell den Abschnitt davor, sitzt die Marke einen Satz zu früh -
+ * beim Thema "Handelspolitik" waren das 14 Sekunden. Die Wörter dagegen sind
+ * eindeutig, und ihre Zeiten sind gemessen, nicht geschätzt. Gesucht wird nur
+ * in der Umgebung des genannten Abschnitts, damit ein Wort, das später noch
+ * einmal fällt, die Marke nicht verschleppt.
+ */
+function findPhraseStart(words, phrase, near) {
+  const needle = String(phrase || '').split(/\s+/).map(normWord).filter(Boolean);
+  if (needle.length < 2) return null;
+
+  // Erst die lange Wortfolge versuchen, dann kürzere - das Modell schreibt
+  // gelegentlich ein Wort anders, als Whisper es verstanden hat.
+  for (let len = Math.min(needle.length, 5); len >= 2; len--) {
+    const treffer = [];
+    for (let i = 0; i + len <= words.length; i++) {
+      let passt = true;
+      for (let j = 0; j < len; j++) {
+        if (normWord(words[i + j].text) !== needle[j]) { passt = false; break; }
+      }
+      if (passt) treffer.push(words[i].start);
+    }
+    if (treffer.length > 0) {
+      treffer.sort((a, b) => Math.abs(a - near) - Math.abs(b - near));
+      return treffer[0];
+    }
+  }
+  return null;
 }
 
 /**
@@ -637,7 +676,27 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
     .map((c) => {
       const block = blocks[c.block];
       if (!block || !c.titel) return null;
-      return { start: Math.max(0, block.start - BLOCK_PAD), title: String(c.titel).slice(0, 60) };
+      const titel = String(c.titel).slice(0, 60);
+
+      // Nur in der Umgebung des genannten Abschnitts suchen (zwei davor, zwei
+      // danach) - so fängt die Suche einen Griff daneben ab, läuft aber nicht
+      // quer durch die Folge.
+      const von = blocks[Math.max(0, c.block - 2)].start;
+      const bis = blocks[Math.min(blocks.length - 1, c.block + 2)].end;
+      const umgebung = [];
+      for (let i = Math.max(0, c.block - 2); i <= Math.min(blocks.length - 1, c.block + 2); i++) {
+        umgebung.push(...blocks[i].words);
+      }
+      const treffer = findPhraseStart(umgebung, c.beginnt, block.start);
+      const gefunden = treffer !== null && treffer >= von - 0.5 && treffer <= bis + 0.5;
+      if (gefunden && Math.abs(treffer - block.start) > 0.5) {
+        log(`   Thema "${titel}": Abschnitt ${c.block} beginnt ${fmt(block.start)}, die Worte "${c.beginnt}" aber ${fmt(treffer)} - es gelten die Worte`);
+      } else if (!gefunden && c.beginnt) {
+        log(`   Thema "${titel}": "${c.beginnt}" nicht wiedergefunden - es gilt der Abschnittsanfang ${fmt(block.start)}`);
+      }
+
+      const start = gefunden ? treffer : block.start;
+      return { start: Math.max(0, start - BLOCK_PAD), title: titel };
     })
     .filter(Boolean)
     .sort((a, b) => a.start - b.start);
