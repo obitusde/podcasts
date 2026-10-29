@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T08:59:00.739Z",
+  "updatedAt": "2026-10-29T09:01:23.906Z",
   "episodes": {
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
@@ -8,15 +8,15 @@
       "adRanges": [
         [
           37.4,
-          97.2
+          96.2
         ],
         [
-          292.2,
-          308.3
+          287.6,
+          311.5
         ],
         [
-          570.1,
-          615.1
+          565.5,
+          601.4
         ]
       ],
       "chapters": [
@@ -25,41 +25,33 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 97.3,
-          "title": "Israelische Parlamentswahl"
+          "start": 96.3,
+          "title": "Israel: Eine gespaltene Gesellschaft"
         },
         {
-          "start": 219.8,
-          "title": "Merz auf Asienreise"
+          "start": 215.2,
+          "title": "Merz und der Freihandel mit Asien"
         },
         {
-          "start": 315.6,
-          "title": "US-Wahl und Trump-Fans"
+          "start": 363.9,
+          "title": "E.ON: Investitionen und Sparprogramm"
         },
         {
-          "start": 375.3,
-          "title": "E.ON Investitionen"
+          "start": 432.8,
+          "title": "Mercedes: Gewinnprognose gekappt"
         },
         {
-          "start": 440,
-          "title": "Mercedes Gewinnwarnung"
+          "start": 477.7,
+          "title": "Börse: Handel rund um die Uhr"
         },
         {
-          "start": 461.9,
-          "title": "Tarifstreit Metallindustrie"
-        },
-        {
-          "start": 482.3,
-          "title": "Börsenhandel rund um die Uhr"
-        },
-        {
-          "start": 523.7,
-          "title": "Kurioses aus Essen"
+          "start": 519.3,
+          "title": "Sport: Kurioser Bau in Essen"
         }
       ],
-      "durationSeconds": 615,
+      "durationSeconds": 601,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T08:59:00.732Z"
+      "detectedAt": "2026-10-29T09:01:23.899Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -67,12 +59,8 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
       "adRanges": [
         [
-          43.1,
-          93.7
-        ],
-        [
-          559.4,
-          593.1
+          37.9,
+          88.1
         ]
       ],
       "chapters": [
@@ -81,37 +69,41 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 93.8,
-          "title": "Debatte um Bundespräsidentenamt"
+          "start": 88.2,
+          "title": "Bundespräsidentenwahl"
         },
         {
-          "start": 233.2,
-          "title": "Notenbanken und Zinspolitik"
+          "start": 237.5,
+          "title": "Zinsentscheid der FED"
         },
         {
-          "start": 286.4,
-          "title": "Rekordquartale der Banken"
+          "start": 256.2,
+          "title": "EZB und Inflation"
         },
         {
-          "start": 340.7,
+          "start": 283,
+          "title": "Bankenquartalszahlen"
+        },
+        {
+          "start": 337.2,
           "title": "Gesundheitspolitik"
         },
         {
-          "start": 402.7,
-          "title": "Audi und die US-Politik"
+          "start": 398.9,
+          "title": "Audi und Trump"
         },
         {
-          "start": 457.2,
-          "title": "Alphabet und KI-Investitionen"
+          "start": 452.8,
+          "title": "Alphabet Quartalszahlen"
         },
         {
-          "start": 511.3,
-          "title": "Handelspolitik und Weinpreise"
+          "start": 504,
+          "title": "Weinmarkt"
         }
       ],
-      "durationSeconds": 593,
+      "durationSeconds": 600,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T08:58:34.448Z"
+      "detectedAt": "2026-10-29T09:01:05.050Z"
     }
   }
 }
