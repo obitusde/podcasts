@@ -795,6 +795,66 @@ async function findAdsAndChapters(lines, words, structure, endMarker) {
   return { ads: trimAdsByChapters(ads, chapters), chapters };
 }
 
+/**
+ * Abschliessende Prüfung an der echten Datei: Vor jeder Marke, an der die
+ * Wiedergabe einsetzt (Themenanfang, Ende eines Werbeblocks), MUSS eine
+ * gemessene Pause liegen. Sonst beginnt die Wiedergabe mitten im Satz.
+ *
+ * Fehlt die Pause, wird die Marke auf die letzte Pause davor zurückgezogen
+ * (höchstens PAUSE_LOOKBACK Sekunden). Jede Marke wird protokolliert - damit
+ * lässt sich der Erfolg ablesen, ohne hineinzuhören.
+ */
+const PAUSE_NEAR = 0.6;       // so nah gilt eine Pause als "direkt davor"
+const PAUSE_LOOKBACK = 4;     // so weit wird notfalls zurückgezogen
+
+function pauseBeforeMark(silences, time, floor = 0) {
+  const direct = silences.find(([, end]) => end >= time - PAUSE_NEAR && end <= time + 0.25);
+  if (direct) return { at: Math.max(floor, direct[1] - 0.05), status: 'Pause davor' };
+
+  const earlier = silences
+    .filter(([, end]) => end < time && time - end <= PAUSE_LOOKBACK && end - 0.05 >= floor)
+    .sort((a, b) => b[1] - a[1])[0];
+  if (earlier) {
+    return { at: Math.max(floor, earlier[1] - 0.05), status: 'auf Pause zurückgezogen' };
+  }
+  return { at: time, status: 'KEINE Pause gefunden' };
+}
+
+/**
+ * Zieht alle Einstiegsmarken auf Pausen und schreibt das Ergebnis ins
+ * Protokoll. Gibt die geprüften Werte zurück.
+ */
+function alignMarksToPauses(adRanges, chapters, silences, duration) {
+  if (silences.length === 0) {
+    log('   Prüfung übersprungen: keine Pausen gemessen');
+    return { adRanges, chapters };
+  }
+
+  let good = 0;
+  let total = 0;
+
+  const checkedAds = adRanges.map(([from, to]) => {
+    if (to >= duration - 1) return [from, to];       // Schlussblock: kein Einstieg danach
+    total++;
+    const r = pauseBeforeMark(silences, to, from + 1);
+    if (r.status === 'Pause davor') good++;
+    log(`   Werbe-Ende ${fmt(to)} -> ${fmt(r.at)}: ${r.status}`);
+    return [from, r.at];
+  });
+
+  const checkedChapters = chapters.map((c) => {
+    if (c.start <= 0.5) return c;                    // Anfang der Folge
+    total++;
+    const r = pauseBeforeMark(silences, c.start);
+    if (r.status === 'Pause davor') good++;
+    log(`   Thema "${c.title}" ${fmt(c.start)} -> ${fmt(r.at)}: ${r.status}`);
+    return { start: r.at, title: c.title };
+  });
+
+  log(`   Prüfung: ${good} von ${total} Marken lagen schon richtig`);
+  return { adRanges: checkedAds, chapters: checkedChapters };
+}
+
 /* --------------------------------------------------------- Nachbearbeitung */
 
 /**
@@ -980,7 +1040,17 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
     }
   }
 
-  const chapters = fixChapters(found.chapters, adRanges, duration);
+  let chapters = fixChapters(found.chapters, adRanges, duration);
+
+  // Letzter Schritt: alle Marken an der echten Datei gegenprüfen.
+  const aligned = alignMarksToPauses(adRanges, chapters, silences, duration);
+  adRanges = normalizeRanges(aligned.adRanges, duration);
+  chapters = aligned.chapters;
+
+  // Das offene Ende des Schlussblocks nach dem Normalisieren wiederherstellen
+  if (adRanges.length > 0 && adRanges[adRanges.length - 1][1] >= duration - 1) {
+    adRanges[adRanges.length - 1][1] = 999999;
+  }
 
   log('   Werbung:');
   if (adRanges.length === 0) log('     (keine gefunden)');
