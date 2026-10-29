@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T09:37:11.135Z",
+  "updatedAt": "2026-10-29T09:40:00.037Z",
   "episodes": {
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
@@ -7,7 +7,11 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622455-m-7e234179e43d04e3d8a140fed5cdc025.mp3?source=feed",
       "adRanges": [
         [
-          510.9,
+          38.9,
+          94.1
+        ],
+        [
+          566.4,
           999999
         ]
       ],
@@ -17,37 +21,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 37.7,
-          "title": "Israelische Parlamentswahl"
+          "start": 94.2,
+          "title": "Israel"
         },
         {
-          "start": 159.7,
-          "title": "Handelsabkommen mit Asien"
+          "start": 217.4,
+          "title": "Freihandel mit Asien"
         },
         {
-          "start": 234.5,
+          "start": 292.2,
           "title": "US-Zwischenwahlen"
         },
         {
-          "start": 309.3,
-          "title": "Eon und das Fotojahr"
+          "start": 365.5,
+          "title": "E.ON"
         },
         {
-          "start": 380.6,
-          "title": "Gewinnwarnung bei Mercedes"
+          "start": 436.6,
+          "title": "Mercedes-Gewinnwarnung"
         },
         {
-          "start": 422.8,
-          "title": "Börse ohne Feierabend"
+          "start": 478.9,
+          "title": "Börsenhandel rund um die Uhr"
         },
         {
-          "start": 464.4,
-          "title": "Pokalspiel in Essen"
+          "start": 520.2,
+          "title": "Zubetonierter Gästeblock"
         }
       ],
-      "durationSeconds": 513,
-      "model": "microsoft/mai-transcribe-2",
-      "detectedAt": "2026-10-29T09:37:11.129Z"
+      "durationSeconds": 594,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-29T09:40:00.029Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -55,7 +59,11 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
       "adRanges": [
         [
-          504.9,
+          37.7,
+          96.5
+        ],
+        [
+          559.5,
           999999
         ]
       ],
@@ -65,37 +73,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 38.4,
-          "title": "Bundespräsident"
+          "start": 96.6,
+          "title": "Nachfolge des Bundespräsidenten"
         },
         {
-          "start": 178.2,
-          "title": "Notenbanken"
+          "start": 240.9,
+          "title": "Fed belässt Leitzins unverändert"
         },
         {
-          "start": 231.5,
-          "title": "Banken"
+          "start": 284.6,
+          "title": "Rekordgewinne bei Großbanken"
         },
         {
-          "start": 285.7,
-          "title": "Gesundheit"
+          "start": 340.6,
+          "title": "Gesundheitspolitik von Linnemann"
         },
         {
-          "start": 347.7,
-          "title": "Audi"
+          "start": 402.3,
+          "title": "Audis Wackeldeal mit Trump"
         },
         {
-          "start": 401.4,
-          "title": "Alphabet"
+          "start": 457.1,
+          "title": "Zahlen von Alphabet und Microsoft"
         },
         {
-          "start": 456.3,
-          "title": "Handelspolitik"
+          "start": 511.3,
+          "title": "Handelspolitik und Weinpreise"
         }
       ],
-      "durationSeconds": 506,
-      "model": "microsoft/mai-transcribe-2",
-      "detectedAt": "2026-10-29T09:36:42.331Z"
+      "durationSeconds": 594,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-29T09:39:20.406Z"
     },
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
