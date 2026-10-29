@@ -77,8 +77,21 @@ const LINE_MAX_WORDS = 22;
 // Ton gemessen: An fast jeder Abschnittsgrenze liegt eine kurze Pause.
 // Pausen schwanken zwischen zwei Läufen um exakt null Sekunden - anders als
 // geschätzte Wort-Zeitstempel.
-const SILENCE_DB = -30;          // ab wie leise es als Pause gilt
-const SILENCE_MIN = 0.15;        // Mindestdauer einer Pause in Sekunden
+// Wie leise es sein muss, um als Pause zu gelten, hängt vom Material ab:
+// In einer professionell produzierten Sendung ist eine Sprechpause nie
+// wirklich still (Raumklang, Musikbett, angeglichene Lautstärke). Mit einer
+// festen strengen Schwelle findet man dort GAR KEINE Pause - genau das ist
+// passiert. Deshalb wird eine Leiter von Schwellen durchprobiert und die
+// erste genommen, die eine sinnvolle Anzahl Pausen liefert.
+const SILENCE_LADDER = [
+  { db: -35, min: 0.25 },
+  { db: -30, min: 0.25 },
+  { db: -25, min: 0.3 },
+  { db: -20, min: 0.35 },
+  { db: -16, min: 0.4 }
+];
+const SILENCE_MIN_COUNT = 8;    // weniger = die Schwelle war zu streng
+const SILENCE_MAX_COUNT = 500;  // mehr = sie war zu grosszügig
 const SNAP_WINDOW = 5;           // Suchradius um die geschätzte Grenze
 
 // Sicherheitsregel, wenn im Suchradius KEINE Pause liegt: Die Grenze wandert
@@ -354,32 +367,43 @@ function linesFromWords(words) {
  * ffmpeg ist auf den GitHub-Rechnern vorinstalliert; der Lauf dauert für
  * eine 10-Minuten-Datei wenige Sekunden und kostet nichts.
  */
-async function detectSilences(filePath) {
-  try {
-    const { stderr } = await run('ffmpeg', [
-      '-hide_banner', '-nostats',
-      '-i', filePath,
-      '-af', `silencedetect=noise=${SILENCE_DB}dB:d=${SILENCE_MIN}`,
-      '-f', 'null', '-'
-    ], { maxBuffer: 64 * 1024 * 1024 });
+async function detectSilencesAt(filePath, db, min) {
+  const { stderr } = await run('ffmpeg', [
+    '-hide_banner', '-nostats',
+    '-i', filePath,
+    '-af', `silencedetect=noise=${db}dB:d=${min}`,
+    '-f', 'null', '-'
+  ], { maxBuffer: 64 * 1024 * 1024 });
 
-    const silences = [];
-    let start = null;
-    for (const line of stderr.split('\n')) {
-      const s = /silence_start:\s*(-?[0-9.]+)/.exec(line);
-      const e = /silence_end:\s*(-?[0-9.]+)/.exec(line);
-      if (s) start = parseFloat(s[1]);
-      else if (e && start !== null) {
-        const end = parseFloat(e[1]);
-        if (end > start) silences.push([start, end]);
-        start = null;
-      }
+  const silences = [];
+  let start = null;
+  for (const line of stderr.split('\n')) {
+    const s = /silence_start:\s*(-?[0-9.]+)/.exec(line);
+    const e = /silence_end:\s*(-?[0-9.]+)/.exec(line);
+    if (s) start = parseFloat(s[1]);
+    else if (e && start !== null) {
+      const end = parseFloat(e[1]);
+      if (end > start) silences.push([start, end]);
+      start = null;
     }
-    return silences;
-  } catch (err) {
-    log(`   Pausen-Messung nicht möglich (${err.message}) - es gilt die Sicherheitsregel`);
-    return [];
   }
+  return silences;
+}
+
+async function detectSilences(filePath) {
+  let best = [];
+  for (const step of SILENCE_LADDER) {
+    try {
+      const found = await detectSilencesAt(filePath, step.db, step.min);
+      log(`   Pausen bei ${step.db} dB / ${step.min}s: ${found.length}`);
+      if (found.length > best.length && found.length <= SILENCE_MAX_COUNT) best = found;
+      if (found.length >= SILENCE_MIN_COUNT && found.length <= SILENCE_MAX_COUNT) return found;
+    } catch (err) {
+      log(`   Pausen-Messung nicht möglich (${err.message})`);
+      return [];
+    }
+  }
+  return best;
 }
 
 /**
