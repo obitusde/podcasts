@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T09:23:18.841Z",
+  "updatedAt": "2026-10-29T09:24:53.067Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -55,7 +55,7 @@
       ],
       "durationSeconds": 588,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:23:18.833Z"
+      "detectedAt": "2026-10-29T09:24:53.061Z"
     },
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
