@@ -6,6 +6,7 @@
       "feed": "https://handelsblatt-morningbriefing.podigee.io/feed/mp3",
       "episodes": 1,
       "endMarker": "Ihr Sven Prange",
+      "expectOpeningAd": true,
       "structure": "Die Folge ist immer gleich aufgebaut: (1) der Moderator stellt kurz die Themen der Sendung vor, (2) ein Werbeblock mit Sponsorenhinweis, (3) die einzelnen Themen nacheinander, dazwischen koennen weitere Werbebloecke liegen, (4) am Schluss ein Werbeblock bzw. Abspann mit Hinweisen auf andere Angebote. Der Werbeblock nach der Themenvorstellung dauert meist etwa eine Minute."
     }
   ]

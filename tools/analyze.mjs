@@ -28,9 +28,13 @@ const API = 'https://openrouter.ai/api/v1';
 // Whisper-Turbo setzte dasselbe Wort in drei Läufen auf 1:29, 1:34 und
 // 1:37. Deshalb zuerst das genauere Modell, Whisper bleibt Rückfallebene.
 // Das erste aus dieser Liste, das es bei OpenRouter gibt, wird genommen.
+// MAI-Transcribe 2 wurde getestet und wieder entfernt: Seine Zeitstempel
+// waren um die Länge des Werbeblocks verschoben (Themen begannen 59 Sek.
+// zu früh, der vordere Werbeblock fehlte ganz). Es bleibt bei Whisper -
+// die grosse Variante zuerst, weil ihre Zeitstempel ruhiger sind als die
+// der Turbo-Variante.
 const STT_PREFERENCE = [
-  'microsoft/mai-transcribe-2',      // ca. 1,7 Cent je 10 Min., Wort-Zeitstempel
-  'openai/whisper-large-v3',         // ca. 0,5 Cent
+  'openai/whisper-large-v3',         // ca. 0,5 Cent je 10 Min.
   'openai/whisper-large-v3-turbo'    // ca. 0,2 Cent
 ];
 const STT_FALLBACK = 'openai/whisper-large-v3-turbo';
@@ -518,7 +522,7 @@ function fixChapters(chapters, adRanges, duration) {
 
 /* ----------------------------------------------------------- Hauptprogramm */
 
-async function analyzeEpisode(ep, structure, endMarker) {
+async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   log(`\n-> ${ep.title}`);
   if (ep.pubDate) log(`   erschienen: ${ep.pubDate}`);
   log(`   ${ep.audioUrl}`);
@@ -564,6 +568,7 @@ async function analyzeEpisode(ep, structure, endMarker) {
     lines.forEach((l, i) => log(`   [${i}] ${fmt(l.start)}-${fmt(l.end)} ${l.text}`));
     log('   --- Ende Transkript ---');
   }
+  log(`   Transkript deckt ${fmt(lines[0].start)} bis ${fmt(transcriptEnd)} ab`);
   if (feedDuration && Math.abs(feedDuration - transcriptEnd) > 20) {
     log(`   Hinweis: Feed meldet ${fmt(feedDuration)}, Transkript endet bei ${fmt(transcriptEnd)} - es gilt das Transkript`);
   }
@@ -586,6 +591,17 @@ async function analyzeEpisode(ep, structure, endMarker) {
   const adSeconds = adRanges.reduce((sum, [a, b]) => sum + (Math.min(b, duration) - a), 0);
   if (duration - adSeconds < MIN_CONTENT_SECONDS) {
     throw new Error(`verworfen - nur ${Math.round(duration - adSeconds)} Sek. Inhalt übrig`);
+  }
+
+  // Sicherung gegen kaputte Zeitachsen: Wenn für diesen Podcast ein
+  // Werbeblock am Anfang bekannt ist, muss einer gefunden worden sein.
+  // Sonst würde die Folge mit Werbung starten - genau das, was nicht
+  // passieren soll. Dann lieber keine Analyse und die festen Werte.
+  if (expectOpeningAd) {
+    const hasOpeningAd = adRanges.some(([a]) => a < 180);
+    if (!hasOpeningAd) {
+      throw new Error('verworfen - kein Werbeblock am Anfang gefunden (Zeitachse unplausibel)');
+    }
   }
 
   const chapters = fixChapters(found.chapters, adRanges, duration);
@@ -655,7 +671,7 @@ async function main() {
         continue;
       }
       try {
-        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast.structure || '', podcast.endMarker || '');
+        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast.structure || '', podcast.endMarker || '', podcast.expectOpeningAd !== false);
         changed = true;
       } catch (err) {
         log(`   FEHLER: ${err.message}`);
