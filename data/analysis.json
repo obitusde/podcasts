@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T14:23:38.404Z",
+  "updatedAt": "2026-10-29T14:28:41.912Z",
   "episodes": {
     "38e16133-0dc4-38ad-b831-329ec32eae10": {
       "podcastId": "echo-der-zeit",
@@ -13,10 +13,10 @@
       "chapters": [
         {
           "start": 0,
-          "title": "Themenvorstellung"
+          "title": "Themenübersicht"
         },
         {
-          "start": 20.6,
+          "start": 101.9,
           "title": "Zugunglück in Spanien"
         },
         {
@@ -25,15 +25,11 @@
         },
         {
           "start": 540.4,
-          "title": "Wahl in Israel"
+          "title": "Wahlen in Israel"
         },
         {
-          "start": 731.0728750000001,
-          "title": "Regierungsbildung in Israel"
-        },
-        {
-          "start": 1098.070125,
-          "title": "Nachfolge UNO-Generalsekretär"
+          "start": 1175.6911460000001,
+          "title": "Nachfolge des UNO-Generalsekretärs"
         },
         {
           "start": 1343.715729,
@@ -45,7 +41,7 @@
         },
         {
           "start": 1820.417667,
-          "title": "Missbrauch in reformierter Kirche"
+          "title": "Missbrauch in der Kirche"
         },
         {
           "start": 2151.8,
@@ -54,7 +50,7 @@
       ],
       "durationSeconds": 2550,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T14:23:36.311Z"
+      "detectedAt": "2026-10-29T14:28:41.326Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "podcast": "Handelsblatt Morning Briefing",
