@@ -41,10 +41,21 @@ const LINE_MAX_SECONDS = 8;      // Länge der Transkript-Zeilen fürs Textmodel
 const LINE_MAX_WORDS = 22;
 const PAD_BEFORE = 0.3;          // Werbeblock minimal weiter fassen
 const PAD_AFTER = 0.4;
+// Zwischen dem letzten gesprochenen Werbewort und dem ersten Wort des
+// Beitrags liegt oft ein Jingle oder Musik. Im Transkript steht dazu
+// nichts, also würde der Werbeblock zu früh enden (gemessen: rund 9
+// Sekunden Werbung blieben übrig). Deshalb wird ein Werbeblock bis zum
+// ersten Wort danach bzw. ab dem letzten Wort davor ausgedehnt - höchstens
+// aber um GAP_MAX_SECONDS, damit ein langer Sprechpausen-Abschnitt nicht
+// ganze Beiträge verschluckt.
+const GAP_MAX_SECONDS = 20;
 
 // FORCE=1 analysiert auch Folgen neu, die schon im Ergebnis stehen -
 // nützlich, wenn Prompt oder Modell geändert wurden.
 const FORCE = process.env.FORCE === '1' || process.env.FORCE === 'true';
+// EPISODES überschreibt beim Start von Hand, wie viele der neuesten Folgen
+// geprüft werden - praktisch, um eine Änderung an mehreren Folgen zu testen.
+const EPISODES_OVERRIDE = parseInt(process.env.EPISODES || '', 10);
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 if (!apiKey) {
@@ -224,10 +235,25 @@ async function findAdsAndChapters(lines, structure) {
 
   const ads = (parsed.ads || [])
     .map((a) => {
-      const from = lines[a.von];
-      const to = lines[a.bis ?? a.von];
+      const fromIdx = a.von;
+      const toIdx = a.bis ?? a.von;
+      const from = lines[fromIdx];
+      const to = lines[toIdx];
       if (!from || !to) return null;
-      return [Math.max(0, from.start - PAD_BEFORE), to.end + PAD_AFTER];
+
+      // Anfang: bis zum Ende des letzten Wortes davor zurückziehen
+      const prev = lines[fromIdx - 1];
+      const start = prev
+        ? Math.max(prev.end, from.start - GAP_MAX_SECONDS)
+        : Math.max(0, from.start - PAD_BEFORE);
+
+      // Ende: bis zum ersten Wort danach ausdehnen (deckt den Jingle ab)
+      const next = lines[toIdx + 1];
+      const end = next
+        ? Math.min(Math.max(to.end + PAD_AFTER, next.start - 0.05), to.end + GAP_MAX_SECONDS)
+        : to.end + PAD_AFTER;
+
+      return [Math.max(0, start), end];
     })
     .filter(Boolean);
 
@@ -374,7 +400,11 @@ async function main() {
 
     const maxAgeHours = podcast.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS;
 
-    for (const ep of episodes.slice(0, podcast.episodes || 1)) {
+    const count = Number.isFinite(EPISODES_OVERRIDE) && EPISODES_OVERRIDE > 0
+      ? EPISODES_OVERRIDE
+      : (podcast.episodes || 1);
+
+    for (const ep of episodes.slice(0, count)) {
       if (episodesStore[ep.guid] && !FORCE) {
         log(`   schon analysiert: ${ep.title}`);
         continue;
