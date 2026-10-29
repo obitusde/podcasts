@@ -1,17 +1,17 @@
 {
-  "updatedAt": "2026-10-29T09:24:53.067Z",
+  "updatedAt": "2026-10-29T09:29:01.925Z",
   "episodes": {
-    "62faa662abdc627404ef0d5e582d2174": {
-      "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
-      "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
-      "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
+    "75be7f726ec71e51c3d61106f50501e0": {
+      "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
+      "pubDate": "Wed, 28 Oct 2026 04:52:59 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622455-m-7e234179e43d04e3d8a140fed5cdc025.mp3?source=feed",
       "adRanges": [
         [
-          37.9,
-          87.8
+          37.4,
+          89.5
         ],
         [
-          555.8,
+          562.1,
           999999
         ]
       ],
@@ -21,41 +21,89 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 87.9,
-          "title": "Bundespräsidentenwahl"
+          "start": 89.6,
+          "title": "Wahl in Israel"
         },
         {
-          "start": 237,
-          "title": "Zinsentscheid der FED"
+          "start": 211.8,
+          "title": "Merz-Reise nach Asien"
         },
         {
-          "start": 255.8,
-          "title": "EZB und Inflation"
+          "start": 285.6,
+          "title": "US-Zwischenwahlen"
         },
         {
-          "start": 282.4,
-          "title": "Bankenquartalszahlen"
+          "start": 360.4,
+          "title": "Sparprogramm von E.ON"
         },
         {
-          "start": 336.8,
+          "start": 430.4,
+          "title": "Gewinnwarnung bei Mercedes"
+        },
+        {
+          "start": 474.3,
+          "title": "DAX-Handel rund um die Uhr"
+        },
+        {
+          "start": 515.8,
+          "title": "Protest im Stadion Essen"
+        }
+      ],
+      "durationSeconds": 598,
+      "model": "openai/whisper-large-v3-turbo",
+      "detectedAt": "2026-10-29T09:29:01.921Z"
+    },
+    "62faa662abdc627404ef0d5e582d2174": {
+      "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
+      "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
+      "adRanges": [
+        [
+          37.9,
+          109
+        ],
+        [
+          571.2,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 109.1,
+          "title": "Bundespräsident"
+        },
+        {
+          "start": 244.6,
+          "title": "Notenbanken"
+        },
+        {
+          "start": 298.4,
+          "title": "Starke Bankenergebnisse"
+        },
+        {
+          "start": 352.3,
           "title": "Gesundheitspolitik"
         },
         {
-          "start": 398.5,
-          "title": "Audi und Trump"
+          "start": 414.5,
+          "title": "Audi-Deal mit Trump"
         },
         {
-          "start": 452.4,
-          "title": "Alphabet Quartalszahlen"
+          "start": 467.9,
+          "title": "Alphabet-Zahlen"
         },
         {
-          "start": 508.5,
-          "title": "Weinmarkt und Welthandel"
+          "start": 523.4,
+          "title": "Handelspolitik"
         }
       ],
-      "durationSeconds": 588,
+      "durationSeconds": 598,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:24:53.061Z"
+      "detectedAt": "2026-10-29T09:28:18.436Z"
     },
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
@@ -104,58 +152,6 @@
       "durationSeconds": 629,
       "model": "openai/whisper-large-v3-turbo",
       "detectedAt": "2026-10-29T09:06:32.609Z"
-    },
-    "75be7f726ec71e51c3d61106f50501e0": {
-      "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
-      "pubDate": "Wed, 28 Oct 2026 04:52:59 +0000",
-      "audioUrl": "https://audio.podigee-cdn.net/2622455-m-7e234179e43d04e3d8a140fed5cdc025.mp3?source=feed",
-      "adRanges": [
-        [
-          37.3,
-          94.1
-        ],
-        [
-          566.4,
-          999999
-        ]
-      ],
-      "chapters": [
-        {
-          "start": 0,
-          "title": "Themenüberblick"
-        },
-        {
-          "start": 94.2,
-          "title": "Israelische Parlamentswahl"
-        },
-        {
-          "start": 215.8,
-          "title": "Merz Reise nach Asien"
-        },
-        {
-          "start": 292.4,
-          "title": "US-Zwischenwahlen"
-        },
-        {
-          "start": 361.2,
-          "title": "E.ON Sparprogramm"
-        },
-        {
-          "start": 436.6,
-          "title": "Mercedes Gewinnprognose"
-        },
-        {
-          "start": 478.8,
-          "title": "Börsenhandel rund um die Uhr"
-        },
-        {
-          "start": 520.4,
-          "title": "Kurioses aus Essen"
-        }
-      ],
-      "durationSeconds": 594,
-      "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:06:09.636Z"
     }
   }
 }
