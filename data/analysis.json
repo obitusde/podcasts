@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T09:04:07.503Z",
+  "updatedAt": "2026-10-29T09:06:32.615Z",
   "episodes": {
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
@@ -8,11 +8,11 @@
       "adRanges": [
         [
           37.9,
-          96
+          94
         ],
         [
-          570.6,
-          625.1
+          570.7,
+          999999
         ]
       ],
       "chapters": [
@@ -21,7 +21,7 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 96.1,
+          "start": 94.1,
           "title": "Antropic Börsengang"
         },
         {
@@ -30,7 +30,7 @@
         },
         {
           "start": 326.2,
-          "title": "Autoritäre Regierungen"
+          "title": "Autoritäre Regierungssysteme"
         },
         {
           "start": 399.3,
@@ -42,12 +42,12 @@
         },
         {
           "start": 516.2,
-          "title": "Nachhaltiges Kaugummi"
+          "title": "Plastikfreies Kaugummi"
         }
       ],
-      "durationSeconds": 625,
+      "durationSeconds": 629,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:04:07.496Z"
+      "detectedAt": "2026-10-29T09:06:32.609Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
@@ -55,12 +55,12 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622455-m-7e234179e43d04e3d8a140fed5cdc025.mp3?source=feed",
       "adRanges": [
         [
-          37.4,
-          94
+          37.3,
+          94.1
         ],
         [
-          566.6,
-          595.3
+          566.4,
+          999999
         ]
       ],
       "chapters": [
@@ -69,37 +69,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 94.1,
+          "start": 94.2,
           "title": "Israelische Parlamentswahl"
         },
         {
-          "start": 216.3,
+          "start": 215.8,
           "title": "Merz Reise nach Asien"
         },
         {
-          "start": 290.1,
+          "start": 292.4,
           "title": "US-Zwischenwahlen"
         },
         {
-          "start": 364.9,
-          "title": "E.ON Investitionen"
+          "start": 361.2,
+          "title": "E.ON Sparprogramm"
         },
         {
-          "start": 433.9,
-          "title": "Mercedes Gewinnwarnung"
+          "start": 436.6,
+          "title": "Mercedes Gewinnprognose"
         },
         {
-          "start": 478.9,
+          "start": 478.8,
           "title": "Börsenhandel rund um die Uhr"
         },
         {
-          "start": 520.3,
+          "start": 520.4,
           "title": "Kurioses aus Essen"
         }
       ],
-      "durationSeconds": 595,
+      "durationSeconds": 594,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:03:49.458Z"
+      "detectedAt": "2026-10-29T09:06:09.636Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -112,7 +112,7 @@
         ],
         [
           559.7,
-          594.2
+          999999
         ]
       ],
       "chapters": [
@@ -155,7 +155,7 @@
       ],
       "durationSeconds": 594,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:03:30.633Z"
+      "detectedAt": "2026-10-29T09:05:47.486Z"
     }
   }
 }
