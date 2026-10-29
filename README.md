@@ -306,6 +306,34 @@ Für ausgewählte Podcasts (aktuell nur das Handelsblatt Morning Briefing, Liste
 Der Umweg über die Zeilennummern ist der Kern: Lässt man ein Sprachmodell die
 Audiodatei direkt anhören und nach Sekunden fragen, liegen die Werte weit daneben.
 
+### Was beim Feinschliff gelernt wurde
+
+Die Grenzen sitzen nur dann verlässlich, wenn sie **nicht** vom Sprachmodell
+geschätzt werden. Drei Regeln arbeiten deshalb ohne Modell:
+
+| Grenze | Regel |
+|---|---|
+| Ende eines Werbeblocks | bis zum ersten **echten** Wort danach (Jingle-Füllwörter wie "Musik" oder "Vielen Dank", die Whisper erfindet, zählen nicht) |
+| Schlussblock | ab dem `endMarker` der Sendung (hier die Verabschiedung "Ihr Sven Prange") bis Dateiende |
+| Themenanfang | zurück auf das Schlagwort davor ("Notenbanken.", "Audi.", "Börse.") - erkennbar daran, dass es für sich allein einen Satz bildet |
+
+Ausserdem:
+
+- **Transkriptionsmodell:** Whisper-Turbo setzte dasselbe Wort in drei Läufen
+  auf 1:29, 1:34 und 1:37 - die Zeitstempel wackeln rund um Musik. Deshalb
+  läuft die Transkription auf `openai/whisper-large-v3` (ca. 0,5 statt 0,2
+  Cent je Folge).
+- **MAI-Transcribe 2 wurde getestet und verworfen:** Seine Zeitachse war um
+  die Länge des Werbeblocks verschoben, der vordere Block fehlte ganz. Daraus
+  entstand die Sicherung `expectOpeningAd`: Fehlt der Werbeblock am Anfang,
+  wird die ganze Analyse verworfen und es gelten die festen Werte. Lieber
+  keine Automatik als eine, die Werbung durchlässt.
+- **Modellnamen nie fest verdrahten:** Ein nicht mehr existierender Slug
+  liess die Analyse still auf das schlechtere Modell zurückfallen. Jetzt
+  wird die Modell-Liste abgefragt - inklusive
+  `?output_modalities=transcription`, denn dort stehen die
+  Transkriptionsmodelle, nicht im Standardkatalog.
+
 Zwei Dinge haben sich dabei als entscheidend erwiesen:
 
 - **Feine Zeilen.** Whisper liefert Abschnitte von 15-20 Sekunden; darauf lässt
