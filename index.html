@@ -737,13 +737,7 @@ function buildAdRanges(podcastName, episode) {
       .sort((a, b) => a[0] - b[0]);
   }
 
-  const trim = getTrim(podcastName);
-  if (!trim) return [];
-  const ranges = [];
-  if (trim.startSeconds) ranges.push([0, trim.startSeconds]);
-  if (Array.isArray(trim.adRanges)) trim.adRanges.forEach((r) => ranges.push([r[0], r[1]]));
-  if (trim.endSeconds) ranges.push([trim.endSeconds, Number.MAX_SAFE_INTEGER]);
-  return ranges.sort((a, b) => a[0] - b[0]);
+  return buildAdRangesFromTrim(podcastName);
 }
 
 // Themen der Folge (leer, wenn es keine Analyse gibt).
@@ -803,7 +797,13 @@ function checkAnalysisFitsFile(podcastName, episode) {
 
 // Nur die festen Werte aus PODCAST_TRIM, ohne Analyse.
 function buildAdRangesFromTrim(podcastName) {
-  return buildAdRangesFromTrim(podcastName);
+  const trim = getTrim(podcastName);
+  if (!trim) return [];
+  const ranges = [];
+  if (trim.startSeconds) ranges.push([0, trim.startSeconds]);
+  if (Array.isArray(trim.adRanges)) trim.adRanges.forEach((r) => ranges.push([r[0], r[1]]));
+  if (trim.endSeconds) ranges.push([trim.endSeconds, Number.MAX_SAFE_INTEGER]);
+  return ranges.sort((a, b) => a[0] - b[0]);
 }
 
 function audioDuration() {

@@ -1,0 +1,30 @@
+# Prüft, ob der Anbieter bei jedem Abruf dieselbe Audiodatei liefert.
+# Von Hand starten unter Actions -> Auslieferung pruefen -> Run workflow.
+name: Auslieferung pruefen
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Adresse der MP3-Datei'
+        type: string
+        required: true
+      runs:
+        description: 'Wie oft herunterladen'
+        type: string
+        default: '3'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: ffmpeg installieren
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+      - name: Herunterladen und vergleichen
+        run: node tools/probe.mjs "${{ inputs.url }}" "${{ inputs.runs }}"
