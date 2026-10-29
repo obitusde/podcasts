@@ -399,8 +399,21 @@ async function analyzeEpisode(ep, structure, endMarker) {
   }
   const found = await findAdsAndChapters(lines, structure, endMarker);
 
-  const adRanges = normalizeRanges(found.ads, duration);
-  const adSeconds = adRanges.reduce((sum, [a, b]) => sum + (b - a), 0);
+  let adRanges = normalizeRanges(found.ads, duration);
+
+  // Reicht der letzte Werbeblock bis ans Ende des Transkripts, wird er
+  // bewusst "offen" bis weit hinter das Dateiende gesetzt. Grund: Whisper
+  // lässt die letzten Sekunden manchmal weg, und der Player begrenzt den
+  // Bereich ohnehin auf die echte Dateilänge. Sonst liefe am Schluss noch
+  // ein Rest Werbung.
+  if (adRanges.length > 0) {
+    const last = adRanges[adRanges.length - 1];
+    if (last[1] >= duration - 15) {
+      last[1] = 999999;
+      log(`   Schlussblock läuft bis Dateiende (ab ${fmt(last[0])})`);
+    }
+  }
+  const adSeconds = adRanges.reduce((sum, [a, b]) => sum + (Math.min(b, duration) - a), 0);
   if (duration - adSeconds < MIN_CONTENT_SECONDS) {
     throw new Error(`verworfen - nur ${Math.round(duration - adSeconds)} Sek. Inhalt übrig`);
   }
@@ -410,7 +423,8 @@ async function analyzeEpisode(ep, structure, endMarker) {
   log('   Werbung:');
   if (adRanges.length === 0) log('     (keine gefunden)');
   adRanges.forEach(([a, b]) => {
-    log(`     ${fmt(a)} - ${fmt(b)}  (${Math.round(b - a)} Sek.)`);
+    const shown = Math.min(b, duration);
+    log(`     ${fmt(a)} - ${fmt(shown)}${b > duration ? ' (bis Dateiende)' : ''}  (${Math.round(shown - a)} Sek.)`);
     // Die Zeilen rund um die Grenzen mitschreiben: daran sieht man sofort,
     // ob der Block zu früh endet und was danach gesprochen wird.
     const after = lines.filter((l) => l.start >= b - 0.5).slice(0, 2);
