@@ -937,7 +937,8 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
     if (DEBUG) blocks.forEach((b, i) => log(`   [${i}] ${fmt(b.start)}-${fmt(b.end)} ${b.text.slice(0, 110)}`));
     found = await findAdsAndChaptersFromBlocks(blocks, structure, endMarker, duration);
   } else {
-    log('   Keine Pausen messbar - Auswertung über die Wort-Zeiten');
+    log('   !!! KEINE PAUSEN MESSBAR - Rückfall auf die ungenauen Wort-Zeiten !!!');
+    log('   (ist ffmpeg im Workflow installiert?)');
     found = await findAdsAndChapters(lines, words, structure, endMarker);
     found.ads = trimAdsByChapters(
       found.ads.map(([from, to]) => {
