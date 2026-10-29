@@ -156,13 +156,56 @@ async function transcribe(audioBase64, model) {
   // Zeilen von höchstens 8 Sekunden.
   if (words.length > 0) {
     const lines = linesFromWords(words);
-    if (lines.length > 0) return { lines, source: `${words.length} Wörter` };
+    if (lines.length > 0) return { lines, words: normalizeWords(words), source: `${words.length} Wörter` };
   }
 
   const lines = segments
     .map((s) => ({ start: Number(s.start), end: Number(s.end), text: (s.text || '').trim() }))
     .filter((s) => Number.isFinite(s.start) && s.text);
-  return { lines, source: `${segments.length} Abschnitte` };
+  return { lines, words: [], source: `${segments.length} Abschnitte` };
+}
+
+function normalizeWords(words) {
+  return words
+    .map((w) => ({
+      start: Number(w.start),
+      text: String(w.word ?? w.text ?? '').trim()
+    }))
+    .filter((w) => Number.isFinite(w.start) && w.text);
+}
+
+// Für den Vergleich: Kleinschreibung, Satzzeichen weg.
+function plainWord(text) {
+  return String(text).toLowerCase().replace(/[^\wäöüß]/g, '');
+}
+
+/**
+ * Sucht die genaue Sekunde, in der ein Thema beginnt.
+ * Das Modell nennt die Zeile und die ersten Wörter des Themas. Die Zeile
+ * allein reicht nicht: Das Schlagwort ("Notenbanken.", "Audi.", "Börse.")
+ * steht oft noch am Ende der vorherigen Zeile, der Sprung käme dann ein
+ * paar Sekunden zu spät - hörbar mitten im Satz davor. Über die Wörter
+ * finden wir den exakten Einsatz.
+ */
+function findWordStart(words, firstWords, lineStart) {
+  if (!words.length || !firstWords) return null;
+
+  const needle = String(firstWords).split(/\s+/).map(plainWord).filter(Boolean).slice(0, 3);
+  if (needle.length === 0) return null;
+
+  let best = null;
+  for (let i = 0; i + needle.length <= words.length; i++) {
+    let hit = true;
+    for (let k = 0; k < needle.length; k++) {
+      if (plainWord(words[i + k].text) !== needle[k]) { hit = false; break; }
+    }
+    if (!hit) continue;
+    // Die Stelle nehmen, die der vom Modell genannten Zeile am nächsten ist
+    const distance = Math.abs(words[i].start - lineStart);
+    if (distance > 30) continue; // weit weg -> anderes Vorkommen im Text
+    if (!best || distance < best.distance) best = { start: words[i].start, distance };
+  }
+  return best ? best.start : null;
 }
 
 function linesFromWords(words) {
@@ -215,10 +258,11 @@ function buildPrompt(lines, structure) {
     'Entscheidend ist der Aufruf an die Hörer: kaufen, testen, abonnieren, anmelden, teilnehmen, einen Code eingeben oder eine Adresse aufrufen. Fehlt so ein Aufruf, ist es keine Werbung.',
     'Setze die Grenzen so eng wie möglich: die erste Zeile des Blocks ist die erste Werbezeile, die letzte Zeile die letzte - die darauffolgende Zeile muss wieder redaktioneller Inhalt sein.',
     '',
-    'Aufgabe 2 - Themen: Gliedere den redaktionellen Teil in 3 bis 12 Themen. Gib für jedes Thema die Zeilennummer an, bei der es beginnt, und einen kurzen deutschen Titel (höchstens 40 Zeichen, keine Anführungszeichen). Ein Thema darf NIE in einem Werbeblock beginnen. Die Themenvorstellung am Anfang ist kein eigenes Thema. Gibt es einen Sport-, Wetter- oder Boulevardblock, soll er ein eigenes Thema mit passendem Titel sein.',
+    'Aufgabe 2 - Themen: Gliedere den redaktionellen Teil in 3 bis 12 Themen. Gib für jedes Thema an: die Zeilennummer, in der es beginnt, einen kurzen deutschen Titel (höchstens 40 Zeichen, keine Anführungszeichen) und unter "start" die ersten zwei bis drei Wörter des Themas - genau so abgeschrieben, wie sie im Transkript stehen. Oft ist das erste Wort ein Schlagwort wie "Notenbanken." oder "Audi."; steht es noch am Ende der vorherigen Zeile, schreibe es trotzdem bei "start" hin und gib die Zeilennummer an, in der der Beitrag weitergeht.',
+    'Ein Thema darf NIE in einem Werbeblock beginnen. Die Themenvorstellung am Anfang ist kein eigenes Thema. Gibt es einen Sport-, Wetter- oder Boulevardblock, soll er ein eigenes Thema mit passendem Titel sein.',
     '',
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
-    '{"ads":[{"von":0,"bis":4}],"themen":[{"zeile":5,"titel":"Zollstreit mit China"}]}',
+    '{"ads":[{"von":0,"bis":4}],"themen":[{"zeile":5,"titel":"Zollstreit mit China","start":"Zoelle. Die EU"}]}',
     '',
     'Transkript:',
     transcript
@@ -238,7 +282,7 @@ async function askTextModel(prompt, model) {
   return { ok: res.ok, status: res.status, text: await res.text() };
 }
 
-async function findAdsAndChapters(lines, structure, endMarker) {
+async function findAdsAndChapters(lines, words, structure, endMarker) {
   const prompt = buildPrompt(lines, structure);
 
   let res = await askTextModel(prompt, TEXT_MODEL);
@@ -298,7 +342,13 @@ async function findAdsAndChapters(lines, structure, endMarker) {
     .map((c) => {
       const line = lines[c.zeile];
       if (!line || !c.titel) return null;
-      return { start: Math.max(0, line.start - PAD_BEFORE), title: String(c.titel).slice(0, 60) };
+      // Zuerst die Wort-Zeit versuchen, sonst den Zeilenanfang nehmen.
+      const wordStart = findWordStart(words, c.start, line.start);
+      const start = wordStart !== null ? wordStart : line.start;
+      if (wordStart !== null && Math.abs(wordStart - line.start) > 0.6) {
+        log(`   Thema "${c.titel}": ${fmt(line.start)} (Zeile) -> ${fmt(wordStart)} (erstes Wort)`);
+      }
+      return { start: Math.max(0, start - PAD_BEFORE), title: String(c.titel).slice(0, 60) };
     })
     .filter(Boolean);
 
@@ -372,11 +422,11 @@ async function analyzeEpisode(ep, structure, endMarker) {
 
   const base64 = buffer.toString('base64');
 
-  let { lines, source } = await transcribe(base64, STT_MODEL);
+  let { lines, words, source } = await transcribe(base64, STT_MODEL);
   let model = STT_MODEL;
   if (lines.length === 0) {
     log('   Keine Zeitstempel - zweiter Versuch mit', STT_FALLBACK);
-    ({ lines, source } = await transcribe(base64, STT_FALLBACK));
+    ({ lines, words, source } = await transcribe(base64, STT_FALLBACK));
     model = STT_FALLBACK;
   }
   if (lines.length === 0) throw new Error('Transkription ohne Zeitstempel');
@@ -397,7 +447,7 @@ async function analyzeEpisode(ep, structure, endMarker) {
   if (feedDuration && Math.abs(feedDuration - transcriptEnd) > 20) {
     log(`   Hinweis: Feed meldet ${fmt(feedDuration)}, Transkript endet bei ${fmt(transcriptEnd)} - es gilt das Transkript`);
   }
-  const found = await findAdsAndChapters(lines, structure, endMarker);
+  const found = await findAdsAndChapters(lines, words, structure, endMarker);
 
   let adRanges = normalizeRanges(found.ads, duration);
 
