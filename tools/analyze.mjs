@@ -317,24 +317,36 @@ let textModelCache = null;
 let sttModelCache = null;
 let availableModelIds = null;
 
-// Liste der verfügbaren Modelle (einmal pro Lauf).
+/**
+ * Liste der verfügbaren Modelle (einmal pro Lauf).
+ * Zwei Abfragen sind nötig: Transkriptionsmodelle stehen bei OpenRouter
+ * NICHT im Standard-Katalog, sondern nur unter
+ * ?output_modalities=transcription. Ohne die zweite Abfrage fällt die
+ * Auswahl still auf das Modell zurück, das gerade ersetzt werden soll.
+ */
 async function loadModelIds() {
   if (availableModelIds) return availableModelIds;
-  try {
-    const res = await fetch(`${API}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
-    if (res.ok) {
-      availableModelIds = new Set((await res.json()).data.map((m) => m.id));
-      if (DEBUG) {
-        const stt = [...availableModelIds].filter((id) => /transcribe|whisper|asr|scribe|voxtral/i.test(id));
-        log('Verfügbare Transkriptionsmodelle: ' + stt.sort().join(', '));
-      }
-      return availableModelIds;
-    }
-    log(`Modell-Liste: HTTP ${res.status}`);
-  } catch (err) {
-    log(`Modell-Liste nicht abrufbar (${err.message})`);
-  }
   availableModelIds = new Set();
+
+  for (const url of [`${API}/models`, `${API}/models?output_modalities=transcription`]) {
+    try {
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } });
+      if (!res.ok) {
+        log(`Modell-Liste (${url}): HTTP ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      (data.data || []).forEach((m) => availableModelIds.add(m.id));
+    } catch (err) {
+      log(`Modell-Liste nicht abrufbar (${err.message})`);
+    }
+  }
+
+  if (DEBUG) {
+    const stt = [...availableModelIds].filter((id) => /transcribe|whisper|asr|scribe|voxtral|chirp/i.test(id));
+    log(`Modelle insgesamt: ${availableModelIds.size}`);
+    log('Davon Transkription: ' + (stt.sort().join(', ') || 'keine gefunden'));
+  }
   return availableModelIds;
 }
 
