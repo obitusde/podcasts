@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T10:36:01.357Z",
+  "updatedAt": "2026-10-29T10:38:37.179Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -8,10 +8,10 @@
       "adRanges": [
         [
           38.2,
-          107.2
+          104
         ],
         [
-          575,
+          571.5,
           999999
         ]
       ],
@@ -21,33 +21,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 108.5,
-          "title": "Nachfolge des Bundespräsidenten"
+          "start": 105.2,
+          "title": "Suche nach Bundespräsident"
         },
         {
-          "start": 248.1,
-          "title": "Zinsentscheide und Bankengewinne"
+          "start": 244.9,
+          "title": "Notenbanken"
         },
         {
-          "start": 355.6,
-          "title": "Linnemanns Gesundheitspolitik"
+          "start": 297,
+          "title": "Banken"
         },
         {
-          "start": 417.3,
-          "title": "Döllners Trump-Deal wackelt"
+          "start": 352.1,
+          "title": "Gesundheit"
         },
         {
-          "start": 472.2,
-          "title": "Zahlen von Alphabet und Microsoft"
+          "start": 413.9,
+          "title": "Audi"
         },
         {
-          "start": 526.8,
-          "title": "Folgen der Handelspolitik"
+          "start": 467.7,
+          "title": "Alphabet"
+        },
+        {
+          "start": 523.3,
+          "title": "Handelspolitik"
         }
       ],
       "durationSeconds": 606,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T10:36:01.352Z"
+      "detectedAt": "2026-10-29T10:38:37.174Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
