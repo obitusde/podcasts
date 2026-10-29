@@ -1,0 +1,23 @@
+# Sucht zu einer Sendungsseite die Feed-Adresse und zeigt, wie lang und wie
+# gross die neuesten Folgen sind. Gedacht fuers Eintragen eines neuen
+# Podcasts in die Konfigurationstabelle.
+# Von Hand starten unter Actions -> Feed suchen.
+name: Feed suchen
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Adresse der Sendungsseite (oder direkt des Feeds)'
+        type: string
+        required: true
+
+jobs:
+  suchen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node tools/find-feed.mjs "${{ inputs.url }}"
