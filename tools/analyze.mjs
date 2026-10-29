@@ -87,6 +87,15 @@ const SNAP_WINDOW = 5;           // Suchradius um die geschätzte Grenze
 const SAFETY_CONTENT_START = 1.2; // Inhalt beginnt so viel früher
 const SAFETY_AD_START = 0.5;      // Werbung beginnt so viel später
 
+// --- Abschnitte aus Pausen bilden ---------------------------------------
+// Die Sendung wird an den gemessenen Sprechpausen in Abschnitte zerlegt.
+// Das Sprachmodell entscheidet dann nur noch, WELCHE Abschnitte Werbung
+// sind und wo ein Thema beginnt - die Zeiten stehen vorher fest und
+// stammen aus der Messung, nicht aus geschätzten Wort-Zeitstempeln.
+const BLOCK_PAUSE = 0.4;      // ab dieser Pausenlänge beginnt ein Abschnitt
+const BLOCK_MIN_WORDS = 3;    // kürzere Abschnitte mit dem nächsten verbinden
+const BLOCK_PAD = 0.15;       // winziger Vorlauf, damit nichts angeschnitten wird
+
 const PAD_BEFORE = 0.3;          // Werbeblock minimal weiter fassen
 const PAD_AFTER = 0.4;
 // Zwischen dem letzten gesprochenen Werbewort und dem ersten Wort des
@@ -406,6 +415,178 @@ function snapToSilence(silences, time, kind) {
   return { at: candidates[0].at, snapped: true, length: candidates[0].length };
 }
 
+/**
+ * Zerlegt die Folge an den gemessenen Pausen in Abschnitte.
+ * Jeder Abschnitt kennt seine Anfangs- und Endzeit sowie die Pause davor
+ * und danach - daraus werden später die Werbegrenzen gebildet.
+ */
+function buildBlocks(words, silences, duration) {
+  const cuts = silences.filter(([from, to]) => to - from >= BLOCK_PAUSE);
+
+  const raw = [];
+  let start = 0;
+  let pauseBefore = null;
+
+  for (const [from, to] of cuts) {
+    if (from <= start + 0.05) {        // Pause ganz am Anfang
+      start = Math.max(start, to);
+      pauseBefore = [from, to];
+      continue;
+    }
+    raw.push({ start, end: from, pauseBefore, pauseAfter: [from, to] });
+    start = to;
+    pauseBefore = [from, to];
+  }
+  if (start < duration - 0.2) raw.push({ start, end: duration, pauseBefore, pauseAfter: null });
+
+  // Wörter den Abschnitten zuordnen
+  raw.forEach((b) => {
+    b.words = words.filter((w) => w.start >= b.start - 0.3 && w.start < b.end + 0.3);
+    b.text = b.words.map((w) => w.text).join(' ').trim();
+  });
+
+  // Sehr kurze Abschnitte werden mit dem FOLGENDEN verbunden, nie mit dem
+  // vorherigen. Grund: Die Themen werden mit einem einzelnen Schlagwort
+  // angekündigt ("Notenbanken.", "Audi."), das zwischen zwei Pausen steht
+  // und damit einen winzigen eigenen Abschnitt bildet. Es gehört zum
+  // Beitrag danach - hängt man es nach hinten an, landet es im Werbeblock
+  // davor und der Beitrag beginnt mitten im Satz.
+  // Reine Musik-Abschnitte bleiben stehen; sie sind ein guter Hinweis auf
+  // eine Abschnittsgrenze.
+  const blocks = [];
+  let pending = null;
+
+  for (const b of raw) {
+    if (pending) {
+      b.start = pending.start;
+      b.pauseBefore = pending.pauseBefore;
+      b.words = pending.words.concat(b.words);
+      b.text = (pending.text + ' ' + b.text).trim();
+      pending = null;
+    }
+    if (b.words.length > 0 && b.words.length < BLOCK_MIN_WORDS) {
+      pending = b;   // auf den nächsten Abschnitt warten
+      continue;
+    }
+    blocks.push(b);
+  }
+
+  if (pending) {                       // ganz am Schluss: nichts folgt mehr
+    const last = blocks[blocks.length - 1];
+    if (last) {
+      last.end = pending.end;
+      last.pauseAfter = pending.pauseAfter;
+      last.text = (last.text + ' ' + pending.text).trim();
+    } else {
+      blocks.push(pending);
+    }
+  }
+
+  blocks.forEach((b) => {
+    if (!b.text) b.text = '[Musik oder Stille]';
+  });
+  return blocks;
+}
+
+/* --------------------------------- Werbung und Themen auf Abschnitts-Basis */
+
+function buildBlockPrompt(blocks, structure) {
+  const list = blocks
+    .map((b, i) => `[${i}] ${fmt(b.start)} ${b.text.slice(0, 220)}`)
+    .join('\n');
+
+  return [
+    'Das ist eine deutsche Podcast-Folge, zerlegt in Abschnitte. Die Abschnitte wurden an den Sprechpausen getrennt; jede Zeile ist ein Abschnitt in der Form "[Nummer] Zeit Text". "[Musik oder Stille]" heisst: dort wird nicht gesprochen.',
+    structure ? `\nAufbau dieser Sendung: ${structure}` : '',
+    '',
+    'Aufgabe 1 - Werbung: Nenne die Nummern ALLER Abschnitte, die zur Werbung gehören. Werbung ist:',
+    '- Sponsorenhinweise ("präsentiert von", "unterstützt von", "Werbung", "Anzeige")',
+    '- beworbene Anbieter samt Produktbeschreibung, Rabattcode oder Aufruf ("jetzt testen", "mehr unter ...")',
+    '- Eigenwerbung: Abo-, Newsletter- und Veranstaltungshinweise, Empfehlungen anderer Podcasts',
+    '- die Ankündigung der Werbepause ("Nach einer kurzen Unterbrechung geht es gleich weiter", "Bleiben Sie dran")',
+    '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
+    'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
+    '',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, und einen kurzen deutschen Titel (höchstens 40 Zeichen). Die Themen werden oft mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi.") - dann ist der Abschnitt gemeint, in dem dieses Schlagwort steht. Ein Thema darf nicht in einem Werbeabschnitt beginnen. 3 bis 12 Themen.',
+    '',
+    'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
+    '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China"}]}',
+    '',
+    'Abschnitte:',
+    list
+  ].join('\n');
+}
+
+/**
+ * Fragt das Modell, welche Abschnitte Werbung sind und wo Themen beginnen -
+ * und setzt die Zeiten aus den gemessenen Pausen ein.
+ */
+async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, duration) {
+  const model = await pickTextModel();
+  const prompt = buildBlockPrompt(blocks, structure);
+
+  let res = await askTextModel(prompt, model);
+  if (!res.ok && model !== TEXT_MODEL_FALLBACK) {
+    log(`   ${model}: HTTP ${res.status} - zweiter Versuch mit ${TEXT_MODEL_FALLBACK}`);
+    textModelCache = TEXT_MODEL_FALLBACK;
+    res = await askTextModel(prompt, TEXT_MODEL_FALLBACK);
+  }
+  if (!res.ok) throw new Error(`Analyse HTTP ${res.status}: ${res.text.slice(0, 300)}`);
+
+  const content = JSON.parse(res.text).choices?.[0]?.message?.content;
+  if (!content) throw new Error('Keine Antwort vom Analyse-Modell');
+  const parsed = JSON.parse(content.replace(/```json/gi, '').replace(/```/g, '').trim());
+  log('   Antwort: ' + JSON.stringify(parsed));
+
+  const adBlocks = new Set((parsed.werbung || []).filter((i) => blocks[i]));
+
+  // Fester Schlussmarker: ab dem Abschnitt mit der Verabschiedung ist alles
+  // Werbung, unabhängig vom Modell.
+  if (endMarker) {
+    const needle = endMarker.toLowerCase();
+    const idx = blocks.findIndex((b) => b.text.toLowerCase().includes(needle));
+    if (idx !== -1) {
+      for (let i = idx; i < blocks.length; i++) adBlocks.add(i);
+      log(`   Schlussmarker "${endMarker}" in Abschnitt ${idx} (${fmt(blocks[idx].start)}) - ab dort Werbung`);
+    } else {
+      log(`   Hinweis: Schlussmarker "${endMarker}" nicht gefunden`);
+    }
+  }
+
+  // Zusammenhängende Werbeabschnitte zu Bereichen zusammenfassen. Die
+  // Grenzen sind gemessene Pausen: Start = Beginn der Pause davor (direkt
+  // nach dem letzten Inhaltswort), Ende = Ende der Pause danach (dort
+  // setzt der Inhalt wieder ein).
+  const sorted = [...adBlocks].sort((a, b) => a - b);
+  const ads = [];
+  let group = [];
+  const flush = () => {
+    if (group.length === 0) return;
+    const first = blocks[group[0]];
+    const last = blocks[group[group.length - 1]];
+    const from = first.pauseBefore ? first.pauseBefore[0] : first.start;
+    const to = last.pauseAfter ? last.pauseAfter[1] : duration;
+    ads.push([Math.max(0, from), to]);
+    group = [];
+  };
+  sorted.forEach((i) => {
+    if (group.length === 0 || i === group[group.length - 1] + 1) group.push(i);
+    else { flush(); group = [i]; }
+  });
+  flush();
+
+  const chapters = (parsed.themen || [])
+    .map((c) => {
+      const block = blocks[c.block];
+      if (!block || !c.titel) return null;
+      return { start: Math.max(0, block.start - BLOCK_PAD), title: String(c.titel).slice(0, 60) };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.start - b.start);
+
+  return { ads: trimAdsByChapters(ads, chapters), chapters };
+}
+
 /* ------------------------------------------------- Werbung und Themen finden */
 
 function buildPrompt(lines, structure) {
@@ -722,25 +903,27 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   if (feedDuration && Math.abs(feedDuration - transcriptEnd) > 20) {
     log(`   Hinweis: Feed meldet ${fmt(feedDuration)}, Transkript endet bei ${fmt(transcriptEnd)} - es gilt das Transkript`);
   }
-  const found = await findAdsAndChapters(lines, words, structure, endMarker);
-
-  // Jetzt die geschätzten Grenzen am Ton einrasten lassen.
-  const snappedAds = found.ads.map(([from, to], i) => {
-    const a = snapToSilence(silences, from, 'adStart');
-    const b = snapToSilence(silences, to, 'contentStart');
-    log(`   Werbeblock ${i + 1}: Start ${fmt(from)} -> ${fmt(a.at)}${a.snapped ? ' (Pause)' : ' (Sicherheitsregel)'}` +
-        `, Ende ${fmt(to)} -> ${fmt(b.at)}${b.snapped ? ' (Pause)' : ' (Sicherheitsregel)'}`);
-    return [Math.max(0, a.at), b.at];
-  });
-
-  const snappedChapters = found.chapters.map((c) => {
-    const snap = snapToSilence(silences, c.start, 'contentStart');
-    return { start: Math.max(0, snap.at), title: c.title };
-  });
-
-  // Nach dem Einrasten nochmal prüfen: Ragt ein Werbeblock in ein Thema?
-  found.ads = trimAdsByChapters(snappedAds, snappedChapters);
-  found.chapters = snappedChapters;
+  // Zwei Wege: Mit gemessenen Pausen wird die Folge in Abschnitte zerlegt
+  // und das Modell ordnet nur noch zu (genau, weil die Zeiten gemessen
+  // sind). Ohne Pausen-Messung bleibt der alte Weg über die Wort-Zeiten.
+  let found;
+  if (silences.length > 0) {
+    const blocks = buildBlocks(words, silences, duration);
+    log(`   Abschnitte aus Pausen: ${blocks.length}`);
+    if (DEBUG) blocks.forEach((b, i) => log(`   [${i}] ${fmt(b.start)}-${fmt(b.end)} ${b.text.slice(0, 110)}`));
+    found = await findAdsAndChaptersFromBlocks(blocks, structure, endMarker, duration);
+  } else {
+    log('   Keine Pausen messbar - Auswertung über die Wort-Zeiten');
+    found = await findAdsAndChapters(lines, words, structure, endMarker);
+    found.ads = trimAdsByChapters(
+      found.ads.map(([from, to]) => {
+        const a = snapToSilence(silences, from, 'adStart');
+        const b = snapToSilence(silences, to, 'contentStart');
+        return [Math.max(0, a.at), b.at];
+      }),
+      found.chapters
+    );
+  }
 
   let adRanges = normalizeRanges(found.ads, duration);
 
