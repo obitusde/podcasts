@@ -646,6 +646,8 @@ function buildBlockPrompt(blocks, structure) {
     '- Wird ein Thema nur mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi."), beginnt es bei diesem Schlagwort.',
     '- Ein Thema, das in der Themenvorstellung am Anfang nur kurz angekündigt wird, beginnt NICHT dort, sondern erst an der Stelle, an der die Sendung es später ausführlich behandelt.',
     '',
+    'Bei JEDEM Thema muss unter "beginnt" eine Folge von MINDESTENS VIER WÖRTERN stehen, wortwörtlich aus dem Abschnittstext. Ein einzelnes Wort oder eine Abkürzung ist unbrauchbar.',
+    '',
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
     '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China","beginnt":"Zollstreit. Die Europäische Union hat"}]}',
     '',
@@ -731,10 +733,43 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
   }
   if (!res.ok) throw new Error(`Analyse HTTP ${res.status}: ${res.text.slice(0, 300)}`);
 
-  const content = JSON.parse(res.text).choices?.[0]?.message?.content;
-  if (!content) throw new Error('Keine Antwort vom Analyse-Modell');
-  const parsed = JSON.parse(content.replace(/```json/gi, '').replace(/```/g, '').trim());
+  const auswerten = (antwort) => {
+    const inhalt = JSON.parse(antwort).choices?.[0]?.message?.content;
+    if (!inhalt) throw new Error('Keine Antwort vom Analyse-Modell');
+    return JSON.parse(inhalt.replace(/```json/gi, '').replace(/```/g, '').trim());
+  };
+
+  let parsed = auswerten(res.text);
   log('   Antwort: ' + JSON.stringify(parsed));
+
+  // Die Antwort ist nur brauchbar, wenn zu jedem Thema genug Anfangsworte
+  // da sind - an ihnen hängt die ganze Genauigkeit. Das Modell liefert das
+  // nicht zuverlässig: In einem Lauf stand bei einem Thema nur "Der ", und
+  // die Marke fiel auf den Abschnittsanfang zurück, 44 Sekunden daneben.
+  // Deshalb wird die Antwort geprüft und notfalls einmal nachgefragt.
+  const zuKurz = (parsed.themen || []).filter(
+    (c) => String(c.beginnt || '').trim().split(/\s+/).filter(Boolean).length < 3
+  );
+  if (zuKurz.length > 0) {
+    log(`   ${zuKurz.length} Thema/Themen ohne brauchbare Anfangsworte (${zuKurz.map((c) => `"${c.titel}": "${c.beginnt || ''}"`).join(', ')}) - einmal nachfragen`);
+    const nachfrage = prompt +
+      '\n\nDeine letzte Antwort war unvollständig: Bei ' +
+      zuKurz.map((c) => `"${c.titel}"`).join(' und ') +
+      ' standen unter "beginnt" zu wenige Wörter. Antworte noch einmal vollständig und gib bei JEDEM Thema MINDESTENS VIER zusammenhängende Wörter an, wortwörtlich aus dem Abschnittstext abgeschrieben.';
+    const zweite = await askTextModel(nachfrage, model);
+    if (zweite.ok) {
+      try {
+        const neuerVersuch = auswerten(zweite.text);
+        const nochZuKurz = (neuerVersuch.themen || []).filter(
+          (c) => String(c.beginnt || '').trim().split(/\s+/).filter(Boolean).length < 3
+        ).length;
+        log(`   Nachfrage: ${nochZuKurz === 0 ? 'jetzt vollständig' : nochZuKurz + ' weiterhin zu kurz'}`);
+        if (nochZuKurz < zuKurz.length) parsed = neuerVersuch;
+      } catch (err) {
+        log(`   Nachfrage nicht auswertbar (${err.message}) - es gilt die erste Antwort`);
+      }
+    }
+  }
 
   const adBlocks = new Set((parsed.werbung || []).filter((i) => blocks[i]));
 
