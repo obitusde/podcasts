@@ -236,7 +236,7 @@ Normalbetrieb lädt der Browser überhaupt kein Cover mehr nach. Die Dauer steht
 ### Kachel-Layout und Titel
 
 - Der Podcast-Name steht als eigene Zeile ganz oben links - also auch über dem
-  Cover. Darunter folgt die Zeile mit Cover, Episodentitel, Datum und Ziehgriff.
+  Cover. Darunter folgt die Zeile mit Cover, Episodentitel und Datum.
   So stehen Name und Titel über die volle Kachelbreite zur Verfügung.
 - `<main>` hat seitlich fast keinen Rand mehr, die Kacheln nutzen die Bildschirm-
   breite aus.
@@ -325,9 +325,10 @@ Zwei Dinge, die dabei leicht schiefgehen:
   ID-Spalte fängt das ab: Weicht der Name von dem ab, der zuletzt zu dieser
   ID gespeichert war, zieht alles Gespeicherte mit um.
 
-Die Reihenfolge lässt sich weiterhin mit dem Ziehgriff ändern - das gilt
-lokal auf dem Gerät. Ändert sich die Reihenfolge der Zeilen in der Tabelle,
-sticht das die lokale Sortierung aus; wer zuletzt etwas geändert hat, gewinnt.
+Die Reihenfolge wird ausschliesslich in der Tabelle festgelegt. Den früheren
+Ziehgriff an der Kachel gibt es nicht mehr: Zwei Stellen für dieselbe Sache
+widersprechen sich sonst ständig, und auf dem Handy war die Tabelle ohnehin
+der bequemere Weg.
 
 Fehlt `data/config.json` oder ist die Tabelle nicht erreichbar, gelten die
 Listen im Code (`PODCASTS` in `index.html`, `tools/podcasts.config.json`).

@@ -94,42 +94,11 @@
     border-color: var(--accent);
   }
 
-  /* Reordering per Ziehgriff (Touch & Maus, siehe attachDragHandlers).
-     touch-action: none NUR auf dem Griff - sonst bleibt die Seite überall
-     normal scrollbar, nur der Griff selbst startet einen Drag statt Scroll. */
-  /* Zeile unter dem Podcast-Namen: Bild + Titel/Datum + Ziehgriff */
+  /* Zeile unter dem Podcast-Namen: Bild + Titel/Datum */
   .card-body {
     display: flex;
     gap: 12px;
     align-items: center;
-  }
-
-  .drag-handle {
-    touch-action: none;
-    -webkit-user-select: none;
-    user-select: none;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 56px;
-    margin: 0 -6px 0 0;
-    color: var(--text-dim);
-    cursor: grab;
-  }
-
-  .card.dragging {
-    opacity: 0.85;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    z-index: 20;
-    cursor: grabbing;
-    transition: none;
-  }
-
-  .card.dragging .drag-handle {
-    cursor: grabbing;
-    color: var(--accent);
   }
 
   .card img {
@@ -738,7 +707,6 @@ function getTrim(podcastName) {
    ------------------------------------------------------------------ */
 
 const CONFIG_URL = 'data/config.json';
-const SHEET_ORDER_KEY = 'podcastOrderFromSheet_v1';
 const PODCAST_IDS_KEY = 'podcastNamesById_v1';
 
 async function loadConfigFile() {
@@ -772,7 +740,6 @@ async function loadConfigFile() {
     }
   });
 
-  adoptSheetOrder(daten.podcasts);
   console.log('Konfiguration aus der Tabelle: ' + PODCASTS.length + ' Podcasts');
 }
 
@@ -785,6 +752,15 @@ async function loadConfigFile() {
  * zuletzt benutzte Name gemerkt; weicht er ab, zieht alles Gespeicherte mit
  * auf den neuen Namen um.
  */
+// Schlüssel aus der Zeit des Ziehgriffs. Die Reihenfolge kommt jetzt aus
+// der Tabelle; die Reste werden einmal weggeräumt, damit im Speicher des
+// Geräts nichts liegen bleibt, das nichts mehr bewirkt.
+function removeOldOrderKeys() {
+  ['podcastOrder_v1', 'podcastOrderFromSheet_v1'].forEach((key) => {
+    try { localStorage.removeItem(key); } catch (e) {}
+  });
+}
+
 function migratePodcastIds(podcasts) {
   let bekannt;
   try {
@@ -814,37 +790,10 @@ function migratePodcastIds(podcasts) {
       delete daten[alt];
       try { localStorage.setItem(key, JSON.stringify(daten)); } catch (e) {}
     });
-    try {
-      const reihenfolge = JSON.parse(localStorage.getItem(ORDER_KEY));
-      if (Array.isArray(reihenfolge)) {
-        localStorage.setItem(ORDER_KEY, JSON.stringify(reihenfolge.map((n) => (n === alt ? neu : n))));
-      }
-    } catch (e) {}
     console.log('Podcast umbenannt: "' + alt + '" -> "' + neu + '" (alles Gehörte bleibt erhalten)');
   });
 
   try { localStorage.setItem(PODCAST_IDS_KEY, JSON.stringify(bekannt)); } catch (e) {}
-}
-
-/**
- * Wer zuletzt etwas geändert hat, gewinnt.
- *
- * Die Reihenfolge lässt sich weiterhin mit dem Ziehgriff ändern; sie liegt
- * dann lokal auf diesem Gerät. Wird dagegen die Reihenfolge der Zeilen in
- * der Tabelle geändert, sticht das die lokale Sortierung aus - sonst käme
- * eine Änderung in der Tabelle auf dem Handy nie an.
- */
-function adoptSheetOrder(podcasts) {
-  const jetzt = podcasts.map((p) => p.id || p.name).join('|');
-  let zuletzt = null;
-  try { zuletzt = localStorage.getItem(SHEET_ORDER_KEY); } catch (e) {}
-  if (zuletzt === jetzt) return;
-
-  try {
-    localStorage.setItem(ORDER_KEY, JSON.stringify(podcasts.map((p) => p.name)));
-    localStorage.setItem(SHEET_ORDER_KEY, jetzt);
-  } catch (e) {}
-  if (zuletzt !== null) console.log('Reihenfolge aus der Tabelle übernommen');
 }
 
 /* ------------------------------------------------------------------
@@ -1139,40 +1088,14 @@ function migrateRenamedPodcasts() {
     }
   });
 
-  try {
-    const order = JSON.parse(localStorage.getItem(ORDER_KEY));
-    if (Array.isArray(order)) {
-      const mapped = order.map((n) => RENAMED_PODCASTS[n] || n);
-      localStorage.setItem(ORDER_KEY, JSON.stringify(mapped));
-    }
-  } catch (e) {}
 }
 
-// Wendet eine per Drag & Drop gespeicherte Reihenfolge auf PODCASTS an.
-// Podcasts ohne Eintrag in der gespeicherten Reihenfolge (z.B. neu im
-// Code hinzugefügt) werden hinten in ihrer ursprünglichen Reihenfolge
-// angehängt; Einträge in der gespeicherten Reihenfolge, die es nicht
-// mehr gibt, werden einfach ignoriert.
+// Die Reihenfolge kommt aus der Google-Tabelle: Die Zeilenreihenfolge dort
+// ist die Reihenfolge hier. Früher liess sie sich auch mit einem Ziehgriff
+// an der Kachel ändern; das ist entfallen, seit die Tabelle sie vorgibt -
+// zwei Stellen für dieselbe Sache widersprechen sich sonst ständig.
 function getOrderedPodcasts() {
-  let savedOrder = [];
-  try {
-    savedOrder = JSON.parse(localStorage.getItem(ORDER_KEY)) || [];
-  } catch (e) {
-    savedOrder = [];
-  }
-
-  const remaining = new Map(PODCASTS.map((p) => [p.name, p]));
-  const ordered = [];
-  savedOrder.forEach((name) => {
-    if (remaining.has(name)) {
-      ordered.push(remaining.get(name));
-      remaining.delete(name);
-    }
-  });
-  PODCASTS.forEach((p) => {
-    if (remaining.has(p.name)) ordered.push(p);
-  });
-  return ordered;
+  return PODCASTS;
 }
 
 /* ============================================================
@@ -1180,7 +1103,6 @@ function getOrderedPodcasts() {
    ============================================================ */
 
 const STORAGE_KEY = 'podcastPlayerState_v2';
-const ORDER_KEY = 'podcastOrder_v1';
 const IMAGE_KEY = 'podcastImages_v1';
 
 // --- Cover-Bilder: pro Podcast EINE feste URL, ein Jahr lang -------------
@@ -1353,13 +1275,6 @@ function createCard(podcast) {
         <p class="card-title">Wird geladen …</p>
         <p class="card-date"></p>
       </div>
-      <span class="drag-handle" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-          <circle cx="6" cy="5" r="1.6"/><circle cx="14" cy="5" r="1.6"/>
-          <circle cx="6" cy="10" r="1.6"/><circle cx="14" cy="10" r="1.6"/>
-          <circle cx="6" cy="15" r="1.6"/><circle cx="14" cy="15" r="1.6"/>
-        </svg>
-      </span>
     </div>
   `;
   card.podcast = podcast; // für späteres Neuladen (Aktualisieren-Knopf)
@@ -1417,12 +1332,11 @@ async function loadPodcast(podcast, card) {
 
     renderCard(card, podcast.name, pState.currentIndex);
 
-    // Klick-/Drag-Handler nur beim ersten erfolgreichen Laden anhängen,
-    // damit ein Neuladen keine doppelten Handler erzeugt.
+    // Klick-Handler nur beim ersten erfolgreichen Laden anhängen, damit
+    // ein Neuladen keine doppelten Handler erzeugt.
     if (!card.dataset.wired) {
       card.dataset.wired = '1';
       card.addEventListener('click', () => onCardClick(card));
-      attachDragHandlers(card, card.querySelector('.drag-handle'));
     }
     updateEpisodeNavButtons();
   } catch (err) {
@@ -1527,114 +1441,6 @@ function setMediaMetadata(podcastName, episode, coverUrl) {
     album: formatDateNoYear(episode.pubDate),
     artwork: coverUrl ? [{ src: coverUrl, sizes: '512x512' }] : []
   });
-}
-
-/* ============================================================
-   REORDERING: Ziehgriff, Touch & Maus über Pointer Events.
-   Der Griff hat touch-action: none (siehe CSS) - nur dadurch lässt
-   sich das native Scrollen von Android/iOS beim Ziehen zuverlässig
-   unterdrücken. Ohne dediziertem Griff (z.B. bei Drag auf der ganzen
-   Karte) kann das Betriebssystem die Touch-Geste als Scroll kapern,
-   auch wenn preventDefault() im JS aufgerufen wird.
-   ============================================================ */
-
-const DRAG_JITTER_PX = 6; // Mindestbewegung, bevor eine Geste als Drag zählt (Tap-Schutz)
-
-function persistCardOrder() {
-  const order = Array.from(grid.children).map((c) => c.dataset.podcastName).filter(Boolean);
-  try {
-    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
-  } catch (e) {
-    console.error('Reihenfolge konnte nicht gespeichert werden', e);
-  }
-}
-
-// Findet die Geschwister-Karte, deren Mittelpunkt dem Pointer am
-// nächsten ist, und ob vor oder nach ihr eingefügt werden soll.
-function findDropTarget(clientX, clientY, excludeCard) {
-  let closest = null;
-  let closestDist = Infinity;
-  Array.from(grid.children).forEach((sib) => {
-    if (sib === excludeCard) return;
-    const rect = sib.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dist = Math.hypot(clientX - cx, clientY - cy);
-    if (dist < closestDist) {
-      closestDist = dist;
-      closest = { el: sib, cy };
-    }
-  });
-  return closest;
-}
-
-function attachDragHandlers(card, handle) {
-  handle.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const pointerId = e.pointerId;
-    let dragStarted = false; // erste nennenswerte Bewegung erreicht (Tap-Schutz)
-
-    try { handle.setPointerCapture(pointerId); } catch (err) {}
-    card.classList.add('dragging');
-
-    function onMove(ev) {
-      if (ev.pointerId !== pointerId) return;
-      ev.preventDefault();
-
-      if (!dragStarted) {
-        const dx = ev.clientX - startX;
-        const dy = ev.clientY - startY;
-        if (Math.hypot(dx, dy) < DRAG_JITTER_PX) return;
-        dragStarted = true;
-      }
-
-      const target = findDropTarget(ev.clientX, ev.clientY, card);
-      if (target) {
-        if (ev.clientY < target.cy) grid.insertBefore(card, target.el);
-        else grid.insertBefore(card, target.el.nextSibling);
-      }
-
-      // Transform aus der AKTUELLEN (durch das Umsortieren ggf. neuen)
-      // natürlichen Position neu berechnen - sonst "springt" die Karte
-      // relativ zum Finger weg, sobald sich ihre DOM-Position ändert.
-      card.style.transform = 'none';
-      const rect = card.getBoundingClientRect();
-      const tx = ev.clientX - (rect.left + rect.width / 2);
-      const ty = ev.clientY - (rect.top + rect.height / 2);
-      card.style.transform = `translate(${tx}px, ${ty}px)`;
-    }
-
-    function onUp(ev) {
-      if (ev.pointerId !== pointerId) return;
-      card.classList.remove('dragging');
-      card.style.transform = '';
-      try { handle.releasePointerCapture(pointerId); } catch (err) {}
-      if (dragStarted) persistCardOrder();
-      cleanup();
-    }
-
-    function cleanup() {
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-      document.removeEventListener('pointercancel', onUp);
-    }
-
-    document.addEventListener('pointermove', onMove);
-    document.addEventListener('pointerup', onUp);
-    document.addEventListener('pointercancel', onUp);
-  });
-
-  // Ein Klick auf den Griff soll nie die Kachel als "Karte angeklickt"
-  // behandeln (würde sonst die Folge starten/weiterblättern).
-  handle.addEventListener('click', (e) => e.stopPropagation());
-
-  // Verhindert das native Long-Press-Kontextmenü auf dem Griff.
-  handle.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 function onCardClick(card) {
@@ -2356,6 +2162,7 @@ if ('serviceWorker' in navigator) {
 /* Init */
 async function init() {
   migrateRenamedPodcasts();
+  removeOldOrderKeys();
   renderTodayHeader();
   applyPlaybackRate();
   updatePlayPauseIcon();
