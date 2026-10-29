@@ -2,3 +2,4 @@
 # Google Sheets -> Datei -> Freigeben -> Im Web veroeffentlichen -> Format CSV.
 # Diese Datei wird von tools/sync-config.mjs gelesen.
 
+https://docs.google.com/spreadsheets/d/e/2PACX-1vSAiprMurCpNLrHb5_zNwGah1h5OYPj9dVZNU01jz0zZ9Bt01XKDCV_LucLwH1Yl32VnFx19ZP1wF4I/pub?output=csv
