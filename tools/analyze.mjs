@@ -128,6 +128,8 @@ const SAFETY_AD_START = 0.5;      // Werbung beginnt so viel später
 const BLOCK_PAUSE = 0.4;      // ab dieser Pausenlänge beginnt ein Abschnitt
 const BLOCK_MIN_WORDS = 3;    // kürzere Abschnitte mit dem nächsten verbinden
 const BLOCK_PAD = 0.15;       // winziger Vorlauf, damit nichts angeschnitten wird
+const PHRASE_WINDOW = 150;    // Sekunden um den genannten Abschnitt, in denen die zitierten Worte gesucht werden
+const MIN_CHAPTER_GAP = 20;   // dichter aufeinander ist kein zweites Thema, sondern dieselbe Stelle doppelt
 
 const PAD_BEFORE = 0.3;          // Werbeblock minimal weiter fassen
 const PAD_AFTER = 0.4;
@@ -642,6 +644,7 @@ function buildBlockPrompt(blocks, structure) {
     '- Die Abschnittsnummer ist die des Abschnitts, in dem diese Anmoderation steht. Steht die Anmoderation in einem ¶-Abschnitt, nimm diesen - nicht einen späteren.',
     '- Fange immer beim ERSTEN WORT DES ERSTEN SATZES an, nie mitten im Satz: "Zum Schluss schauen wir nach" ist richtig, "schauen wir nach Düsseldorf, wo" ist falsch.',
     '- Wird ein Thema nur mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi."), beginnt es bei diesem Schlagwort.',
+    '- Ein Thema, das in der Themenvorstellung am Anfang nur kurz angekündigt wird, beginnt NICHT dort, sondern erst an der Stelle, an der die Sendung es später ausführlich behandelt.',
     '',
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
     '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China","beginnt":"Zollstreit. Die Europäische Union hat"}]}',
@@ -776,15 +779,20 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
       if (!block || !c.titel) return null;
       const titel = String(c.titel).slice(0, 60);
 
-      // Nur in der Umgebung des genannten Abschnitts suchen (zwei davor, zwei
-      // danach) - so fängt die Suche einen Griff daneben ab, läuft aber nicht
-      // quer durch die Folge.
-      const von = blocks[Math.max(0, c.block - 2)].start;
-      const bis = blocks[Math.min(blocks.length - 1, c.block + 2)].end;
+      // Gesucht wird in einem ZEITFENSTER um den genannten Abschnitt, nicht
+      // in einer festen Zahl von Abschnitten. Grund: Die Abschnittsnummer
+      // ist nur ein grober Fingerzeig des Modells - bei Echo der Zeit lag
+      // die zitierte Anmoderation 44 Sekunden und damit vier Abschnitte
+      // weiter, das alte Fenster von zwei Abschnitten hat sie verfehlt und
+      // die Marke fiel auf den Abschnittsanfang zurück. Die Wörter selbst
+      // sind eindeutig; das Fenster muss nur verhindern, dass eine Wendung,
+      // die später noch einmal fällt, die Marke verschleppt.
+      const von = block.start - PHRASE_WINDOW;
+      const bis = block.start + PHRASE_WINDOW;
       const umgebung = [];
-      for (let i = Math.max(0, c.block - 2); i <= Math.min(blocks.length - 1, c.block + 2); i++) {
-        umgebung.push(...blocks[i].words);
-      }
+      blocks.forEach((b) => {
+        if (b.end >= von && b.start <= bis) umgebung.push(...b.words);
+      });
       const idx = findPhraseStart(umgebung, c.beginnt, block.start);
       let treffer = null;
       if (idx !== null) {
@@ -805,7 +813,17 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
       return { start: Math.max(0, start - BLOCK_PAD), title: titel };
     })
     .filter(Boolean)
-    .sort((a, b) => a.start - b.start);
+    .sort((a, b) => a.start - b.start)
+    // Zwei Marken dicht hintereinander sind kein zweites Thema: Meist hat
+    // das Modell ein Thema zusätzlich dort markiert, wo die Sendung es in
+    // der Themenvorstellung nur ankündigt. Die spätere, ausführliche Stelle
+    // ist die richtige - die frühere fällt weg.
+    .filter((c, i, alle) => {
+      if (i === 0) return true;
+      const zuDicht = c.start - alle[i - 1].start < MIN_CHAPTER_GAP;
+      if (zuDicht) log(`   Thema "${c.title}" ${fmt(c.start)} verworfen: nur ${Math.round(c.start - alle[i - 1].start)} Sek. nach "${alle[i - 1].title}"`);
+      return !zuDicht;
+    });
 
   return { ads: trimAdsByChapters(ads, chapters), chapters };
 }
