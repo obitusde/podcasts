@@ -257,10 +257,15 @@ dadurch ohne Copy-Paste in den Apps-Script-Editor und ohne neue Bereitstellung.
 
 Ablauf:
 
-1. Zweimal täglich (4:25 und 10:25 UTC) läuft die Action; sie lässt sich unter
-   *Actions → Podcast-Analyse → Run workflow* auch von Hand starten.
-2. `tools/analyze.mjs` liest die Feeds aus `tools/podcasts.config.json`, prüft
-   die neuesten Folgen und überspringt bereits analysierte.
+1. Die Action läuft morgens im Halbstundentakt (3:00-7:30 UTC) plus einmal
+   mittags - so lange, bis die Folge des Tages erschienen und analysiert ist.
+   Jeder weitere Lauf an dem Tag endet nach dem Feed-Abruf. Von Hand starten:
+   *Actions → Podcast-Analyse → Run workflow*; mit angehaktem "force" werden
+   auch schon analysierte Folgen neu ausgewertet.
+2. `tools/analyze.mjs` liest die Feeds aus `tools/podcasts.config.json` und
+   nimmt sich **nur die neueste Folge** (`episodes: 1`). Sie wird übersprungen,
+   wenn sie schon analysiert wurde oder älter als `maxAgeHours` (Standard 14
+   Stunden) ist - an Tagen ohne neue Folge passiert also nichts.
 3. Pro neuer Folge: MP3 laden → OpenRouter-Transkription mit Wort-Zeitstempeln
    → Transkript in feine Zeilen (max. 8 Sek.) zerlegen → günstiges Textmodell
    benennt Werbeblöcke und Themen über **Zeilennummern** → die Sekunden kommen
@@ -272,7 +277,13 @@ Ablauf:
 Einmalig nötig: Repository-Secret `OPENROUTER_API_KEY` unter
 *Settings → Secrets and variables → Actions → New repository secret*.
 
-Kosten: ca. 0,2 Cent Transkription plus ca. 0,1 Cent Analyse je Folge.
+Kosten: ca. 0,2 Cent Transkription plus ca. 0,1 Cent Analyse je Folge - also
+nur an Tagen mit neuer Folge, einmal pro Folge.
+
+Die Längenangabe aus dem Feed wird bewusst nicht als Obergrenze benutzt: Beim
+Handelsblatt meldet der Feed rund 8:30, die Datei läuft aber knapp 10 Minuten.
+Es gilt der grössere Wert aus Feed-Angabe und Transkript-Ende, sonst fällt der
+Werbeblock am Schluss unter den Tisch.
 
 Reihenfolge der Quellen im Frontend: `data/analysis.json` → was der
 Apps-Script-Proxy mitliefert → feste Werte aus `PODCAST_TRIM`. Die

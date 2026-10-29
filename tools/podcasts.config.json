@@ -1,10 +1,10 @@
 {
-  "_hinweis": "Welche Podcasts analysiert werden. 'structure' beschreibt den Aufbau der Sendung in Worten und ist der wichtigste Hebel, wenn die Werbe-Erkennung danebenliegt. 'episodes' = wie viele der neuesten Folgen pro Lauf geprüft werden.",
+  "_hinweis": "Welche Podcasts analysiert werden. 'structure' beschreibt den Aufbau der Sendung in Worten und ist der wichtigste Hebel, wenn die Werbe-Erkennung danebenliegt. 'episodes' = wie viele der neuesten Folgen pro Lauf geprueft werden (1 = nur die Folge des Tages). 'maxAgeHours' = wie alt die neueste Folge hoechstens sein darf, damit sie noch analysiert wird; Standard 14 Stunden.",
   "podcasts": [
     {
       "name": "Handelsblatt Morning Briefing",
       "feed": "https://handelsblatt-morningbriefing.podigee.io/feed/mp3",
-      "episodes": 2,
+      "episodes": 1,
       "structure": "Die Folge ist immer gleich aufgebaut: (1) der Moderator stellt kurz die Themen der Sendung vor, (2) ein Werbeblock mit Sponsorenhinweis, (3) die einzelnen Themen nacheinander, dazwischen koennen weitere Werbebloecke liegen, (4) am Schluss ein Werbeblock bzw. Abspann mit Hinweisen auf andere Angebote. Der Werbeblock nach der Themenvorstellung dauert meist etwa eine Minute."
     }
   ]

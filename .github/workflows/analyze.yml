@@ -8,9 +8,13 @@ name: Podcast-Analyse
 
 on:
   schedule:
-    # Zeiten in UTC. Morgens kurz nach Erscheinen der Folge, mittags nochmal.
-    - cron: '25 4 * * *'   # 5:25 bzw. 6:25 deutscher Zeit
-    - cron: '25 10 * * *'  # 11:25 bzw. 12:25 deutscher Zeit
+    # Zeiten in UTC. Morgens im Halbstundentakt, bis die Folge des Tages da
+    # ist: Der erste Lauf, der sie findet, analysiert sie; alle weiteren
+    # Läufe sehen "schon analysiert" und enden nach dem Feed-Abruf. Gibt es
+    # an dem Tag keine neue Folge, passiert gar nichts.
+    # (GitHub startet geplante Läufe oft 5-15 Minuten später als angegeben.)
+    - cron: '0,30 3-7 * * *'  # 4:00 bis 8:30 deutscher Zeit
+    - cron: '0 11 * * *'      # Sicherheitsnetz am Mittag
   workflow_dispatch:       # erlaubt das Starten von Hand
     inputs:
       force:

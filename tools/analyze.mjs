@@ -31,6 +31,10 @@ const CONFIG_PATH = 'tools/podcasts.config.json';
 const OUT_PATH = 'data/analysis.json';
 
 const KEEP_EPISODES = 60;      // so viele Analysen bleiben in der Datei
+// Nur frische Folgen werden analysiert: Ist die neueste Folge älter als
+// das hier, gibt es heute keine neue Ausgabe (Wochenende, Feiertag) und
+// der Lauf endet sofort wieder - ohne Kosten.
+const DEFAULT_MAX_AGE_HOURS = 14;
 const MAX_AUDIO_MB = 60;
 const MIN_CONTENT_SECONDS = 120; // Plausibilität: so viel Inhalt muss übrig bleiben
 const LINE_MAX_SECONDS = 8;      // Länge der Transkript-Zeilen fürs Textmodell
@@ -91,10 +95,13 @@ async function fetchEpisodes(feedUrl) {
     const item = m[0];
     const enclosure = /<enclosure[^>]*url=["']([^"']+)["']/i.exec(item);
     if (!enclosure) continue;
+    const pubDate = tagText(item, 'pubDate');
     episodes.push({
       guid: tagText(item, 'guid') || enclosure[1],
       title: tagText(item, 'title') || '(ohne Titel)',
       audioUrl: enclosure[1],
+      pubDate: pubDate,
+      pubDateMs: pubDate ? Date.parse(pubDate) : NaN,
       durationSeconds: parseDuration(tagText(item, 'itunes:duration'))
     });
     if (episodes.length >= 5) break;
@@ -290,6 +297,7 @@ function fixChapters(chapters, adRanges, duration) {
 
 async function analyzeEpisode(ep, structure) {
   log(`\n-> ${ep.title}`);
+  if (ep.pubDate) log(`   erschienen: ${ep.pubDate}`);
   log(`   ${ep.audioUrl}`);
 
   const audioRes = await fetch(ep.audioUrl, { redirect: 'follow' });
@@ -338,6 +346,7 @@ async function analyzeEpisode(ep, structure) {
 
   return {
     title: ep.title,
+    pubDate: ep.pubDate || null,
     adRanges,
     chapters,
     durationSeconds: Math.round(duration),
@@ -362,9 +371,21 @@ async function main() {
       continue;
     }
 
+    const maxAgeHours = podcast.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS;
+
     for (const ep of episodes.slice(0, podcast.episodes || 1)) {
       if (episodesStore[ep.guid] && !FORCE) {
         log(`   schon analysiert: ${ep.title}`);
+        continue;
+      }
+
+      // Ist die neueste Folge von gestern oder älter, gibt es heute nichts
+      // zu tun. Der Lauf kostet dann nur den Feed-Abruf.
+      const ageHours = Number.isFinite(ep.pubDateMs)
+        ? (Date.now() - ep.pubDateMs) / 3600000
+        : null;
+      if (!FORCE && ageHours !== null && ageHours > maxAgeHours) {
+        log(`   keine neue Folge (neueste ist ${ageHours.toFixed(1)} Std. alt: ${ep.title})`);
         continue;
       }
       try {
