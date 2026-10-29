@@ -1,12 +1,20 @@
 {
-  "updatedAt": "2026-10-29T08:39:07.549Z",
+  "updatedAt": "2026-10-29T08:41:19.876Z",
   "episodes": {
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
       "adRanges": [
         [
           38.4,
-          94.3
+          87.4
+        ],
+        [
+          285.6,
+          308
+        ],
+        [
+          562.1,
+          597.6
         ]
       ],
       "chapters": [
@@ -15,44 +23,48 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 94.4,
-          "title": "Israel: Eine gespaltene Nation"
+          "start": 87.5,
+          "title": "Israel: Politische Lage"
         },
         {
-          "start": 218.7,
-          "title": "Merz auf Asienreise"
+          "start": 211.8,
+          "title": "Merz: Asienreise und Handelspolitik"
         },
         {
-          "start": 292.5,
-          "title": "US-Wahlkampf und Trump-Fans"
+          "start": 308.1,
+          "title": "US-Wahl: Trump-Anhänger"
         },
         {
-          "start": 367.5,
+          "start": 360.4,
           "title": "E.ON: Investitionen und Sparprogramm"
         },
         {
-          "start": 436.3,
-          "title": "Mercedes Gewinnwarnung"
+          "start": 429.4,
+          "title": "Mercedes: Gewinnwarnung"
         },
         {
-          "start": 481.3,
-          "title": "Börsenhandel rund um die Uhr"
+          "start": 474.3,
+          "title": "Börse: Handel rund um die Uhr"
         },
         {
-          "start": 513,
+          "start": 515.8,
           "title": "Sport: Blockade in Essen"
         }
       ],
-      "durationSeconds": 513,
+      "durationSeconds": 598,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T08:39:07.541Z"
+      "detectedAt": "2026-10-29T08:41:19.869Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
       "adRanges": [
         [
           39.1,
-          88.1
+          95.3
+        ],
+        [
+          559.6,
+          591
         ]
       ],
       "chapters": [
@@ -61,41 +73,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 88.2,
+          "start": 95.4,
           "title": "Bundespräsidentenwahl"
         },
         {
-          "start": 237.5,
-          "title": "FED Zinspolitik"
+          "start": 241.2,
+          "title": "US-Notenbank und EZB"
         },
         {
-          "start": 256.2,
-          "title": "EZB und Inflation"
-        },
-        {
-          "start": 283,
+          "start": 286.4,
           "title": "Bankenquartalszahlen"
         },
         {
-          "start": 337.2,
+          "start": 340.7,
           "title": "Gesundheitspolitik"
         },
         {
-          "start": 398.9,
-          "title": "Audi und Trump"
+          "start": 402.4,
+          "title": "Audi und der Trump-Deal"
         },
         {
-          "start": 453.1,
+          "start": 456.4,
           "title": "Alphabet Quartalszahlen"
         },
         {
-          "start": 504,
-          "title": "Weinmarkt und Zölle"
+          "start": 507.5,
+          "title": "Weinmarkt und Fazit"
         }
       ],
-      "durationSeconds": 506,
+      "durationSeconds": 591,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T08:38:47.275Z"
+      "detectedAt": "2026-10-29T08:41:01.064Z"
     }
   }
 }
