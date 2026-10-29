@@ -724,6 +724,7 @@ function getTrim(podcastName) {
 
 let activeAdRanges = [];  // [[von, bis], ...] der laufenden Folge
 let activeChapters = [];  // [{start, title}, ...] der laufenden Folge
+let activeAnalysis = null; // die zugrunde liegende Analyse (für die Längenprüfung)
 
 // Baut die Werbebereiche einer Folge: erkannte Bereiche bevorzugt,
 // sonst die festen Werte aus PODCAST_TRIM.
@@ -753,6 +754,56 @@ function buildChapters(episode) {
     .filter((c) => c && isFinite(Number(c.start)) && c.title)
     .map((c) => ({ start: Number(c.start), title: String(c.title) }))
     .sort((a, b) => a.start - b.start);
+}
+
+/**
+ * Passt die Analyse zur Datei, die gerade geladen wurde?
+ *
+ * Der Anbieter (Podigee) schaltet Werbung dynamisch dazu - dieselbe Adresse
+ * liefert mal die Fassung mit Werbung, mal die ohne. Die Marken gelten aber
+ * nur für genau die Fassung, die analysiert wurde. Deshalb wird nach dem
+ * Laden die Länge verglichen:
+ *
+ *   passt zur analysierten Länge  -> Marken gelten
+ *   passt zur Länge aus dem Feed  -> Fassung OHNE Werbung: nichts
+ *                                    überspringen, Themen um die
+ *                                    weggefallene Werbezeit nach vorn ziehen
+ *   passt zu keiner von beiden    -> keine Marken, feste Werte
+ */
+function checkAnalysisFitsFile(podcastName, episode) {
+  const duration = audioDuration();
+  if (!activeAnalysis || !isFinite(duration)) return;
+
+  const analysed = Number(activeAnalysis.durationSeconds) || 0;
+  const feed = Number(activeAnalysis.feedDurationSeconds) || 0;
+
+  if (analysed && Math.abs(duration - analysed) <= 5) return; // alles wie erwartet
+
+  if (feed && Math.abs(duration - feed) <= 5) {
+    // Fassung ohne Werbung: Die Themen liegen um die Werbezeit früher, die
+    // vor ihnen lag.
+    const removedBefore = (time) => activeAdRanges
+      .filter((r) => r[1] <= time)
+      .reduce((sum, r) => sum + (r[1] - r[0]), 0);
+    activeChapters = activeChapters
+      .map((c) => ({ start: Math.max(0, c.start - removedBefore(c.start)), title: c.title }))
+      .sort((a, b) => a.start - b.start);
+    activeAdRanges = [];
+    console.log('Folge ohne Werbung geliefert (' + Math.round(duration) + 's) - nichts zu überspringen');
+    updateTransportUI();
+    return;
+  }
+
+  console.log('Analyse passt nicht zur Datei (' + Math.round(duration) + 's statt ' +
+    Math.round(analysed) + 's) - feste Werte werden benutzt');
+  activeChapters = [];
+  activeAdRanges = buildAdRangesFromTrim(podcastName);
+  updateTransportUI();
+}
+
+// Nur die festen Werte aus PODCAST_TRIM, ohne Analyse.
+function buildAdRangesFromTrim(podcastName) {
+  return buildAdRangesFromTrim(podcastName);
 }
 
 function audioDuration() {
@@ -1499,12 +1550,14 @@ function playEpisode(card, podcastName, index) {
   activeEpisodeEnded = false;
   activeAdRanges = buildAdRanges(podcastName, episode);
   activeChapters = buildChapters(episode);
+  activeAnalysis = analysisFor(episode);
   applyPlaybackRate();
 
   setMediaMetadata(podcastName, episode, coverUrl);
 
   const savedProgress = pState.progress[episode.guid];
   const resume = () => {
+    checkAnalysisFitsFile(podcastName, episode);
     // Gespeicherte Position nur übernehmen, wenn sie im hörbaren Bereich
     // liegt und nicht praktisch am Ende - sonst beim Inhalt anfangen.
     const start = contentStart();

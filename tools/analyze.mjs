@@ -1071,6 +1071,11 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
     title: ep.title,
     pubDate: ep.pubDate || null,
     audioUrl: ep.audioUrl, // damit sich jede Analyse von Hand nachhören lässt
+    // Länge der analysierten Datei und die Angabe aus dem Feed. Podigee
+    // schaltet Werbung dynamisch dazu: dieselbe Adresse lieferte einmal
+    // 10:06 (mit Werbung) und einmal 8:26 (ohne). Mit beiden Werten kann
+    // die App erkennen, WELCHE Fassung sie gerade abspielt.
+    feedDurationSeconds: ep.durationSeconds || null,
     adRanges,
     chapters,
     durationSeconds: Math.round(duration),
