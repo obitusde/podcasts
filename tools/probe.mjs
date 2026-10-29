@@ -1,28 +1,42 @@
 /**
- * Lädt dieselbe Folge mehrfach herunter und vergleicht die Dateien.
+ * Untersucht, welche Fassung einer Folge der Anbieter ausliefert.
  *
  * Hintergrund: Podigee schaltet Werbung dynamisch zu - dieselbe Adresse
- * kann unterschiedlich lange Dateien liefern. Diese Prüfung beantwortet
- * die entscheidende Frage: Verschiebt sich dabei auch der redaktionelle
- * Inhalt, oder bleibt der Anfang Byte für Byte derselbe und nur das Ende
- * ändert sich? Davon hängt ab, ob die einmal gemessenen Marken für jede
- * Auslieferung gelten.
+ * liefert mal die Fassung mit Werbung, mal die ohne, je nachdem welcher
+ * Auslieferungsserver antwortet. Einmal gemessene Marken gelten aber nur
+ * für genau eine Fassung.
+ *
+ * Diese Prüfung lädt die Folge mehrfach und über verschiedene Varianten
+ * der Adresse herunter und zeigt, welche Längen dabei herauskommen.
+ * Kommt bei einer Variante immer dieselbe (am besten die kurze, werbe-
+ * freie) Länge heraus, ist das Problem damit gelöst.
+ *
+ * Aufruf: node tools/probe.mjs <audio-url> [runden]
  */
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { writeFileSync, unlinkSync } from 'node:fs';
 
-const url = process.argv[2];
-const runs = Number(process.argv[3] || 3);
-if (!url) {
-  console.error('Aufruf: node tools/probe.mjs <audio-url> [anzahl]');
+const input = process.argv[2];
+const rounds = Number(process.argv[3] || 3);
+if (!input) {
+  console.error('Aufruf: node tools/probe.mjs <audio-url> [runden]');
   process.exit(1);
 }
 
-const md5 = (buf) => createHash('md5').update(buf).digest('hex').slice(0, 12);
+// Varianten der Adresse, die getestet werden.
+const base = input.split('?')[0];
+const variants = [
+  { name: 'wie im Feed      ', url: input },
+  { name: 'ohne Zusatz      ', url: base },
+  { name: 'source=webplayer ', url: base + '?source=webplayer' },
+  { name: 'source=website   ', url: base + '?source=website' }
+];
+
+const md5 = (buf) => createHash('md5').update(buf).digest('hex').slice(0, 10);
 
 function duration(buf) {
-  const file = '/tmp/probe-' + Date.now() + '.mp3';
+  const file = `/tmp/probe-${process.pid}-${Date.now()}.mp3`;
   writeFileSync(file, buf);
   const out = spawnSync('ffprobe', [
     '-v', 'error', '-show_entries', 'format=duration',
@@ -32,34 +46,37 @@ function duration(buf) {
   return Number(out.stdout) || 0;
 }
 
-const results = [];
-for (let i = 1; i <= runs; i++) {
-  const res = await fetch(url);
-  const buf = Buffer.from(await res.arrayBuffer());
-  const r = {
-    bytes: buf.length,
-    seconds: duration(buf),
-    ganz: md5(buf),
-    erste2MB: md5(buf.subarray(0, 2 * 1024 * 1024)),
-    letzte2MB: md5(buf.subarray(-2 * 1024 * 1024))
-  };
-  results.push(r);
-  console.log(`Lauf ${i}: ${r.bytes} Bytes · ${r.seconds.toFixed(1)}s · ganz ${r.ganz} · Anfang ${r.erste2MB} · Ende ${r.letzte2MB}`);
+const seen = new Map(); // Variante -> Set von Längen
+
+for (let round = 1; round <= rounds; round++) {
+  console.log(`\n--- Runde ${round} ---`);
+  for (const v of variants) {
+    try {
+      const res = await fetch(v.url, { redirect: 'follow' });
+      if (!res.ok) { console.log(`${v.name} HTTP ${res.status}`); continue; }
+      const buf = Buffer.from(await res.arrayBuffer());
+      const sec = duration(buf);
+      console.log(`${v.name} ${(buf.length / 1048576).toFixed(1)} MB · ${sec.toFixed(1)}s · ${md5(buf)}`);
+      if (!seen.has(v.name)) seen.set(v.name, new Set());
+      seen.get(v.name).add(Math.round(sec));
+    } catch (err) {
+      console.log(`${v.name} Fehler: ${err.message}`);
+    }
+  }
 }
 
-const gleicherAnfang = results.every((r) => r.erste2MB === results[0].erste2MB);
-const gleicheDatei = results.every((r) => r.ganz === results[0].ganz);
-const laengen = [...new Set(results.map((r) => Math.round(r.seconds)))];
-
-console.log('\n--- Ergebnis ---');
-console.log('Längen:', laengen.join(' / '), 'Sekunden');
-if (gleicheDatei) {
-  console.log('IDENTISCH: Jede Auslieferung ist dieselbe Datei. Marken gelten immer.');
-} else if (gleicherAnfang) {
-  console.log('ANFANG GLEICH: Nur das Ende unterscheidet sich.');
-  console.log('-> Inhalt und Werbung am Anfang liegen fest, nur die Schlusswerbung variiert.');
-  console.log('-> Die Marken gelten, die Längenprüfung im Player darf lockerer sein.');
+console.log('\n=== Ergebnis ===');
+let stabil = null;
+for (const [name, lengths] of seen) {
+  const list = [...lengths].sort((a, b) => a - b);
+  const note = list.length === 1 ? 'IMMER GLEICH' : 'schwankt';
+  console.log(`${name} ${list.join(' / ')} s  ->  ${note}`);
+  if (list.length === 1 && (stabil === null || list[0] < stabil.len)) {
+    stabil = { name, len: list[0] };
+  }
+}
+if (stabil) {
+  console.log(`\nStabil und am kürzesten: "${stabil.name.trim()}" mit ${stabil.len}s.`);
 } else {
-  console.log('ANFANG VERSCHIEDEN: Die Werbung vorn ist je Auslieferung anders lang.');
-  console.log('-> Die Zeitachse verschiebt sich, feste Marken reichen nicht.');
+  console.log('\nKeine Variante liefert verlässlich dieselbe Fassung.');
 }
