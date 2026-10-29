@@ -250,6 +250,37 @@ Normalbetrieb lädt der Browser überhaupt kein Cover mehr nach. Die Dauer steht
 
 ## Werbung überspringen und Themen (automatische Erkennung)
 
+**Diese Erkennung läuft als GitHub Action** (`.github/workflows/analyze.yml`,
+Skript `tools/analyze.mjs`), nicht im Apps Script. Grund: Am Repository kann
+Claude selbst arbeiten - Prompt, Modelle, Podcast-Liste und Zeiten ändern sich
+dadurch ohne Copy-Paste in den Apps-Script-Editor und ohne neue Bereitstellung.
+
+Ablauf:
+
+1. Zweimal täglich (4:25 und 10:25 UTC) läuft die Action; sie lässt sich unter
+   *Actions → Podcast-Analyse → Run workflow* auch von Hand starten.
+2. `tools/analyze.mjs` liest die Feeds aus `tools/podcasts.config.json`, prüft
+   die neuesten Folgen und überspringt bereits analysierte.
+3. Pro neuer Folge: MP3 laden → OpenRouter-Transkription mit Wort-Zeitstempeln
+   → Transkript in feine Zeilen (max. 8 Sek.) zerlegen → günstiges Textmodell
+   benennt Werbeblöcke und Themen über **Zeilennummern** → die Sekunden kommen
+   aus dem Transkript.
+4. Ergebnis landet in `data/analysis.json` und wird von der Action committet.
+   `index.html` lädt diese Datei beim Start (gleiche Adresse, kein CORS) und
+   verknüpft sie über die `guid` mit den Folgen aus dem Feed.
+
+Einmalig nötig: Repository-Secret `OPENROUTER_API_KEY` unter
+*Settings → Secrets and variables → Actions → New repository secret*.
+
+Kosten: ca. 0,2 Cent Transkription plus ca. 0,1 Cent Analyse je Folge.
+
+Reihenfolge der Quellen im Frontend: `data/analysis.json` → was der
+Apps-Script-Proxy mitliefert → feste Werte aus `PODCAST_TRIM`. Die
+entsprechende Logik in `Code.gs` ist damit nur noch Reserve und kann bei
+Gelegenheit entfernt werden.
+
+### Wie es früher gedacht war (Apps Script)
+
 Für ausgewählte Podcasts (aktuell nur das Handelsblatt Morning Briefing, Liste
 `AD_DETECT_PODCASTS` in `Code.gs`) analysiert das Backend die neuesten Folgen:
 

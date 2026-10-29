@@ -728,8 +728,9 @@ let activeChapters = [];  // [{start, title}, ...] der laufenden Folge
 // Baut die Werbebereiche einer Folge: erkannte Bereiche bevorzugt,
 // sonst die festen Werte aus PODCAST_TRIM.
 function buildAdRanges(podcastName, episode) {
-  if (episode && Array.isArray(episode.adRanges) && episode.adRanges.length > 0) {
-    return episode.adRanges
+  const analysis = analysisFor(episode);
+  if (analysis && Array.isArray(analysis.adRanges) && analysis.adRanges.length > 0) {
+    return analysis.adRanges
       .map((r) => [Number(r[0]), Number(r[1])])
       .filter((r) => isFinite(r[0]) && isFinite(r[1]) && r[1] > r[0])
       .sort((a, b) => a[0] - b[0]);
@@ -742,6 +743,16 @@ function buildAdRanges(podcastName, episode) {
   if (Array.isArray(trim.adRanges)) trim.adRanges.forEach((r) => ranges.push([r[0], r[1]]));
   if (trim.endSeconds) ranges.push([trim.endSeconds, Number.MAX_SAFE_INTEGER]);
   return ranges.sort((a, b) => a[0] - b[0]);
+}
+
+// Themen der Folge (leer, wenn es keine Analyse gibt).
+function buildChapters(episode) {
+  const analysis = analysisFor(episode);
+  if (!analysis || !Array.isArray(analysis.chapters)) return [];
+  return analysis.chapters
+    .filter((c) => c && isFinite(Number(c.start)) && c.title)
+    .map((c) => ({ start: Number(c.start), title: String(c.title) }))
+    .sort((a, b) => a.start - b.start);
 }
 
 function audioDuration() {
@@ -819,6 +830,37 @@ function playableToReal(position) {
     remaining -= length;
   }
   return segments.length > 0 ? segments[segments.length - 1][1] : 0;
+}
+
+// --- Erkannte Werbeblöcke und Themen ------------------------------------
+// data/analysis.json wird zweimal täglich von einer GitHub Action
+// geschrieben (siehe tools/analyze.mjs) und liegt auf derselben Adresse wie
+// diese Seite. Darin steht pro Folge (Schlüssel = guid), wo die Werbung
+// liegt und wie die Themen heissen.
+const ANALYSIS_URL = 'data/analysis.json';
+let EPISODE_ANALYSIS = {};
+
+async function loadAnalysisFile() {
+  try {
+    // Zeitstempel in der Adresse: so liefert der Browser-Cache nie einen
+    // alten Stand, wenn die Action gerade neu geschrieben hat.
+    const res = await fetch(ANALYSIS_URL + '?t=' + Math.floor(Date.now() / 60000));
+    if (!res.ok) return;
+    const data = await res.json();
+    EPISODE_ANALYSIS = (data && data.episodes) || {};
+  } catch (err) {
+    console.error('Analyse-Datei nicht ladbar', err);
+  }
+}
+
+// Analyse zu einer Folge: zuerst die Datei (immer der neueste Stand),
+// sonst das, was der Apps-Script-Proxy mitgeliefert hat.
+function analysisFor(episode) {
+  if (!episode) return null;
+  const fromFile = EPISODE_ANALYSIS[episode.guid];
+  if (fromFile) return fromFile;
+  if (Array.isArray(episode.adRanges) || Array.isArray(episode.chapters)) return episode;
+  return null;
 }
 
 // --- Titel aufräumen ----------------------------------------------------
@@ -1204,6 +1246,7 @@ async function refreshAll() {
   isRefreshing = true;
   if (refreshBtn) refreshBtn.classList.add('busy');
   try {
+    await loadAnalysisFile();
     const cards = Array.from(grid.children).filter((c) => c.podcast);
     await Promise.all(cards.map((card) => loadPodcast(card.podcast, card)));
   } finally {
@@ -1248,7 +1291,7 @@ function updatePlayerPreview(card, podcastName, index) {
   // Themen/Werbebereiche gleich auf die angezeigte Folge umstellen, sonst
   // stünde noch das Thema der gerade beendeten Folge in der Leiste.
   activeAdRanges = buildAdRanges(podcastName, episode);
-  activeChapters = Array.isArray(episode.chapters) ? episode.chapters.slice() : [];
+  activeChapters = buildChapters(episode);
   updateChapterUI();
   const coverUrl = getPodcastImage(podcastName, episode.imageUrl);
   setImageSrc(playerImg, coverUrl);
@@ -1449,7 +1492,7 @@ function playEpisode(card, podcastName, index) {
   activeEpisode = { podcastName, guid: episode.guid };
   activeEpisodeEnded = false;
   activeAdRanges = buildAdRanges(podcastName, episode);
-  activeChapters = Array.isArray(episode.chapters) ? episode.chapters.slice() : [];
+  activeChapters = buildChapters(episode);
   applyPlaybackRate();
 
   setMediaMetadata(podcastName, episode, coverUrl);
@@ -2071,15 +2114,24 @@ if ('serviceWorker' in navigator) {
 }
 
 /* Init */
-migrateRenamedPodcasts();
-renderTodayHeader();
-applyPlaybackRate();
-updatePlayPauseIcon();
-updateEpisodeNavButtons();
-getOrderedPodcasts().forEach(podcast => {
-  const card = createCard(podcast);
-  loadPodcast(podcast, card);
-});
+async function init() {
+  migrateRenamedPodcasts();
+  renderTodayHeader();
+  applyPlaybackRate();
+  updatePlayPauseIcon();
+  updateEpisodeNavButtons();
+
+  // Die Analyse-Datei ist klein und kommt von derselben Adresse - erst sie
+  // laden, damit schon die erste angetippte Folge ohne Werbung startet.
+  await loadAnalysisFile();
+
+  getOrderedPodcasts().forEach(podcast => {
+    const card = createCard(podcast);
+    loadPodcast(podcast, card);
+  });
+}
+
+init();
 </script>
 
 </body>

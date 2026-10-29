@@ -1,0 +1,49 @@
+# Erkennt zweimal täglich Werbeblöcke und Themen in den neuesten Folgen
+# (siehe tools/analyze.mjs) und schreibt das Ergebnis nach data/analysis.json.
+# Die Webseite liest diese Datei und überspringt damit die Werbung.
+#
+# Einmalig nötig: Repository-Secret OPENROUTER_API_KEY anlegen unter
+# Settings -> Secrets and variables -> Actions -> New repository secret
+name: Podcast-Analyse
+
+on:
+  schedule:
+    # Zeiten in UTC. Morgens kurz nach Erscheinen der Folge, mittags nochmal.
+    - cron: '25 4 * * *'   # 5:25 bzw. 6:25 deutscher Zeit
+    - cron: '25 10 * * *'  # 11:25 bzw. 12:25 deutscher Zeit
+  workflow_dispatch:       # erlaubt das Starten von Hand
+
+permissions:
+  contents: write
+
+concurrency:
+  group: podcast-analyse
+  cancel-in-progress: false
+
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Folgen analysieren
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node tools/analyze.mjs
+
+      - name: Ergebnis committen
+        run: |
+          git config user.name "podcast-analyse"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/analysis.json
+          if git diff --staged --quiet; then
+            echo "Keine Änderung."
+          else
+            git commit -m "Werbe- und Themen-Analyse aktualisiert"
+            git pull --rebase origin main
+            git push
+          fi
