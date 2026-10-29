@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T14:07:34.201Z",
+  "updatedAt": "2026-10-29T14:13:23.610Z",
   "episodes": {
     "38e16133-0dc4-38ad-b831-329ec32eae10": {
       "podcastId": "echo-der-zeit",
@@ -13,7 +13,7 @@
       "chapters": [
         {
           "start": 0,
-          "title": "Themenüberblick"
+          "title": "Themenübersicht"
         },
         {
           "start": 20.6,
@@ -24,57 +24,37 @@
           "title": "Nachrichtenübersicht"
         },
         {
-          "start": 320.852625,
-          "title": "Digitale Abhängigkeit Europas"
-        },
-        {
-          "start": 364.2,
-          "title": "Berufliche Vorsorge in der Schweiz"
-        },
-        {
-          "start": 445.1,
-          "title": "Schusswaffengebrauch der Polizei"
-        },
-        {
-          "start": 484.47585399999997,
-          "title": "Mehr Gewinn für Bank UBS"
-        },
-        {
-          "start": 502.15329199999996,
-          "title": "Börsendaten"
-        },
-        {
-          "start": 523.9326870000001,
-          "title": "Wetter"
-        },
-        {
           "start": 540.4,
-          "title": "Parlamentswahl in Israel"
+          "title": "Wahl in Israel"
         },
         {
-          "start": 1175.6911460000001,
+          "start": 731.0728750000001,
+          "title": "Regierungsbildung in Israel"
+        },
+        {
+          "start": 1098.070125,
           "title": "Nachfolge UNO-Generalsekretär"
         },
         {
           "start": 1343.715729,
-          "title": "Neues Budget in Grossbritannien"
+          "title": "Britischer Haushalt"
         },
         {
           "start": 1632.5,
-          "title": "Luftabwehr der Schweiz"
+          "title": "Schweizer Luftabwehr"
         },
         {
           "start": 1820.417667,
-          "title": "Missbrauch in reformierter Kirche"
+          "title": "Missbrauch in der Kirche"
         },
         {
           "start": 2151.8,
-          "title": "US-Midterms in Georgia"
+          "title": "US-Zwischenwahlen"
         }
       ],
       "durationSeconds": 2550,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T14:07:33.688Z"
+      "detectedAt": "2026-10-29T14:13:23.093Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "podcast": "Handelsblatt Morning Briefing",
