@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T10:18:39.817Z",
+  "updatedAt": "2026-10-29T10:29:34.402Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -7,11 +7,11 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
       "adRanges": [
         [
-          34,
-          101.6
+          38.2,
+          104
         ],
         [
-          563.9,
+          571.5,
           999999
         ]
       ],
@@ -21,33 +21,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 101.7,
-          "title": "Kandidatensuche Bundespräsident"
+          "start": 104,
+          "title": "Suche nach Bundespräsident"
         },
         {
-          "start": 241.5,
-          "title": "Notenbanken und Zinsentscheidungen"
+          "start": 243.7,
+          "title": "Notenbanken"
         },
         {
-          "start": 349,
-          "title": "Gesundheitspolitik und Pflege"
+          "start": 295.8,
+          "title": "Banken"
         },
         {
-          "start": 411.8,
-          "title": "Audi-Chef Döllner bei Trump"
+          "start": 350.9,
+          "title": "Gesundheit"
         },
         {
-          "start": 464.6,
-          "title": "Alphabet und KI-Investitionen"
+          "start": 412.7,
+          "title": "Audi"
         },
         {
-          "start": 519.6,
-          "title": "Handelspolitik und Weinpreise"
+          "start": 466.5,
+          "title": "Alphabet"
+        },
+        {
+          "start": 522.1,
+          "title": "Handelspolitik"
         }
       ],
-      "durationSeconds": 594,
+      "durationSeconds": 606,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T10:18:39.810Z"
+      "detectedAt": "2026-10-29T10:29:34.393Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
