@@ -150,6 +150,9 @@ const EPISODES_OVERRIDE = parseInt(process.env.EPISODES || '', 10);
 // ins Protokoll - damit lässt sich nachvollziehen, warum eine Grenze sitzt,
 // wo sie sitzt.
 const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
+// Auf einen einzigen Podcast einschränken (ID oder Name), damit sich ein
+// neuer Eintrag ausprobieren lässt, ohne die anderen neu zu analysieren.
+const ONLY = (process.env.ONLY || '').trim().toLowerCase();
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 if (!apiKey) {
@@ -1459,6 +1462,8 @@ async function main() {
   let changed = false;
 
   for (const podcast of config.podcasts) {
+    if (ONLY && ![podcast.id, podcast.name].some((x) => String(x || '').toLowerCase() === ONLY)) continue;
+
     // Steht in der Tabelle weder "Werbung" noch "Sprungmarken" auf ja, gibt
     // es für diesen Podcast nichts zu analysieren - und er kostet nichts.
     const ausTabelle = 'werbung' in podcast || 'sprungmarken' in podcast;
@@ -1507,6 +1512,11 @@ async function main() {
         log(`   FEHLER: ${err.message}`);
       }
     }
+  }
+
+  if (ONLY && !config.podcasts.some((p) => [p.id, p.name].some((x) => String(x || '').toLowerCase() === ONLY))) {
+    log(`\nKein Podcast mit "${ONLY}" in der Konfiguration.`);
+    return;
   }
 
   if (!changed) {
