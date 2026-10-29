@@ -83,6 +83,12 @@ const KEEP_AUDIO_PER_PODCAST = 1;
 // der Lauf endet sofort wieder - ohne Kosten.
 const DEFAULT_MAX_AGE_HOURS = 14;
 const MAX_AUDIO_MB = 60;
+// Ab dieser Größe wird die Datei fürs Transkript verkleinert. Sie geht als
+// Text kodiert in einem einzigen Aufruf zum Modell und wächst dabei um ein
+// Drittel - eine 40-Minuten-Folge von Echo der Zeit (39 MB) läuft so gegen
+// die Grenze der Schnittstelle. Verkleinert wird nur die Kopie fürs
+// Transkript; gehört und geschnitten wird immer das Original.
+const TRANSCRIBE_MAX_MB = 20;
 const MIN_CONTENT_SECONDS = 120; // Plausibilität: so viel Inhalt muss übrig bleiben
 const LINE_MAX_SECONDS = 8;      // Länge der Transkript-Zeilen fürs Textmodell
 const LINE_MAX_WORDS = 22;
@@ -429,6 +435,26 @@ async function probeDuration(filePath) {
   } catch (err) {
     return 0;
   }
+}
+
+/**
+ * Verkleinert eine Kopie der Tonspur für die Transkription.
+ *
+ * Mono, 16 kHz, 32 kbit/s: Genau damit arbeiten die Whisper-Modelle intern
+ * ohnehin, die Worterkennung verliert dadurch nichts. Aus 39 MB werden rund
+ * 10 MB. Die Zeitachse bleibt unverändert - die Zeitstempel gelten also
+ * weiter für die Originaldatei.
+ */
+async function shrinkForTranscription(filePath, sizeMb) {
+  if (sizeMb <= TRANSCRIBE_MAX_MB) return null;
+  const out = join(tmpdir(), `klein-${process.pid}.mp3`);
+  await run('ffmpeg', [
+    '-hide_banner', '-loglevel', 'error', '-y',
+    '-i', filePath,
+    '-ac', '1', '-ar', '16000', '-b:a', '32k',
+    out
+  ]);
+  return out;
 }
 
 async function detectSilences(filePath) {
@@ -1220,7 +1246,24 @@ async function analyzeEpisode(ep, podcast, structure, endMarker) {
   log(`   Pausen gemessen: ${silences.length}`);
   log(`   Dateilänge gemessen: ${fileDuration ? fmt(fileDuration) : 'nicht messbar'}`);
 
-  const base64 = buffer.toString('base64');
+  // Für die Transkription notfalls eine kleinere Kopie benutzen.
+  let transcribePath = null;
+  let base64;
+  try {
+    transcribePath = await shrinkForTranscription(audioPath, sizeMb);
+    if (transcribePath) {
+      const klein = await readFile(transcribePath);
+      log(`   Fürs Transkript verkleinert: ${sizeMb.toFixed(1)} MB -> ${(klein.length / 1048576).toFixed(1)} MB`);
+      base64 = klein.toString('base64');
+    } else {
+      base64 = buffer.toString('base64');
+    }
+  } catch (err) {
+    log(`   Verkleinern fehlgeschlagen (${err.message}) - es geht die Originaldatei raus`);
+    base64 = buffer.toString('base64');
+  } finally {
+    if (transcribePath) await unlink(transcribePath).catch(() => {});
+  }
 
   let model = await pickSttModel();
   let lines = [];
