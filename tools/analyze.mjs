@@ -29,7 +29,16 @@ const STT_FALLBACK = 'openai/whisper-large-v3';    // falls keine Zeitstempel ko
 // identischem Transkript unterschiedlich geantwortet (mal fehlte der
 // Schlussblock, mal wurde ein Beitrag fälschlich als Werbung markiert),
 // deshalb das grössere Modell - der Unterschied sind Bruchteile eines Cents.
-const TEXT_MODEL = 'google/gemini-3.1-flash';
+// Welches Textmodell genommen wird, entscheidet sich beim Lauf: Das Skript
+// fragt die Modell-Liste von OpenRouter ab und nimmt das erste aus dieser
+// Reihenfolge, das es dort wirklich gibt. Sonst scheitert ein Lauf still an
+// einem Slug, den es nicht (mehr) gibt - genau das ist passiert.
+const TEXT_MODEL_PREFERENCE = [
+  'google/gemini-3.1-flash',
+  'google/gemini-3.5-flash',
+  'google/gemini-2.5-flash',
+  'google/gemini-3.1-flash-lite'
+];
 const TEXT_MODEL_FALLBACK = 'google/gemini-3.1-flash-lite';
 
 const CONFIG_PATH = 'tools/podcasts.config.json';
@@ -179,6 +188,30 @@ function plainWord(text) {
   return String(text).toLowerCase().replace(/[^\wäöüß]/g, '');
 }
 
+// Bei Musik und Jingles erfindet Whisper regelmässig Wörter ("Musik",
+// "Vielen Dank", "Untertitel von ..."). Die dürfen weder ein Thema
+// einleiten noch einen Werbeblock beenden, sonst landet die Grenze mitten
+// im Jingle - hörbar als Musikfetzen vor dem Beitrag.
+const FILLER_WORDS = new Set([
+  'musik', 'music', 'applaus', 'untertitel', 'untertitelung', 'copyright',
+  'swr', 'zdf', 'ard', 'vielen', 'dank', 'danke', 'ende', 'amara', 'org'
+]);
+
+function isFiller(text) {
+  const w = plainWord(text);
+  return w === '' || FILLER_WORDS.has(w);
+}
+
+// Erstes echtes Wort ab einem Zeitpunkt (Füllwörter werden übersprungen).
+function firstRealWordAfter(words, time, limitSeconds) {
+  for (const w of words) {
+    if (w.start < time - 0.01) continue;
+    if (w.start > time + limitSeconds) return null;
+    if (!isFiller(w.text)) return w.start;
+  }
+  return null;
+}
+
 /**
  * Sucht die genaue Sekunde, in der ein Thema beginnt.
  * Das Modell nennt die Zeile und die ersten Wörter des Themas. Die Zeile
@@ -190,7 +223,9 @@ function plainWord(text) {
 function findWordStart(words, firstWords, lineStart) {
   if (!words.length || !firstWords) return null;
 
-  const needle = String(firstWords).split(/\s+/).map(plainWord).filter(Boolean).slice(0, 3);
+  const needle = String(firstWords).split(/\s+/)
+    .filter((w) => !isFiller(w))   // "Musik Bundespräsident." -> "Bundespräsident"
+    .map(plainWord).filter(Boolean).slice(0, 3);
   if (needle.length === 0) return null;
 
   let best = null;
@@ -269,6 +304,30 @@ function buildPrompt(lines, structure) {
   ].join('\n');
 }
 
+let textModelCache = null;
+
+async function pickTextModel() {
+  if (textModelCache) return textModelCache;
+  try {
+    const res = await fetch(`${API}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
+    if (res.ok) {
+      const ids = new Set((await res.json()).data.map((m) => m.id));
+      const found = TEXT_MODEL_PREFERENCE.find((id) => ids.has(id));
+      if (found) {
+        log(`Textmodell: ${found}`);
+        textModelCache = found;
+        return found;
+      }
+      log('Keines der bevorzugten Textmodelle ist verfügbar.');
+    }
+  } catch (err) {
+    log(`Modell-Liste nicht abrufbar (${err.message})`);
+  }
+  textModelCache = TEXT_MODEL_FALLBACK;
+  log(`Textmodell: ${textModelCache} (Rückfallebene)`);
+  return textModelCache;
+}
+
 async function askTextModel(prompt, model) {
   const res = await fetch(`${API}/chat/completions`, {
     method: 'POST',
@@ -285,10 +344,15 @@ async function askTextModel(prompt, model) {
 async function findAdsAndChapters(lines, words, structure, endMarker) {
   const prompt = buildPrompt(lines, structure);
 
-  let res = await askTextModel(prompt, TEXT_MODEL);
+  const model = await pickTextModel();
+  let res = await askTextModel(prompt, model);
   if (!res.ok) {
-    log(`   ${TEXT_MODEL} antwortet mit HTTP ${res.status} - zweiter Versuch mit ${TEXT_MODEL_FALLBACK}`);
-    res = await askTextModel(prompt, TEXT_MODEL_FALLBACK);
+    log(`   ${model} antwortet mit HTTP ${res.status}: ${res.text.slice(0, 200)}`);
+    if (model !== TEXT_MODEL_FALLBACK) {
+      log(`   zweiter Versuch mit ${TEXT_MODEL_FALLBACK}`);
+      textModelCache = TEXT_MODEL_FALLBACK;
+      res = await askTextModel(prompt, TEXT_MODEL_FALLBACK);
+    }
   }
 
   const text = res.text;
@@ -314,11 +378,13 @@ async function findAdsAndChapters(lines, words, structure, endMarker) {
         ? Math.max(prev.end, from.start - GAP_MAX_SECONDS)
         : Math.max(0, from.start - PAD_BEFORE);
 
-      // Ende: bis zum ersten Wort danach ausdehnen (deckt den Jingle ab)
+      // Ende: bis zum ersten echten Wort danach ausdehnen. Das deckt den
+      // Jingle ab - auch dann, wenn Whisper ihn als "Musik" oder "Vielen
+      // Dank" ins Transkript geschrieben hat.
       const next = lines[toIdx + 1];
-      const end = next
-        ? Math.min(Math.max(to.end + PAD_AFTER, next.start - 0.05), to.end + GAP_MAX_SECONDS)
-        : to.end + PAD_AFTER;
+      const realWord = firstRealWordAfter(words, to.end, GAP_MAX_SECONDS);
+      const candidate = realWord !== null ? realWord - 0.05 : (next ? next.start - 0.05 : to.end + PAD_AFTER);
+      const end = Math.min(Math.max(to.end + PAD_AFTER, candidate), to.end + GAP_MAX_SECONDS);
 
       return [Math.max(0, start), end];
     })
