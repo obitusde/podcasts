@@ -1,18 +1,45 @@
 {
-  "updatedAt": "2026-10-29T11:35:48.495Z",
+  "updatedAt": "2026-10-29T12:21:53.223Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
       "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/62faa662abdc627404ef0d5e582d2174.mp3",
+        "file": "62faa662abdc627404ef0d5e582d2174.mp3",
+        "durationSeconds": 504,
+        "chapters": [
+          {
+            "start": 0,
+            "title": "Themenüberblick"
+          },
+          {
+            "start": 37.71,
+            "title": "Bundespräsident"
+          },
+          {
+            "start": 172.44,
+            "title": "Notenbanken"
+          },
+          {
+            "start": 338.03,
+            "title": "Audi"
+          },
+          {
+            "start": 441,
+            "title": "Handelspolitik"
+          }
+        ]
+      },
       "feedDurationSeconds": 506,
       "adRanges": [
         [
           37.7,
-          100.7
+          106.3
         ],
         [
-          566.6,
+          572.1,
           999999
         ]
       ],
@@ -22,37 +49,25 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 100.74634900000001,
-          "title": "Bundespräsidenten-Suche"
+          "start": 106.31043100000001,
+          "title": "Bundespräsident"
         },
         {
-          "start": 241.92675699999998,
-          "title": "Zinsentscheide von Fed und EZB"
+          "start": 241.03877599999998,
+          "title": "Notenbanken"
         },
         {
-          "start": 288.14161,
-          "title": "Banken"
-        },
-        {
-          "start": 349.46702899999997,
-          "title": "Gesundheitspolitik"
-        },
-        {
-          "start": 401.06192699999997,
+          "start": 406.626009,
           "title": "Audi"
         },
         {
-          "start": 464.942381,
-          "title": "Quartalszahlen von Alphabet"
-        },
-        {
-          "start": 504.038776,
+          "start": 509.602857,
           "title": "Handelspolitik"
         }
       ],
-      "durationSeconds": 611,
+      "durationSeconds": 605,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T11:35:48.487Z"
+      "detectedAt": "2026-10-29T12:21:52.932Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
