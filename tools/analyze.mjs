@@ -498,7 +498,28 @@ async function findAdsAndChapters(lines, words, structure, endMarker) {
     })
     .filter(Boolean);
 
-  return { ads, chapters };
+  // Ein Themenanfang, der im hinteren Teil eines Werbeblocks liegt, ist das
+  // sicherste Zeichen dafür, dass der Block zu lang geraten ist - das Modell
+  // hat dann eine Inhaltszeile zu viel hineingenommen. Dann wird der
+  // Werbeblock auf den Themenanfang gekürzt. Vorher lief es umgekehrt: Das
+  // Thema wurde hinter das Werbe-Ende geschoben, dadurch fehlten die ersten
+  // Sätze des Beitrags ("Bundespräsident. Seit die Bundesversammlung am ...").
+  const trimmedAds = ads.map(([from, to]) => {
+    const length = to - from;
+    const inside = chapters
+      .map((c) => c.start)
+      .filter((start) => start > from && start < to - 0.2)
+      // nur im letzten Fünftel bzw. den letzten 20 Sekunden des Blocks:
+      // weiter vorn wäre es eher ein falsch gesetztes Thema als ein zu
+      // langer Werbeblock
+      .filter((start) => start > to - Math.min(20, length * 0.5));
+    if (inside.length === 0) return [from, to];
+    const cut = Math.min(...inside);
+    log(`   Werbeblock gekürzt: ${fmt(from)}-${fmt(to)} -> ${fmt(from)}-${fmt(cut)} (dort beginnt ein Thema)`);
+    return [from, cut - 0.05];
+  });
+
+  return { ads: trimmedAds, chapters };
 }
 
 /* --------------------------------------------------------- Nachbearbeitung */
