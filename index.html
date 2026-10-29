@@ -689,12 +689,19 @@ const PODCASTS = [
 // am echten Dateiende (Autoplay-Modi eingeschlossen).
 //
 // Werte einfach hier anpassen - Schreibweise "Minuten * 60 + Sekunden".
-// endSeconds: null  -> bis zum Dateiende spielen
 // startSeconds: 0   -> von Anfang an spielen
+// endSeconds: null  -> bis zum Dateiende spielen
+// adRanges         -> zusätzliche Werbeblöcke MITTEN in der Folge, die
+//                     übersprungen werden sollen: [[von, bis], ...]
 const PODCAST_TRIM = {
   "Handelsblatt Morning Briefing": {
-    startSeconds: 1 * 60 + 5,   // 1:05 - davor Werbung
-    endSeconds:   9 * 60 + 5    // 9:05 - danach Werbung
+    // Aufbau der Sendung: Themenvorstellung (ab 0:00) - Werbung (0:38 bis
+    // 1:43) - die Themen - Werbung am Schluss.
+    // Die Themenvorstellung bleibt also drin; soll sie auch weg, einfach
+    // den ersten Bereich auf [0, 1 * 60 + 43] ändern.
+    startSeconds: 0,
+    endSeconds:   9 * 60 + 5,                  // 9:05 - danach Werbung
+    adRanges:     [[0 * 60 + 38, 1 * 60 + 43]] // Werbung nach der Themenvorstellung
   },
   "HeuteMorgen": {
     startSeconds: 29,           // 0:29 - davor Jingle/Vorspann
@@ -732,8 +739,9 @@ function buildAdRanges(podcastName, episode) {
   if (!trim) return [];
   const ranges = [];
   if (trim.startSeconds) ranges.push([0, trim.startSeconds]);
+  if (Array.isArray(trim.adRanges)) trim.adRanges.forEach((r) => ranges.push([r[0], r[1]]));
   if (trim.endSeconds) ranges.push([trim.endSeconds, Number.MAX_SAFE_INTEGER]);
-  return ranges;
+  return ranges.sort((a, b) => a[0] - b[0]);
 }
 
 function audioDuration() {

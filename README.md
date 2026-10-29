@@ -264,6 +264,18 @@ Für ausgewählte Podcasts (aktuell nur das Handelsblatt Morning Briefing, Liste
 Der Umweg über die Zeilennummern ist der Kern: Lässt man ein Sprachmodell die
 Audiodatei direkt anhören und nach Sekunden fragen, liegen die Werte weit daneben.
 
+Zwei Dinge haben sich dabei als entscheidend erwiesen:
+
+- **Feine Zeilen.** Whisper liefert Abschnitte von 15-20 Sekunden; darauf lässt
+  sich eine Werbegrenze nur grob legen. Deshalb werden zusätzlich Wort-Zeiten
+  angefordert und daraus Zeilen von höchstens 8 Sekunden gebaut
+  (`buildLinesFromWords`).
+- **Aufbau der Sendung im Prompt.** Jeder Podcast in `AD_DETECT_PODCASTS` kann
+  ein Feld `structure` mitbringen, das den Aufbau in Worten beschreibt (beim
+  Handelsblatt: Themenvorstellung, Werbung, Themen, Werbung am Schluss). Ohne
+  diesen Hinweis hat das Modell den Sponsorenblock gar nicht als Werbung
+  erkannt. Wenn die Erkennung danebenliegt, ist das der erste Hebel.
+
 Das läuft am Ende von `refreshDlfAudioCache()` mit - **kein zusätzlicher
 Zeit-Trigger nötig**. Mit `testAdDetection()` lässt sich der Lauf von Hand
 anstossen; das Protokoll zeigt Werbeblöcke, Themen, Modell und Laufzeit.

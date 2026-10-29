@@ -757,14 +757,22 @@ var AD_DETECT_PODCASTS = [
   {
     name: 'Handelsblatt Morning Briefing',
     feed: 'https://handelsblatt-morningbriefing.podigee.io/feed/mp3',
-    episodes: 2   // wie viele der neuesten Folgen pro Lauf geprüft werden
+    episodes: 2,  // wie viele der neuesten Folgen pro Lauf geprüft werden
+    // Aufbau der Sendung im Klartext. Geht direkt in den Prompt und ist der
+    // wirksamste Hebel, wenn die Erkennung mal danebenliegt: hier einfach
+    // beschreiben, wie die Folge tatsächlich aufgebaut ist.
+    structure:
+      'Die Folge ist immer gleich aufgebaut: (1) kurze Vorstellung der Themen ' +
+      'durch den Moderator, (2) ein Werbeblock mit Sponsorenhinweis, ' +
+      '(3) die einzelnen Themen, dazwischen können weitere Werbeblöcke liegen, ' +
+      '(4) am Schluss ein Werbeblock bzw. Abspann mit Hinweisen auf andere Angebote.'
   }
 ];
 
 var AD_DETECT_STT_MODEL     = 'openai/whisper-large-v3-turbo'; // ca. $0.000003/Sek. Audio
 var AD_DETECT_STT_FALLBACK  = 'openai/whisper-large-v3';       // falls Turbo keine Zeitstempel liefert
 var AD_DETECT_TEXT_MODEL    = 'google/gemini-3.1-flash-lite';  // findet Werbung/Themen im Transkript
-var AD_DETECT_PROP_KEY      = 'episodeAnalysis_v1';
+var AD_DETECT_PROP_KEY      = 'episodeAnalysis_v2';
 var AD_DETECT_KEEP          = 20;   // so viele analysierte Folgen werden aufbewahrt
 var AD_DETECT_MAX_AUDIO_MB  = 30;   // grössere Dateien werden übersprungen
 var AD_DETECT_MIN_CONTENT   = 120;  // Plausibilität: mind. 2 Min. redaktioneller Teil
@@ -789,6 +797,7 @@ function refreshAdMarks() {
     }
 
     episodes.slice(0, cfg.episodes || 1).forEach(function(ep) {
+      ep.structure = cfg.structure || '';
       if (store[ep.guid]) return; // schon analysiert
       try {
         var analysis = analyzeEpisode(ep);
@@ -826,6 +835,7 @@ function testAdDetection() {
   }
 
   var ep = episodes[0];
+  ep.structure = cfg.structure || '';
   Logger.log('Folge: ' + ep.title);
   Logger.log('Audio: ' + ep.audioUrl);
 
@@ -917,7 +927,7 @@ function analyzeEpisode(ep, verbose) {
   if (segments.length === 0) throw new Error('Transkription ohne Zeitstempel');
 
   var duration = ep.durationSeconds || segments[segments.length - 1].end;
-  var found = findAdsAndChapters(segments, verbose);
+  var found = findAdsAndChapters(segments, ep.structure || '', verbose);
 
   var adRanges = normalizeRangeList(found.ads, duration);
   var chapters = found.chapters;
@@ -929,6 +939,8 @@ function analyzeEpisode(ep, verbose) {
     Logger.log('Analyse verworfen: nur ' + Math.round(duration - adSeconds) + ' Sek. Inhalt übrig');
     return null;
   }
+
+  chapters = fixChapters(chapters, adRanges, duration);
 
   return {
     adRanges: adRanges,
@@ -952,7 +964,7 @@ function transcribeWithOpenRouter(blob, model, verbose) {
       format: 'mp3'
     },
     response_format: 'verbose_json',
-    timestamp_granularities: ['segment']
+    timestamp_granularities: ['segment', 'word']
   };
 
   var resp = UrlFetchApp.fetch('https://openrouter.ai/api/v1/audio/transcriptions', {
@@ -969,9 +981,21 @@ function transcribeWithOpenRouter(blob, model, verbose) {
   }
 
   var data = JSON.parse(resp.getContentText());
-  var raw = data.segments ||
-            (data.verbose_json && data.verbose_json.segments) ||
-            (data.transcription && data.transcription.segments) || [];
+  var body = data.verbose_json || data.transcription || data;
+  var raw = body.segments || [];
+  var words = body.words || [];
+
+  // Die Abschnitte von Whisper sind oft 15-20 Sekunden lang. Auf so grobe
+  // Zeilen lässt sich eine Werbegrenze nur ungenau legen. Wenn Wort-Zeiten
+  // mitgeliefert werden, bauen wir daraus feinere Zeilen (max. 8 Sek.).
+  if (words.length > 0) {
+    var fine = buildLinesFromWords(words);
+    if (fine.length > 0) {
+      if (verbose) Logger.log('Transkript: ' + fine.length + ' feine Zeilen aus ' +
+        words.length + ' Wörtern (' + model + ')');
+      return fine;
+    }
+  }
 
   var segments = [];
   raw.forEach(function(seg) {
@@ -986,12 +1010,49 @@ function transcribeWithOpenRouter(blob, model, verbose) {
   return segments;
 }
 
+// Gruppiert einzelne Wörter zu Zeilen von höchstens LINE_MAX_SECONDS bzw.
+// LINE_MAX_WORDS - bevorzugt wird am Satzende getrennt.
+var LINE_MAX_SECONDS = 8;
+var LINE_MAX_WORDS = 22;
+
+function buildLinesFromWords(words) {
+  var lines = [];
+  var current = null;
+
+  words.forEach(function(w) {
+    var start = typeof w.start === 'number' ? w.start : parseFloat(w.start);
+    var end = typeof w.end === 'number' ? w.end : parseFloat(w.end);
+    var text = (w.word || w.text || '').trim();
+    if (isNaN(start) || !text) return;
+    if (isNaN(end)) end = start;
+
+    if (!current) {
+      current = { start: start, end: end, text: text, count: 1 };
+      return;
+    }
+
+    current.text += (text.charAt(0) === ',' || text.charAt(0) === '.' ? '' : ' ') + text;
+    current.end = end;
+    current.count++;
+
+    var longEnough = (current.end - current.start) >= LINE_MAX_SECONDS || current.count >= LINE_MAX_WORDS;
+    var sentenceEnd = /[.!?]$/.test(text);
+    if (longEnough || (sentenceEnd && (current.end - current.start) >= 3)) {
+      lines.push({ start: current.start, end: current.end, text: current.text });
+      current = null;
+    }
+  });
+
+  if (current) lines.push({ start: current.start, end: current.end, text: current.text });
+  return lines;
+}
+
 /**
  * Lässt ein günstiges Textmodell im Transkript die Werbeblöcke und die
  * Themen benennen - und zwar über ZEILENNUMMERN. Die Sekunden setzen wir
  * anschliessend selbst aus dem Transkript ein, damit sie exakt sind.
  */
-function findAdsAndChapters(segments, verbose) {
+function findAdsAndChapters(segments, structureHint, verbose) {
   var apiKey = getOpenRouterKey();
 
   var lines = segments.map(function(seg, idx) {
@@ -1001,14 +1062,25 @@ function findAdsAndChapters(segments, verbose) {
   var prompt =
     'Das ist das Transkript einer deutschen Podcast-Folge (Wirtschafts-Briefing). ' +
     'Jede Zeile hat die Form "[Nummer] Sekunde: Text".\n\n' +
-    'Aufgabe 1 - Werbung: Finde ALLE Werbeblöcke: Sponsorenhinweise ("präsentiert von", ' +
-    '"unterstützt von", "Werbung"), beworbene Produkte/Firmen, Eigenwerbung, Abo- und ' +
-    'Newsletter-Hinweise, Podcast-Empfehlungen. Werbung kann am Anfang, mitten in der ' +
-    'Folge und am Ende stehen. Intro-Jingle und Begrüssung des Moderators zählen NICHT ' +
-    'als Werbung, ebenso wenig normale journalistische Berichte über Firmen.\n\n' +
+    (structureHint ? 'Aufbau dieser Sendung: ' + structureHint + '\n\n' : '') +
+    'Aufgabe 1 - Werbung: Finde ALLE Werbeblöcke und gib jeweils die erste und die ' +
+    'letzte Zeile des Blocks an. Als Werbung gilt:\n' +
+    '- jeder Sponsorenhinweis, auch kurze ("präsentiert von", "unterstützt von", ' +
+    '"in Zusammenarbeit mit", "Werbung", "Anzeige")\n' +
+    '- jeder beworbene Anbieter samt Produktbeschreibung, Rabattcode oder Aufruf wie ' +
+    '"jetzt testen", "mehr unter ..."\n' +
+    '- Eigenwerbung: Abo-, Newsletter- und App-Hinweise, Empfehlungen anderer Podcasts, ' +
+    'Spendenaufrufe\n' +
+    '- der Abspann am Schluss, sobald er zu solchen Hinweisen übergeht\n' +
+    'KEINE Werbung sind: die Vorstellung der Themen am Anfang, die Begrüssung und ' +
+    'Verabschiedung des Moderators sowie normale journalistische Berichte über Firmen.\n' +
+    'Setze die Grenzen so eng wie möglich: die erste Zeile des Blocks ist die erste ' +
+    'Zeile, die zur Werbung gehört, die letzte Zeile die letzte Werbezeile - die ' +
+    'darauffolgende Zeile muss wieder redaktioneller Inhalt sein.\n\n' +
     'Aufgabe 2 - Themen: Gliedere den redaktionellen Teil in 3 bis 10 Themen. Gib für ' +
     'jedes Thema die Zeilennummer an, bei der es beginnt, und einen kurzen deutschen ' +
-    'Titel (höchstens 40 Zeichen, keine Anführungszeichen).\n\n' +
+    'Titel (höchstens 40 Zeichen, keine Anführungszeichen). Ein Thema darf NIE in einem ' +
+    'Werbeblock beginnen. Die Themenvorstellung am Anfang ist kein eigenes Thema.\n\n' +
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:\n' +
     '{"ads":[{"von":0,"bis":4}],"themen":[{"zeile":5,"titel":"Zollstreit mit China"}]}\n\n' +
     'Transkript:\n' + lines;
@@ -1055,6 +1127,46 @@ function findAdsAndChapters(segments, verbose) {
   chapters.sort(function(a, b) { return a.start - b.start; });
 
   return { ads: ads, chapters: chapters };
+}
+
+/**
+ * Räumt die Themenliste auf:
+ *  - ein Thema, das in einem Werbeblock beginnt, rutscht ans Ende des Blocks
+ *  - Themen werden sortiert, zu dicht beieinander liegende zusammengelegt
+ *  - beginnt das erste Thema deutlich nach dem Anfang des hörbaren Teils,
+ *    kommt davor ein Eintrag "Themenüberblick" (die Vorschau am Anfang)
+ */
+function fixChapters(chapters, adRanges, duration) {
+  var firstContent = duration;
+  var cursor = 0;
+  adRanges.forEach(function(r) {
+    if (r[0] > cursor && firstContent === duration) firstContent = cursor;
+    cursor = Math.max(cursor, r[1]);
+  });
+  if (firstContent === duration) firstContent = cursor < duration ? cursor : 0;
+
+  var moved = chapters.map(function(c) {
+    var start = c.start;
+    adRanges.forEach(function(r) {
+      if (start >= r[0] - 0.5 && start < r[1]) start = r[1] + 0.1;
+    });
+    return { start: Math.min(start, duration), title: c.title };
+  }).sort(function(a, b) { return a.start - b.start; });
+
+  var cleaned = [];
+  moved.forEach(function(c) {
+    var last = cleaned[cleaned.length - 1];
+    if (last && c.start - last.start < 5) return; // zu dicht beieinander
+    cleaned.push(c);
+  });
+
+  if (cleaned.length > 0 && cleaned[0].start > firstContent + 15) {
+    cleaned.unshift({ start: firstContent, title: 'Themenüberblick' });
+  }
+
+  return cleaned.map(function(c) {
+    return { start: Math.round(c.start * 10) / 10, title: c.title };
+  });
 }
 
 // Bereiche sortieren, auf [0, Dauer] begrenzen und Überlappendes zusammenfassen.
