@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T09:43:27.019Z",
+  "updatedAt": "2026-10-29T10:18:39.817Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -7,11 +7,11 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
       "adRanges": [
         [
-          37.7,
-          97.3
+          34,
+          101.6
         ],
         [
-          562.9,
+          563.9,
           999999
         ]
       ],
@@ -21,37 +21,33 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 97.4,
-          "title": "Nachfolge des Bundespräsidenten"
+          "start": 101.7,
+          "title": "Kandidatensuche Bundespräsident"
         },
         {
-          "start": 236.5,
-          "title": "Zinsentscheidungen der Notenbanken"
+          "start": 241.5,
+          "title": "Notenbanken und Zinsentscheidungen"
         },
         {
-          "start": 288.8,
-          "title": "Rekordgewinne der Banken"
+          "start": 349,
+          "title": "Gesundheitspolitik und Pflege"
         },
         {
-          "start": 344,
-          "title": "Linnemann und Gesundheitspolitik"
+          "start": 411.8,
+          "title": "Audi-Chef Döllner bei Trump"
         },
         {
-          "start": 405.8,
-          "title": "Audi-Chef Döllner und Trump"
+          "start": 464.6,
+          "title": "Alphabet und KI-Investitionen"
         },
         {
-          "start": 459.6,
-          "title": "Quartalszahlen von Alphabet"
-        },
-        {
-          "start": 515.3,
-          "title": "Handelspolitik und Französischer Wein"
+          "start": 519.6,
+          "title": "Handelspolitik und Weinpreise"
         }
       ],
-      "durationSeconds": 595,
+      "durationSeconds": 594,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T09:43:27.013Z"
+      "detectedAt": "2026-10-29T10:18:39.810Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
