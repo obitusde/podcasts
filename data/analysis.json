@@ -1,22 +1,18 @@
 {
-  "updatedAt": "2026-10-29T09:01:23.906Z",
+  "updatedAt": "2026-10-29T09:04:07.503Z",
   "episodes": {
-    "75be7f726ec71e51c3d61106f50501e0": {
-      "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
-      "pubDate": "Wed, 28 Oct 2026 04:52:59 +0000",
-      "audioUrl": "https://audio.podigee-cdn.net/2622455-m-7e234179e43d04e3d8a140fed5cdc025.mp3?source=feed",
+    "3509ad87643993be355055df45d94676": {
+      "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
+      "pubDate": "Tue, 27 Oct 2026 05:05:20 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622454-m-b0df11b5a4520f1fa2843259bc1c6c75.mp3?source=feed",
       "adRanges": [
         [
-          37.4,
-          96.2
+          37.9,
+          96
         ],
         [
-          287.6,
-          311.5
-        ],
-        [
-          565.5,
-          601.4
+          570.6,
+          625.1
         ]
       ],
       "chapters": [
@@ -25,33 +21,85 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 96.3,
-          "title": "Israel: Eine gespaltene Gesellschaft"
+          "start": 96.1,
+          "title": "Antropic Börsengang"
         },
         {
-          "start": 215.2,
-          "title": "Merz und der Freihandel mit Asien"
+          "start": 240.1,
+          "title": "Mercedes Abfindungsprogramm"
         },
         {
-          "start": 363.9,
-          "title": "E.ON: Investitionen und Sparprogramm"
+          "start": 326.2,
+          "title": "Autoritäre Regierungen"
         },
         {
-          "start": 432.8,
-          "title": "Mercedes: Gewinnprognose gekappt"
+          "start": 399.3,
+          "title": "Zollstreit mit China"
         },
         {
-          "start": 477.7,
-          "title": "Börse: Handel rund um die Uhr"
+          "start": 462.9,
+          "title": "Erfolgsmodell Schwarzwaldmilch"
         },
         {
-          "start": 519.3,
-          "title": "Sport: Kurioser Bau in Essen"
+          "start": 516.2,
+          "title": "Nachhaltiges Kaugummi"
         }
       ],
-      "durationSeconds": 601,
+      "durationSeconds": 625,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:01:23.899Z"
+      "detectedAt": "2026-10-29T09:04:07.496Z"
+    },
+    "75be7f726ec71e51c3d61106f50501e0": {
+      "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
+      "pubDate": "Wed, 28 Oct 2026 04:52:59 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622455-m-7e234179e43d04e3d8a140fed5cdc025.mp3?source=feed",
+      "adRanges": [
+        [
+          37.4,
+          94
+        ],
+        [
+          566.6,
+          595.3
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 94.1,
+          "title": "Israelische Parlamentswahl"
+        },
+        {
+          "start": 216.3,
+          "title": "Merz Reise nach Asien"
+        },
+        {
+          "start": 290.1,
+          "title": "US-Zwischenwahlen"
+        },
+        {
+          "start": 364.9,
+          "title": "E.ON Investitionen"
+        },
+        {
+          "start": 433.9,
+          "title": "Mercedes Gewinnwarnung"
+        },
+        {
+          "start": 478.9,
+          "title": "Börsenhandel rund um die Uhr"
+        },
+        {
+          "start": 520.3,
+          "title": "Kurioses aus Essen"
+        }
+      ],
+      "durationSeconds": 595,
+      "model": "openai/whisper-large-v3-turbo",
+      "detectedAt": "2026-10-29T09:03:49.458Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -60,7 +108,11 @@
       "adRanges": [
         [
           37.9,
-          88.1
+          95.3
+        ],
+        [
+          559.7,
+          594.2
         ]
       ],
       "chapters": [
@@ -69,41 +121,41 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 88.2,
+          "start": 95.4,
           "title": "Bundespräsidentenwahl"
         },
         {
-          "start": 237.5,
+          "start": 241.2,
           "title": "Zinsentscheid der FED"
         },
         {
-          "start": 256.2,
+          "start": 259.4,
           "title": "EZB und Inflation"
         },
         {
-          "start": 283,
-          "title": "Bankenquartalszahlen"
+          "start": 286.4,
+          "title": "Rekordquartale der Banken"
         },
         {
-          "start": 337.2,
+          "start": 340.7,
           "title": "Gesundheitspolitik"
         },
         {
-          "start": 398.9,
-          "title": "Audi und Trump"
+          "start": 402.4,
+          "title": "Audi und Trump-Deal"
         },
         {
-          "start": 452.8,
+          "start": 456.3,
           "title": "Alphabet Quartalszahlen"
         },
         {
-          "start": 504,
-          "title": "Weinmarkt"
+          "start": 507.5,
+          "title": "Weinmarkt und Weltwirtschaft"
         }
       ],
-      "durationSeconds": 600,
+      "durationSeconds": 594,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:01:05.050Z"
+      "detectedAt": "2026-10-29T09:03:30.633Z"
     }
   }
 }
