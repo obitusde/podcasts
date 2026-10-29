@@ -270,9 +270,37 @@ Ablauf:
    → Transkript in feine Zeilen (max. 8 Sek.) zerlegen → günstiges Textmodell
    benennt Werbeblöcke und Themen über **Zeilennummern** → die Sekunden kommen
    aus dem Transkript.
-4. Ergebnis landet in `data/analysis.json` und wird von der Action committet.
+4. **Die Werbung wird herausgeschnitten.** ffmpeg kopiert die Stücke zwischen
+   den Werbeblöcken zusammen (ohne Neuberechnung, also ohne Qualitätsverlust)
+   und die fertige Datei wird als Anhang der Veröffentlichung `audio`
+   abgelegt. Die Themenmarken werden auf die Zeitachse dieser Datei
+   umgerechnet.
+5. Ergebnis landet in `data/analysis.json` und wird von der Action committet.
    `index.html` lädt diese Datei beim Start (gleiche Adresse, kein CORS) und
-   verknüpft sie über die `guid` mit den Folgen aus dem Feed.
+   verknüpft sie über die `guid` mit den Folgen aus dem Feed. Gibt es eine
+   geschnittene Fassung, spielt der Player sie; fehlt sie, fällt er auf die
+   Originaldatei mit den festen Werten zurück.
+
+### Warum geschnitten und nicht nur markiert wird
+
+Podigee baut die Werbung bei **jedem Abruf neu** ein. An derselben Adresse
+gemessen, innerhalb von zehn Minuten:
+
+| Uhrzeit | Länge |
+|---|---|
+| 11:49 | 595 s |
+| 11:52 | 506 s (ganz ohne Werbung) |
+| 11:58 | 592 s |
+
+Alle vier getesteten Adressvarianten (`?source=feed`, ohne Zusatz,
+`?source=webplayer`, `?source=website`) lieferten jeweils dieselbe Datei wie
+die anderen - es gibt also keine Adresse für eine feste Fassung. Zeitmarken,
+die morgens um 6 gemessen werden, passen deshalb grundsätzlich nicht zu der
+Datei, die das Handy um halb sieben lädt. Nachprüfen lässt sich das jederzeit
+mit *Actions → Auslieferung pruefen*.
+
+Von jedem Podcast bleibt nur die **neueste** geschnittene Folge liegen; sobald
+die Ausgabe des nächsten Tages fertig ist, wird die vorherige gelöscht.
 
 Einmalig nötig: Repository-Secret `OPENROUTER_API_KEY` unter
 *Settings → Secrets and variables → Actions → New repository secret*.
@@ -280,10 +308,12 @@ Einmalig nötig: Repository-Secret `OPENROUTER_API_KEY` unter
 Kosten: ca. 0,2 Cent Transkription plus ca. 0,1 Cent Analyse je Folge - also
 nur an Tagen mit neuer Folge, einmal pro Folge.
 
-Die Längenangabe aus dem Feed wird bewusst nicht als Obergrenze benutzt: Beim
-Handelsblatt meldet der Feed rund 8:30, die Datei läuft aber knapp 10 Minuten.
-Es gilt der grössere Wert aus Feed-Angabe und Transkript-Ende, sonst fällt der
-Werbeblock am Schluss unter den Tisch.
+Die Länge der Datei wird mit `ffprobe` gemessen, nicht aus dem Feed oder dem
+Transkript abgeleitet: Der Feed meldet beim Handelsblatt rund 8:30, die Datei
+läuft knapp 10 Minuten, und Whisper hängt am Dateiende gern noch ein paar
+Sekunden an. Mit der falschen Länge fällt entweder der Werbeblock am Schluss
+unter den Tisch oder der Abgleich im Player scheitert an einer Datei, die in
+Wahrheit die richtige ist.
 
 Reihenfolge der Quellen im Frontend: `data/analysis.json` → was der
 Apps-Script-Proxy mitliefert → feste Werte aus `PODCAST_TRIM`. Die

@@ -70,7 +70,10 @@ const KEEP_EPISODES = 60;      // so viele Analysen bleiben in der Datei
 // Geschichte mit jeder Folge um rund 9 MB wachsen und liesse sich nie
 // wieder verkleinern. Anhänge lassen sich dagegen löschen.
 const RELEASE_TAG = 'audio';
-const KEEP_AUDIO = 3;          // so viele geschnittene Folgen bleiben liegen
+// Je Podcast bleibt nur die neueste geschnittene Folge liegen. Sobald die
+// Ausgabe des nächsten Tages fertig ist, wird die von gestern gelöscht -
+// gehört wird ohnehin nur die aktuelle.
+const KEEP_AUDIO_PER_PODCAST = 1;
 // Nur frische Folgen werden analysiert: Ist die neueste Folge älter als
 // das hier, gibt es heute keine neue Ausgabe (Wochenende, Feiertag) und
 // der Lauf endet sofort wieder - ohne Kosten.
@@ -1097,7 +1100,7 @@ async function pruneAudio(behalteNamen) {
 
 /* ----------------------------------------------------------- Hauptprogramm */
 
-async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
+async function analyzeEpisode(ep, podcastName, structure, endMarker, expectOpeningAd) {
   log(`\n-> ${ep.title}`);
   if (ep.pubDate) log(`   erschienen: ${ep.pubDate}`);
   log(`   ${ep.audioUrl}`);
@@ -1275,6 +1278,7 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   }
 
   return {
+    podcast: podcastName,
     title: ep.title,
     pubDate: ep.pubDate || null,
     audioUrl: ep.audioUrl, // damit sich jede Analyse von Hand nachhören lässt
@@ -1330,7 +1334,7 @@ async function main() {
         continue;
       }
       try {
-        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast.structure || '', podcast.endMarker || '', podcast.expectOpeningAd !== false);
+        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast.name, podcast.structure || '', podcast.endMarker || '', podcast.expectOpeningAd !== false);
         changed = true;
       } catch (err) {
         log(`   FEHLER: ${err.message}`);
@@ -1350,11 +1354,24 @@ async function main() {
   const kept = {};
   for (const k of keys) kept[k] = episodesStore[k];
 
-  // Tondateien nur für die neuesten Folgen behalten
-  const audioKeys = keys.slice(0, KEEP_AUDIO);
-  const behalten = new Set(audioKeys.map((k) => kept[k].clean && kept[k].clean.file).filter(Boolean));
-  for (const k of keys.slice(KEEP_AUDIO)) {
-    if (kept[k].clean) kept[k] = { ...kept[k], clean: null };
+  // Von jedem Podcast behält nur die neueste Folge ihre Tondatei. Alle
+  // anderen Anhänge werden gelöscht - gehört wird nur die Ausgabe des Tages,
+  // und so bleibt bei GitHub nicht mehr liegen als nötig.
+  const proPodcast = new Map();
+  for (const k of keys) {
+    const name = kept[k].podcast || '?';
+    if (!proPodcast.has(name)) proPodcast.set(name, []);
+    proPodcast.get(name).push(k);
+  }
+  const behalten = new Set();
+  for (const [, episodenKeys] of proPodcast) {
+    // keys ist schon nach Analysezeitpunkt sortiert, neueste zuerst
+    episodenKeys.slice(0, KEEP_AUDIO_PER_PODCAST).forEach((k) => {
+      if (kept[k].clean && kept[k].clean.file) behalten.add(kept[k].clean.file);
+    });
+    episodenKeys.slice(KEEP_AUDIO_PER_PODCAST).forEach((k) => {
+      if (kept[k].clean) kept[k] = { ...kept[k], clean: null };
+    });
   }
   await pruneAudio(behalten);
 
