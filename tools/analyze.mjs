@@ -19,8 +19,14 @@
  * index.html liest diese Datei und überspringt damit die Werbung.
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const run = promisify(execFile);
 
 const API = 'https://openrouter.ai/api/v1';
 // Transkriptionsmodell. Entscheidend ist nicht die Worterkennung - die war
@@ -66,6 +72,22 @@ const MAX_AUDIO_MB = 60;
 const MIN_CONTENT_SECONDS = 120; // Plausibilität: so viel Inhalt muss übrig bleiben
 const LINE_MAX_SECONDS = 8;      // Länge der Transkript-Zeilen fürs Textmodell
 const LINE_MAX_WORDS = 22;
+// --- Grenzen am Ton messen -----------------------------------------------
+// Das Sprachmodell sagt, WO UNGEFÄHR eine Grenze liegt. Wo genau, wird am
+// Ton gemessen: An fast jeder Abschnittsgrenze liegt eine kurze Pause.
+// Pausen schwanken zwischen zwei Läufen um exakt null Sekunden - anders als
+// geschätzte Wort-Zeitstempel.
+const SILENCE_DB = -30;          // ab wie leise es als Pause gilt
+const SILENCE_MIN = 0.15;        // Mindestdauer einer Pause in Sekunden
+const SNAP_WINDOW = 5;           // Suchradius um die geschätzte Grenze
+const SNAP_PREFER_MIN = 0.3;     // solche Pausen gelten als Abschnittsgrenze
+
+// Sicherheitsregel, wenn im Suchradius KEINE Pause liegt: Die Grenze wandert
+// in die Richtung, in der ein Fehler harmlos ist - lieber ein Moment Musik
+// als ein fehlender erster Satz.
+const SAFETY_CONTENT_START = 1.2; // Inhalt beginnt so viel früher
+const SAFETY_AD_START = 0.5;      // Werbung beginnt so viel später
+
 const PAD_BEFORE = 0.3;          // Werbeblock minimal weiter fassen
 const PAD_AFTER = 0.4;
 // Zwischen dem letzten gesprochenen Werbewort und dem ersten Wort des
@@ -317,6 +339,70 @@ function linesFromWords(words) {
   return lines;
 }
 
+/* ----------------------------------------------- Pausen im Ton suchen */
+
+/**
+ * Sucht mit ffmpeg alle Stellen, an denen es kurz still ist.
+ * ffmpeg ist auf den GitHub-Rechnern vorinstalliert; der Lauf dauert für
+ * eine 10-Minuten-Datei wenige Sekunden und kostet nichts.
+ */
+async function detectSilences(filePath) {
+  try {
+    const { stderr } = await run('ffmpeg', [
+      '-hide_banner', '-nostats',
+      '-i', filePath,
+      '-af', `silencedetect=noise=${SILENCE_DB}dB:d=${SILENCE_MIN}`,
+      '-f', 'null', '-'
+    ], { maxBuffer: 64 * 1024 * 1024 });
+
+    const silences = [];
+    let start = null;
+    for (const line of stderr.split('\n')) {
+      const s = /silence_start:\s*(-?[0-9.]+)/.exec(line);
+      const e = /silence_end:\s*(-?[0-9.]+)/.exec(line);
+      if (s) start = parseFloat(s[1]);
+      else if (e && start !== null) {
+        const end = parseFloat(e[1]);
+        if (end > start) silences.push([start, end]);
+        start = null;
+      }
+    }
+    return silences;
+  } catch (err) {
+    log(`   Pausen-Messung nicht möglich (${err.message}) - es gilt die Sicherheitsregel`);
+    return [];
+  }
+}
+
+/**
+ * Rastet eine geschätzte Grenze auf die passendste Pause ein.
+ *   kind 'contentStart' -> Inhalt beginnt: Ende einer Pause
+ *   kind 'adStart'      -> Werbung beginnt: Anfang einer Pause
+ * Bevorzugt werden längere Pausen (sie trennen Abschnitte), bei gleicher
+ * Länge die nächstgelegene. Liegt keine im Suchradius, greift die
+ * Sicherheitsregel.
+ */
+function snapToSilence(silences, time, kind) {
+  const candidates = silences
+    .map(([from, to]) => ({
+      at: kind === 'contentStart' ? to : from,
+      length: to - from
+    }))
+    .filter((c) => Math.abs(c.at - time) <= SNAP_WINDOW);
+
+  const clear = candidates.filter((c) => c.length >= SNAP_PREFER_MIN);
+  const pool = clear.length > 0 ? clear : candidates;
+  if (pool.length === 0) {
+    return {
+      at: kind === 'contentStart' ? time - SAFETY_CONTENT_START : time + SAFETY_AD_START,
+      snapped: false
+    };
+  }
+
+  pool.sort((a, b) => Math.abs(a.at - time) - Math.abs(b.at - time));
+  return { at: pool[0].at, snapped: true, length: pool[0].length };
+}
+
 /* ------------------------------------------------- Werbung und Themen finden */
 
 function buildPrompt(lines, structure) {
@@ -498,31 +584,32 @@ async function findAdsAndChapters(lines, words, structure, endMarker) {
     })
     .filter(Boolean);
 
-  // Ein Themenanfang, der im hinteren Teil eines Werbeblocks liegt, ist das
-  // sicherste Zeichen dafür, dass der Block zu lang geraten ist - das Modell
-  // hat dann eine Inhaltszeile zu viel hineingenommen. Dann wird der
-  // Werbeblock auf den Themenanfang gekürzt. Vorher lief es umgekehrt: Das
-  // Thema wurde hinter das Werbe-Ende geschoben, dadurch fehlten die ersten
-  // Sätze des Beitrags ("Bundespräsident. Seit die Bundesversammlung am ...").
-  const trimmedAds = ads.map(([from, to]) => {
+  return { ads: trimAdsByChapters(ads, chapters), chapters };
+}
+
+/* --------------------------------------------------------- Nachbearbeitung */
+
+/**
+ * Ein Themenanfang, der im hinteren Teil eines Werbeblocks liegt, ist das
+ * sicherste Zeichen dafür, dass der Block zu lang geraten ist - dann wird
+ * der Werbeblock auf den Themenanfang gekürzt. Vorher lief es umgekehrt:
+ * Das Thema wurde hinter das Werbe-Ende geschoben, dadurch fehlten die
+ * ersten Sätze ("Bundespräsident. Seit die Bundesversammlung am ...").
+ * Weiter vorn im Block gilt es dagegen als falsch gesetztes Thema.
+ */
+function trimAdsByChapters(ads, chapters) {
+  return ads.map(([from, to]) => {
     const length = to - from;
     const inside = chapters
       .map((c) => c.start)
       .filter((start) => start > from && start < to - 0.2)
-      // nur im letzten Fünftel bzw. den letzten 20 Sekunden des Blocks:
-      // weiter vorn wäre es eher ein falsch gesetztes Thema als ein zu
-      // langer Werbeblock
       .filter((start) => start > to - Math.min(20, length * 0.5));
     if (inside.length === 0) return [from, to];
     const cut = Math.min(...inside);
     log(`   Werbeblock gekürzt: ${fmt(from)}-${fmt(to)} -> ${fmt(from)}-${fmt(cut)} (dort beginnt ein Thema)`);
     return [from, cut - 0.05];
   });
-
-  return { ads: trimmedAds, chapters };
 }
-
-/* --------------------------------------------------------- Nachbearbeitung */
 
 function normalizeRanges(ranges, duration) {
   const cleaned = ranges
@@ -587,6 +674,13 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
   log(`   Audio: ${sizeMb.toFixed(1)} MB`);
   if (sizeMb > MAX_AUDIO_MB) throw new Error(`Audio zu gross (${sizeMb.toFixed(0)} MB)`);
 
+  // Datei kurz ablegen, damit ffmpeg die Pausen messen kann
+  const audioPath = join(tmpdir(), `episode-${Date.now()}.mp3`);
+  await writeFile(audioPath, buffer);
+  const silences = await detectSilences(audioPath);
+  await unlink(audioPath).catch(() => {});
+  log(`   Pausen gemessen: ${silences.length}`);
+
   const base64 = buffer.toString('base64');
 
   let model = await pickSttModel();
@@ -626,6 +720,24 @@ async function analyzeEpisode(ep, structure, endMarker, expectOpeningAd) {
     log(`   Hinweis: Feed meldet ${fmt(feedDuration)}, Transkript endet bei ${fmt(transcriptEnd)} - es gilt das Transkript`);
   }
   const found = await findAdsAndChapters(lines, words, structure, endMarker);
+
+  // Jetzt die geschätzten Grenzen am Ton einrasten lassen.
+  const snappedAds = found.ads.map(([from, to], i) => {
+    const a = snapToSilence(silences, from, 'adStart');
+    const b = snapToSilence(silences, to, 'contentStart');
+    log(`   Werbeblock ${i + 1}: Start ${fmt(from)} -> ${fmt(a.at)}${a.snapped ? ' (Pause)' : ' (Sicherheitsregel)'}` +
+        `, Ende ${fmt(to)} -> ${fmt(b.at)}${b.snapped ? ' (Pause)' : ' (Sicherheitsregel)'}`);
+    return [Math.max(0, a.at), b.at];
+  });
+
+  const snappedChapters = found.chapters.map((c) => {
+    const snap = snapToSilence(silences, c.start, 'contentStart');
+    return { start: Math.max(0, snap.at), title: c.title };
+  });
+
+  // Nach dem Einrasten nochmal prüfen: Ragt ein Werbeblock in ein Thema?
+  found.ads = trimAdsByChapters(snappedAds, snappedChapters);
+  found.chapters = snappedChapters;
 
   let adRanges = normalizeRanges(found.ads, duration);
 
