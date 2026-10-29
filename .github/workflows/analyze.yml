@@ -12,6 +12,11 @@ on:
     - cron: '25 4 * * *'   # 5:25 bzw. 6:25 deutscher Zeit
     - cron: '25 10 * * *'  # 11:25 bzw. 12:25 deutscher Zeit
   workflow_dispatch:       # erlaubt das Starten von Hand
+    inputs:
+      force:
+        description: 'Schon analysierte Folgen neu analysieren'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -33,6 +38,7 @@ jobs:
       - name: Folgen analysieren
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          FORCE: ${{ inputs.force && '1' || '0' }}
         run: node tools/analyze.mjs
 
       - name: Ergebnis committen

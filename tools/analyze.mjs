@@ -38,6 +38,10 @@ const LINE_MAX_WORDS = 22;
 const PAD_BEFORE = 0.3;          // Werbeblock minimal weiter fassen
 const PAD_AFTER = 0.4;
 
+// FORCE=1 analysiert auch Folgen neu, die schon im Ergebnis stehen -
+// nützlich, wenn Prompt oder Modell geändert wurden.
+const FORCE = process.env.FORCE === '1' || process.env.FORCE === 'true';
+
 const apiKey = process.env.OPENROUTER_API_KEY;
 if (!apiKey) {
   console.error('FEHLER: Das Repository-Secret OPENROUTER_API_KEY fehlt.');
@@ -307,7 +311,15 @@ async function analyzeEpisode(ep, structure) {
   if (lines.length === 0) throw new Error('Transkription ohne Zeitstempel');
   log(`   Transkript: ${lines.length} Zeilen (aus ${source}, ${model})`);
 
-  const duration = ep.durationSeconds || lines[lines.length - 1].end;
+  // Die Längenangabe im Feed ist nicht verlässlich (beim Handelsblatt rund
+  // 1,5 Minuten zu kurz). Das Transkript kennt die echte Länge - sonst
+  // würde der Werbeblock am Schluss einfach abgeschnitten.
+  const feedDuration = ep.durationSeconds || 0;
+  const transcriptEnd = lines[lines.length - 1].end;
+  const duration = Math.max(feedDuration, transcriptEnd);
+  if (feedDuration && Math.abs(feedDuration - transcriptEnd) > 20) {
+    log(`   Hinweis: Feed meldet ${fmt(feedDuration)}, Transkript endet bei ${fmt(transcriptEnd)} - es gilt das Transkript`);
+  }
   const found = await findAdsAndChapters(lines, structure);
 
   const adRanges = normalizeRanges(found.ads, duration);
@@ -351,7 +363,7 @@ async function main() {
     }
 
     for (const ep of episodes.slice(0, podcast.episodes || 1)) {
-      if (episodesStore[ep.guid]) {
+      if (episodesStore[ep.guid] && !FORCE) {
         log(`   schon analysiert: ${ep.title}`);
         continue;
       }
