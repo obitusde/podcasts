@@ -244,6 +244,9 @@ function normalizeWords(words) {
   return words
     .map((w) => ({
       start: Number(w.start),
+      // Das Ende wird gebraucht, um einen Satzanfang von einer Pause mitten
+      // im Satz zu unterscheiden. Fehlt es, gilt eine kurze Standarddauer.
+      end: Number.isFinite(Number(w.end)) ? Number(w.end) : Number(w.start) + 0.3,
       text: String(w.word ?? w.text ?? '').trim()
     }))
     .filter((w) => Number.isFinite(w.start) && w.text);
@@ -565,7 +568,7 @@ function buildBlockPrompt(blocks, structure) {
     '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
     'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
     '',
-    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Die Themen werden oft mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi.") - dann ist der Abschnitt gemeint, in dem dieses Schlagwort steht, und "beginnt" fängt mit diesem Schlagwort an. Ein Thema darf nicht in einem Werbeabschnitt beginnen. 3 bis 12 Themen.',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es BEGINNT, einen kurzen deutschen Titel (höchstens 40 Zeichen) und unter "beginnt" die ERSTEN VIER BIS SECHS WÖRTER des Themas - wortwörtlich abgeschrieben, genau so wie sie im Abschnittstext stehen, ohne etwas zu ergänzen oder umzustellen. Fange dabei immer beim ERSTEN WORT DES ERSTEN SATZES an, nie mitten im Satz: "Zum Schluss schauen wir nach" ist richtig, "schauen wir nach Düsseldorf, wo" ist falsch. Die Themen werden oft mit einem einzelnen Schlagwort angekündigt ("Notenbanken.", "Audi.") - dann ist der Abschnitt gemeint, in dem dieses Schlagwort steht, und "beginnt" fängt mit diesem Schlagwort an. Ein Thema darf nicht in einem Werbeabschnitt beginnen. 3 bis 12 Themen.',
     '',
     'Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Markdown und ohne weiteren Text:',
     '{"werbung":[0,1,2],"themen":[{"block":5,"titel":"Zollstreit mit China","beginnt":"Zollstreit. Die Europäische Union hat"}]}',
@@ -607,11 +610,33 @@ function findPhraseStart(words, phrase, near) {
       if (passt) treffer.push(words[i].start);
     }
     if (treffer.length > 0) {
-      treffer.sort((a, b) => Math.abs(a - near) - Math.abs(b - near));
+      treffer.sort((a, b) => Math.abs(words[a].start - near) - Math.abs(words[b].start - near));
       return treffer[0];
     }
   }
   return null;
+}
+
+/**
+ * Vom getroffenen Wort zurück zum Satzanfang.
+ *
+ * Das Modell zitiert trotz Anweisung manchmal aus der Satzmitte ("schauen
+ * wir nach Düsseldorf, wo ..."). Dann begänne das Thema drei Sekunden zu
+ * spät, mitten im Satz. Die Satzgrenze steht im Transkript: Whisper setzt
+ * die Satzzeichen mit. Gegangen wird nur über kurze Wortabstände - eine
+ * längere Pause ist selbst schon eine Grenze.
+ */
+function sentenceStartIndex(words, idx) {
+  let i = idx;
+  const grenze = words[idx].start - 12;   // weiter zurück ist es ein anderer Satz
+  while (i > 0) {
+    const davor = words[i - 1];
+    if (/[.!?:]["»)]?$/.test(davor.text.trim())) break;  // Satzende davor
+    if (words[i].start - davor.end > 0.45) break;        // deutliche Pause davor
+    if (davor.start < grenze) break;
+    i--;
+  }
+  return i;
 }
 
 /**
@@ -687,10 +712,18 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
       for (let i = Math.max(0, c.block - 2); i <= Math.min(blocks.length - 1, c.block + 2); i++) {
         umgebung.push(...blocks[i].words);
       }
-      const treffer = findPhraseStart(umgebung, c.beginnt, block.start);
+      const idx = findPhraseStart(umgebung, c.beginnt, block.start);
+      let treffer = null;
+      if (idx !== null) {
+        const satzIdx = sentenceStartIndex(umgebung, idx);
+        treffer = umgebung[satzIdx].start;
+        if (satzIdx !== idx) {
+          log(`   Thema "${titel}": "${c.beginnt}" steht mitten im Satz (${fmt(umgebung[idx].start)}) - zurück auf den Satzanfang ${fmt(treffer)}`);
+        }
+      }
       const gefunden = treffer !== null && treffer >= von - 0.5 && treffer <= bis + 0.5;
       if (gefunden && Math.abs(treffer - block.start) > 0.5) {
-        log(`   Thema "${titel}": Abschnitt ${c.block} beginnt ${fmt(block.start)}, die Worte "${c.beginnt}" aber ${fmt(treffer)} - es gelten die Worte`);
+        log(`   Thema "${titel}": Abschnitt ${c.block} beginnt ${fmt(block.start)}, die Worte aber ${fmt(treffer)} - es gelten die Worte`);
       } else if (!gefunden && c.beginnt) {
         log(`   Thema "${titel}": "${c.beginnt}" nicht wiedergefunden - es gilt der Abschnittsanfang ${fmt(block.start)}`);
       }
