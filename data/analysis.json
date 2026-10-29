@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T09:34:39.069Z",
+  "updatedAt": "2026-10-29T09:37:11.135Z",
   "episodes": {
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
@@ -7,11 +7,7 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622455-m-7e234179e43d04e3d8a140fed5cdc025.mp3?source=feed",
       "adRanges": [
         [
-          37.4,
-          96.2
-        ],
-        [
-          565.5,
+          510.9,
           999999
         ]
       ],
@@ -21,37 +17,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 96.3,
-          "title": "Israel"
+          "start": 37.7,
+          "title": "Israelische Parlamentswahl"
         },
         {
-          "start": 215.2,
-          "title": "Merz in Asien"
+          "start": 159.7,
+          "title": "Handelsabkommen mit Asien"
         },
         {
-          "start": 289,
-          "title": "Trump-Fans"
+          "start": 234.5,
+          "title": "US-Zwischenwahlen"
         },
         {
-          "start": 363.9,
-          "title": "E.ON"
+          "start": 309.3,
+          "title": "Eon und das Fotojahr"
         },
         {
-          "start": 433.9,
-          "title": "Mercedes"
+          "start": 380.6,
+          "title": "Gewinnwarnung bei Mercedes"
         },
         {
-          "start": 477.7,
+          "start": 422.8,
           "title": "Börse ohne Feierabend"
         },
         {
-          "start": 519.3,
-          "title": "Kurioses aus Essen"
+          "start": 464.4,
+          "title": "Pokalspiel in Essen"
         }
       ],
-      "durationSeconds": 593,
-      "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:34:39.062Z"
+      "durationSeconds": 513,
+      "model": "microsoft/mai-transcribe-2",
+      "detectedAt": "2026-10-29T09:37:11.129Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -59,11 +55,7 @@
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
       "adRanges": [
         [
-          37.9,
-          97.3
-        ],
-        [
-          563.1,
+          504.9,
           999999
         ]
       ],
@@ -73,33 +65,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 97.4,
-          "title": "Nachfolge des Bundespräsidenten"
+          "start": 38.4,
+          "title": "Bundespräsident"
         },
         {
-          "start": 236.8,
-          "title": "Notenbanken und Banken"
+          "start": 178.2,
+          "title": "Notenbanken"
         },
         {
-          "start": 344.2,
-          "title": "Linnemann und Gesundheit"
+          "start": 231.5,
+          "title": "Banken"
         },
         {
-          "start": 406.5,
-          "title": "Audis Trump-Deal"
+          "start": 285.7,
+          "title": "Gesundheit"
         },
         {
-          "start": 460,
-          "title": "Alphabet und KI-Investitionen"
+          "start": 347.7,
+          "title": "Audi"
         },
         {
-          "start": 514.8,
-          "title": "Handelspolitik und Zölle"
+          "start": 401.4,
+          "title": "Alphabet"
+        },
+        {
+          "start": 456.3,
+          "title": "Handelspolitik"
         }
       ],
-      "durationSeconds": 590,
-      "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:33:48.872Z"
+      "durationSeconds": 506,
+      "model": "microsoft/mai-transcribe-2",
+      "detectedAt": "2026-10-29T09:36:42.331Z"
     },
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
