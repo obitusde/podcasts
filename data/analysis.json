@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T13:51:56.206Z",
+  "updatedAt": "2026-10-29T14:07:34.201Z",
   "episodes": {
     "38e16133-0dc4-38ad-b831-329ec32eae10": {
       "podcastId": "echo-der-zeit",
@@ -16,7 +16,7 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 101.9,
+          "start": 20.6,
           "title": "Zugunglück in Spanien"
         },
         {
@@ -24,8 +24,32 @@
           "title": "Nachrichtenübersicht"
         },
         {
+          "start": 320.852625,
+          "title": "Digitale Abhängigkeit Europas"
+        },
+        {
+          "start": 364.2,
+          "title": "Berufliche Vorsorge in der Schweiz"
+        },
+        {
+          "start": 445.1,
+          "title": "Schusswaffengebrauch der Polizei"
+        },
+        {
+          "start": 484.47585399999997,
+          "title": "Mehr Gewinn für Bank UBS"
+        },
+        {
+          "start": 502.15329199999996,
+          "title": "Börsendaten"
+        },
+        {
+          "start": 523.9326870000001,
+          "title": "Wetter"
+        },
+        {
           "start": 540.4,
-          "title": "Wahlen in Israel"
+          "title": "Parlamentswahl in Israel"
         },
         {
           "start": 1175.6911460000001,
@@ -33,24 +57,24 @@
         },
         {
           "start": 1343.715729,
-          "title": "Britisches Budget"
+          "title": "Neues Budget in Grossbritannien"
         },
         {
           "start": 1632.5,
-          "title": "Schweizer Luftabwehr"
+          "title": "Luftabwehr der Schweiz"
         },
         {
           "start": 1820.417667,
-          "title": "Missbrauch in der Kirche"
+          "title": "Missbrauch in reformierter Kirche"
         },
         {
           "start": 2151.8,
-          "title": "US-Zwischenwahlen"
+          "title": "US-Midterms in Georgia"
         }
       ],
       "durationSeconds": 2550,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T13:51:55.599Z"
+      "detectedAt": "2026-10-29T14:07:33.688Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "podcast": "Handelsblatt Morning Briefing",
