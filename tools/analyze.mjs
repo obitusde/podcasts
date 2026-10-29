@@ -56,6 +56,10 @@ const FORCE = process.env.FORCE === '1' || process.env.FORCE === 'true';
 // EPISODES überschreibt beim Start von Hand, wie viele der neuesten Folgen
 // geprüft werden - praktisch, um eine Änderung an mehreren Folgen zu testen.
 const EPISODES_OVERRIDE = parseInt(process.env.EPISODES || '', 10);
+// DEBUG=1 schreibt das komplette Transkript mit Zeilennummern und Zeiten
+// ins Protokoll - damit lässt sich nachvollziehen, warum eine Grenze sitzt,
+// wo sie sitzt.
+const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
 
 const apiKey = process.env.OPENROUTER_API_KEY;
 if (!apiKey) {
@@ -351,6 +355,12 @@ async function analyzeEpisode(ep, structure) {
   const feedDuration = ep.durationSeconds || 0;
   const transcriptEnd = lines[lines.length - 1].end;
   const duration = Math.max(feedDuration, transcriptEnd);
+
+  if (DEBUG) {
+    log('   --- Transkript ---');
+    lines.forEach((l, i) => log(`   [${i}] ${fmt(l.start)}-${fmt(l.end)} ${l.text}`));
+    log('   --- Ende Transkript ---');
+  }
   if (feedDuration && Math.abs(feedDuration - transcriptEnd) > 20) {
     log(`   Hinweis: Feed meldet ${fmt(feedDuration)}, Transkript endet bei ${fmt(transcriptEnd)} - es gilt das Transkript`);
   }
@@ -366,7 +376,15 @@ async function analyzeEpisode(ep, structure) {
 
   log('   Werbung:');
   if (adRanges.length === 0) log('     (keine gefunden)');
-  adRanges.forEach(([a, b]) => log(`     ${fmt(a)} - ${fmt(b)}  (${Math.round(b - a)} Sek.)`));
+  adRanges.forEach(([a, b]) => {
+    log(`     ${fmt(a)} - ${fmt(b)}  (${Math.round(b - a)} Sek.)`);
+    // Die Zeilen rund um die Grenzen mitschreiben: daran sieht man sofort,
+    // ob der Block zu früh endet und was danach gesprochen wird.
+    const after = lines.filter((l) => l.start >= b - 0.5).slice(0, 2);
+    const before = lines.filter((l) => l.end <= a + 0.5).slice(-1);
+    before.forEach((l) => log(`       davor  ${fmt(l.start)}: ${l.text.slice(0, 90)}`));
+    after.forEach((l) => log(`       danach ${fmt(l.start)}: ${l.text.slice(0, 90)}`));
+  });
   log('   Themen:');
   chapters.forEach((c) => log(`     ${fmt(c.start)}  ${c.title}`));
 

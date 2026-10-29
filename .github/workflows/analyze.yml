@@ -25,6 +25,10 @@ on:
         description: 'Wie viele der neuesten Folgen (leer = wie konfiguriert)'
         type: string
         default: ''
+      debug:
+        description: 'Komplettes Transkript ins Protokoll schreiben'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -48,6 +52,7 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           FORCE: ${{ inputs.force && '1' || '0' }}
           EPISODES: ${{ inputs.episodes }}
+          DEBUG: ${{ inputs.debug && '1' || '0' }}
         run: node tools/analyze.mjs
 
       - name: Ergebnis committen
