@@ -56,7 +56,8 @@ for (let round = 1; round <= rounds; round++) {
       if (!res.ok) { console.log(`${v.name} HTTP ${res.status}`); continue; }
       const buf = Buffer.from(await res.arrayBuffer());
       const sec = duration(buf);
-      console.log(`${v.name} ${(buf.length / 1048576).toFixed(1)} MB · ${sec.toFixed(1)}s · ${md5(buf)}`);
+      const typ = res.headers.get('content-type') || '?';
+      console.log(`${v.name} ${(buf.length / 1048576).toFixed(1)} MB · ${sec.toFixed(1)}s · ${md5(buf)} · ${typ}`);
       if (!seen.has(v.name)) seen.set(v.name, new Set());
       seen.get(v.name).add(Math.round(sec));
     } catch (err) {
