@@ -1,6 +1,58 @@
 {
-  "updatedAt": "2026-10-29T09:40:00.037Z",
+  "updatedAt": "2026-10-29T09:43:27.019Z",
   "episodes": {
+    "62faa662abdc627404ef0d5e582d2174": {
+      "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
+      "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
+      "adRanges": [
+        [
+          37.7,
+          97.3
+        ],
+        [
+          562.9,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 97.4,
+          "title": "Nachfolge des Bundespräsidenten"
+        },
+        {
+          "start": 236.5,
+          "title": "Zinsentscheidungen der Notenbanken"
+        },
+        {
+          "start": 288.8,
+          "title": "Rekordgewinne der Banken"
+        },
+        {
+          "start": 344,
+          "title": "Linnemann und Gesundheitspolitik"
+        },
+        {
+          "start": 405.8,
+          "title": "Audi-Chef Döllner und Trump"
+        },
+        {
+          "start": 459.6,
+          "title": "Quartalszahlen von Alphabet"
+        },
+        {
+          "start": 515.3,
+          "title": "Handelspolitik und Französischer Wein"
+        }
+      ],
+      "durationSeconds": 595,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-29T09:43:27.013Z"
+    },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
       "pubDate": "Wed, 28 Oct 2026 04:52:59 +0000",
@@ -52,58 +104,6 @@
       "durationSeconds": 594,
       "model": "openai/whisper-large-v3",
       "detectedAt": "2026-10-29T09:40:00.029Z"
-    },
-    "62faa662abdc627404ef0d5e582d2174": {
-      "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
-      "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
-      "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
-      "adRanges": [
-        [
-          37.7,
-          96.5
-        ],
-        [
-          559.5,
-          999999
-        ]
-      ],
-      "chapters": [
-        {
-          "start": 0,
-          "title": "Themenüberblick"
-        },
-        {
-          "start": 96.6,
-          "title": "Nachfolge des Bundespräsidenten"
-        },
-        {
-          "start": 240.9,
-          "title": "Fed belässt Leitzins unverändert"
-        },
-        {
-          "start": 284.6,
-          "title": "Rekordgewinne bei Großbanken"
-        },
-        {
-          "start": 340.6,
-          "title": "Gesundheitspolitik von Linnemann"
-        },
-        {
-          "start": 402.3,
-          "title": "Audis Wackeldeal mit Trump"
-        },
-        {
-          "start": 457.1,
-          "title": "Zahlen von Alphabet und Microsoft"
-        },
-        {
-          "start": 511.3,
-          "title": "Handelspolitik und Weinpreise"
-        }
-      ],
-      "durationSeconds": 594,
-      "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T09:39:20.406Z"
     },
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
