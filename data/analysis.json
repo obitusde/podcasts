@@ -1,4 +1,101 @@
 {
-  "updatedAt": null,
-  "episodes": {}
+  "updatedAt": "2026-10-29T08:39:07.549Z",
+  "episodes": {
+    "75be7f726ec71e51c3d61106f50501e0": {
+      "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
+      "adRanges": [
+        [
+          38.4,
+          94.3
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 94.4,
+          "title": "Israel: Eine gespaltene Nation"
+        },
+        {
+          "start": 218.7,
+          "title": "Merz auf Asienreise"
+        },
+        {
+          "start": 292.5,
+          "title": "US-Wahlkampf und Trump-Fans"
+        },
+        {
+          "start": 367.5,
+          "title": "E.ON: Investitionen und Sparprogramm"
+        },
+        {
+          "start": 436.3,
+          "title": "Mercedes Gewinnwarnung"
+        },
+        {
+          "start": 481.3,
+          "title": "Börsenhandel rund um die Uhr"
+        },
+        {
+          "start": 513,
+          "title": "Sport: Blockade in Essen"
+        }
+      ],
+      "durationSeconds": 513,
+      "model": "openai/whisper-large-v3-turbo",
+      "detectedAt": "2026-10-29T08:39:07.541Z"
+    },
+    "62faa662abdc627404ef0d5e582d2174": {
+      "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
+      "adRanges": [
+        [
+          39.1,
+          88.1
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 88.2,
+          "title": "Bundespräsidentenwahl"
+        },
+        {
+          "start": 237.5,
+          "title": "FED Zinspolitik"
+        },
+        {
+          "start": 256.2,
+          "title": "EZB und Inflation"
+        },
+        {
+          "start": 283,
+          "title": "Bankenquartalszahlen"
+        },
+        {
+          "start": 337.2,
+          "title": "Gesundheitspolitik"
+        },
+        {
+          "start": 398.9,
+          "title": "Audi und Trump"
+        },
+        {
+          "start": 453.1,
+          "title": "Alphabet Quartalszahlen"
+        },
+        {
+          "start": 504,
+          "title": "Weinmarkt und Zölle"
+        }
+      ],
+      "durationSeconds": 506,
+      "model": "openai/whisper-large-v3-turbo",
+      "detectedAt": "2026-10-29T08:38:47.275Z"
+    }
+  }
 }
