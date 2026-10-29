@@ -1,0 +1,4 @@
+# Adresse der Google-Tabelle mit der Konfiguration.
+# Google Sheets -> Datei -> Freigeben -> Im Web veroeffentlichen -> Format CSV.
+# Diese Datei wird von tools/sync-config.mjs gelesen.
+

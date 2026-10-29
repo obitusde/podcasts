@@ -638,7 +638,11 @@
 const PROXY_URL = "https://script.google.com/macros/s/AKfycbyHk_vhnKMFkMp3M8KJiS2HDuOEVfysnmOJ6GBYZw2ovPQ-BXYZIXU06s9GbmowjdzX/exec";
 
 // Liste der Podcasts. Einfach weitere Einträge {name, feed} hinzufügen.
-const PODCASTS = [
+// Diese Liste ist nur die Rückfallebene. Im Normalfall wird sie beim Start
+// durch data/config.json ersetzt - die Datei kommt aus der Google-Tabelle
+// (siehe tools/sync-config.mjs). Hier stehen die Werte, die galten, als die
+// Tabelle eingeführt wurde; sie greifen nur, wenn die Datei fehlt.
+let PODCASTS = [
   {
     name: "HeuteMorgen",
     feed: "https://www.srf.ch/feed/podcast/sd/179ababb-4b36-40b2-951d-92d5c207fe9f.xml"
@@ -709,8 +713,138 @@ const PODCAST_TRIM = {
   }
 };
 
+// Aus der Tabelle: Name -> {startSeconds, endSeconds}. Die Werbebereiche
+// mitten in einer Folge stehen weiterhin oben im Code - sie sind nur noch
+// Rückfallebene für den Fall, dass keine Analyse vorliegt.
+let CONFIG_TRIM = {};
+
 function getTrim(podcastName) {
-  return PODCAST_TRIM[podcastName] || null;
+  const ausTabelle = CONFIG_TRIM[podcastName];
+  const festWerte = PODCAST_TRIM[podcastName];
+  if (!ausTabelle) return festWerte || null;
+  return {
+    startSeconds: ausTabelle.startSeconds || 0,
+    endSeconds: ausTabelle.endSeconds || null,
+    adRanges: (festWerte && festWerte.adRanges) || []
+  };
+}
+
+/* ------------------------------------------------------------------
+   KONFIGURATION AUS DER GOOGLE-TABELLE
+   Eine GitHub-Action liest die Tabelle und legt sie als data/config.json
+   ab. Die App liest nur diese Datei: gleiche Adresse wie die App selbst,
+   also kein CORS, und sie funktioniert auch dann, wenn Google gerade
+   nicht erreichbar ist.
+   ------------------------------------------------------------------ */
+
+const CONFIG_URL = 'data/config.json';
+const SHEET_ORDER_KEY = 'podcastOrderFromSheet_v1';
+const PODCAST_IDS_KEY = 'podcastNamesById_v1';
+
+async function loadConfigFile() {
+  let daten;
+  try {
+    const res = await fetch(CONFIG_URL + '?v=' + Math.floor(Date.now() / 60000), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    daten = await res.json();
+  } catch (e) {
+    console.log('Konfigurationsdatei nicht lesbar - es gilt die Liste im Code', e);
+    return;
+  }
+  if (!daten || !Array.isArray(daten.podcasts) || daten.podcasts.length === 0) return;
+
+  migratePodcastIds(daten.podcasts);
+
+  PODCASTS = daten.podcasts.map((p) => {
+    const eintrag = { id: p.id, name: p.name };
+    if (p.feed) eintrag.feed = p.feed;
+    if (p.type) eintrag.type = p.type;
+    if (p.titleContains) eintrag.titleContains = p.titleContains;
+    if (p.titleExcludes) eintrag.titleExcludes = p.titleExcludes;
+    if (p.minDurationSeconds) eintrag.minDurationSeconds = p.minDurationSeconds;
+    return eintrag;
+  });
+
+  CONFIG_TRIM = {};
+  daten.podcasts.forEach((p) => {
+    if (p.startSeconds || p.endSeconds) {
+      CONFIG_TRIM[p.name] = { startSeconds: p.startSeconds || 0, endSeconds: p.endSeconds || null };
+    }
+  });
+
+  adoptSheetOrder(daten.podcasts);
+  console.log('Konfiguration aus der Tabelle: ' + PODCASTS.length + ' Podcasts');
+}
+
+/**
+ * Umbenennen gefahrlos machen.
+ *
+ * Gehört-Haken, Hörposition und Cover hängen am Podcast-NAMEN. Ändert sich
+ * der Name in der Tabelle, wäre der Podcast für die App ein neuer und alles
+ * Gehörte vergessen. Die ID-Spalte verhindert das: Zu jeder ID wird der
+ * zuletzt benutzte Name gemerkt; weicht er ab, zieht alles Gespeicherte mit
+ * auf den neuen Namen um.
+ */
+function migratePodcastIds(podcasts) {
+  let bekannt;
+  try {
+    bekannt = JSON.parse(localStorage.getItem(PODCAST_IDS_KEY)) || {};
+  } catch (e) {
+    bekannt = {};
+  }
+
+  const umzuege = [];
+  podcasts.forEach((p) => {
+    if (!p.id) return;
+    const alt = bekannt[p.id];
+    if (alt && alt !== p.name) umzuege.push([alt, p.name]);
+    bekannt[p.id] = p.name;
+  });
+
+  umzuege.forEach(([alt, neu]) => {
+    [STORAGE_KEY, IMAGE_KEY].forEach((key) => {
+      let daten;
+      try {
+        daten = JSON.parse(localStorage.getItem(key));
+      } catch (e) {
+        return;
+      }
+      if (!daten || typeof daten !== 'object' || !daten[alt]) return;
+      if (!daten[neu]) daten[neu] = daten[alt];
+      delete daten[alt];
+      try { localStorage.setItem(key, JSON.stringify(daten)); } catch (e) {}
+    });
+    try {
+      const reihenfolge = JSON.parse(localStorage.getItem(ORDER_KEY));
+      if (Array.isArray(reihenfolge)) {
+        localStorage.setItem(ORDER_KEY, JSON.stringify(reihenfolge.map((n) => (n === alt ? neu : n))));
+      }
+    } catch (e) {}
+    console.log('Podcast umbenannt: "' + alt + '" -> "' + neu + '" (alles Gehörte bleibt erhalten)');
+  });
+
+  try { localStorage.setItem(PODCAST_IDS_KEY, JSON.stringify(bekannt)); } catch (e) {}
+}
+
+/**
+ * Wer zuletzt etwas geändert hat, gewinnt.
+ *
+ * Die Reihenfolge lässt sich weiterhin mit dem Ziehgriff ändern; sie liegt
+ * dann lokal auf diesem Gerät. Wird dagegen die Reihenfolge der Zeilen in
+ * der Tabelle geändert, sticht das die lokale Sortierung aus - sonst käme
+ * eine Änderung in der Tabelle auf dem Handy nie an.
+ */
+function adoptSheetOrder(podcasts) {
+  const jetzt = podcasts.map((p) => p.id || p.name).join('|');
+  let zuletzt = null;
+  try { zuletzt = localStorage.getItem(SHEET_ORDER_KEY); } catch (e) {}
+  if (zuletzt === jetzt) return;
+
+  try {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(podcasts.map((p) => p.name)));
+    localStorage.setItem(SHEET_ORDER_KEY, jetzt);
+  } catch (e) {}
+  if (zuletzt !== null) console.log('Reihenfolge aus der Tabelle übernommen');
 }
 
 /* ------------------------------------------------------------------
@@ -2227,8 +2361,10 @@ async function init() {
   updatePlayPauseIcon();
   updateEpisodeNavButtons();
 
-  // Die Analyse-Datei ist klein und kommt von derselben Adresse - erst sie
-  // laden, damit schon die erste angetippte Folge ohne Werbung startet.
+  // Beide Dateien sind klein und kommen von derselben Adresse. Erst die
+  // Konfiguration (sie bestimmt, welche Podcasts es überhaupt gibt), dann
+  // die Analyse, damit schon die erste angetippte Folge ohne Werbung startet.
+  await loadConfigFile();
   await loadAnalysisFile();
 
   getOrderedPodcasts().forEach(podcast => {

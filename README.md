@@ -281,6 +281,57 @@ Ablauf:
    geschnittene Fassung, spielt der Player sie; fehlt sie, fällt er auf die
    Originaldatei mit den festen Werten zurück.
 
+### Konfiguration: die Google-Tabelle
+
+Welche Podcasts es gibt, in welcher Reihenfolge sie erscheinen und was mit
+ihnen passiert, steht in einer Google-Tabelle im Drive des Nutzers - nicht
+mehr im Code. Eine Zeile je Podcast, die Zeilenreihenfolge ist die
+Reihenfolge in der App.
+
+| Spalte | Bedeutung |
+|---|---|
+| ID | ändert sich nie; daran hängt der Hörfortschritt beim Umbenennen |
+| Aktiv | nein = ausblenden, ohne die Zeile zu löschen |
+| Name | Überschrift in der App |
+| Feed-URL | Adresse des Feeds, oder `dlf_audio` für den Sonderfall |
+| Nur Titel mit / Titel ohne | Folgenfilter |
+| Mindestlänge (Sek.) | kürzere Folgen werden ausgeblendet |
+| Werbung | ja = Werbung schneiden und die Datei bei GitHub ablegen |
+| Sprungmarken | ja = Themen erkennen |
+| Start / Ende (Sek.) | fester Vor- und Abspann |
+| Aufbau | ein Satz über den Aufbau der Sendung, für die Erkennung |
+| Schlussmarker | ab hier gilt der Rest als Werbung |
+| Folgen | wie viele der neuesten Folgen geprüft werden |
+
+Der Weg: `tools/sync-config.mjs` liest die im Web veröffentlichte Tabelle als
+CSV und schreibt sie nach `data/config.json`; die App liest nur diese Datei.
+Das passiert bei jedem Analyse-Lauf und zusätzlich auf Knopfdruck unter
+*Actions → Konfiguration uebernehmen*. Die Adresse der Tabelle steht in
+`tools/config-quelle.txt`.
+
+Warum der Umweg über das Repository statt direkt aus dem Browser: Google
+liefert Tabellen nicht verlässlich mit den Kopfzeilen aus, die ein Browser
+für fremde Adressen verlangt; und wenn Google nicht antwortet, hätte die App
+gar keine Podcastliste. So liegt die zuletzt funktionierende Fassung immer
+unter derselben Adresse wie die App.
+
+Zwei Dinge, die dabei leicht schiefgehen:
+
+- **Zeiten.** Tippt man `9:05` in eine Zelle, macht Google daraus eine
+  Uhrzeit und liefert `9:05:00` aus. Die Spalten heissen deshalb
+  "(Sek.)" und erwarten Sekunden; `mm:ss` und Googles Uhrzeit-Form werden
+  trotzdem richtig verstanden.
+- **Umbenennen.** Gehört-Haken und Hörposition hängen am Namen. Die
+  ID-Spalte fängt das ab: Weicht der Name von dem ab, der zuletzt zu dieser
+  ID gespeichert war, zieht alles Gespeicherte mit um.
+
+Die Reihenfolge lässt sich weiterhin mit dem Ziehgriff ändern - das gilt
+lokal auf dem Gerät. Ändert sich die Reihenfolge der Zeilen in der Tabelle,
+sticht das die lokale Sortierung aus; wer zuletzt etwas geändert hat, gewinnt.
+
+Fehlt `data/config.json` oder ist die Tabelle nicht erreichbar, gelten die
+Listen im Code (`PODCASTS` in `index.html`, `tools/podcasts.config.json`).
+
 ### Warum geschnitten und nicht nur markiert wird
 
 Podigee baut die Werbung bei **jedem Abruf neu** ein. An derselben Adresse

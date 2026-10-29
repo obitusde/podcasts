@@ -60,7 +60,11 @@ const TEXT_MODEL_PREFERENCE = [
 ];
 const TEXT_MODEL_FALLBACK = 'google/gemini-3.1-flash-lite';
 
-const CONFIG_PATH = 'tools/podcasts.config.json';
+// Die Konfiguration kommt aus der Google-Tabelle (tools/sync-config.mjs
+// schreibt sie hierher). Solange es diese Datei noch nicht gibt, gilt die
+// alte Datei im Repository - der Lauf soll daran nicht scheitern.
+const CONFIG_PATH = 'data/config.json';
+const CONFIG_FALLBACK = 'tools/podcasts.config.json';
 const OUT_PATH = 'data/analysis.json';
 
 const KEEP_EPISODES = 60;      // so viele Analysen bleiben in der Datei
@@ -1192,7 +1196,11 @@ async function pruneAudio(behalteNamen) {
 
 /* ----------------------------------------------------------- Hauptprogramm */
 
-async function analyzeEpisode(ep, podcastName, structure, endMarker, expectOpeningAd) {
+async function analyzeEpisode(ep, podcast, structure, endMarker) {
+  const podcastName = podcast.name;
+  // Nur wo Werbung erwartet wird, muss am Anfang eine gefunden werden - und
+  // nur dort wird überhaupt geschnitten.
+  const expectOpeningAd = !!podcast.werbung;
   log(`\n-> ${ep.title}`);
   if (ep.pubDate) log(`   erschienen: ${ep.pubDate}`);
   log(`   ${ep.audioUrl}`);
@@ -1344,32 +1352,41 @@ async function analyzeEpisode(ep, podcastName, structure, endMarker, expectOpeni
   // Marken - die App kommt mit beidem zurecht.
   let clean = null;
   const cleanPath = join(tmpdir(), `${ep.guid}.mp3`);
-  try {
-    const keep = keepSegments(adRanges, duration);
-    const werbeZeit = Math.round(duration - keep.reduce((sum, [a, b]) => sum + (b - a), 0));
-    await cutAds(audioPath, keep, cleanPath);
-    const cleanDuration = await probeDuration(cleanPath);
-    log(`   Geschnitten: ${fmt(duration)} -> ${fmt(cleanDuration)} (${werbeZeit} Sek. Werbung entfernt)`);
-    const url = await publishAudio(cleanPath, `${ep.guid}.mp3`);
-    if (url) {
-      clean = {
-        url,
-        file: `${ep.guid}.mp3`,
-        durationSeconds: Math.round(cleanDuration),
-        chapters: shiftChapters(chapters, adRanges, duration)
-      };
-      log(`   Abgelegt: ${url}`);
-      log('   Themen in der geschnittenen Fassung:');
-      clean.chapters.forEach((c) => log(`     ${fmt(c.start)}  ${c.title}`));
-    }
-  } catch (err) {
-    log(`   Schneiden fehlgeschlagen: ${err.message} - es bleibt bei der Originaldatei`);
-  } finally {
-    await unlink(cleanPath).catch(() => {});
+  if (!podcast.werbung) {
+    // Kein Schnitt nötig: Ohne eingebaute Werbung bleibt die Originaldatei
+    // gleich, die Marken gelten direkt für sie. Das spart Speicher,
+    // Bandbreite und eine Kopie fremder Tondateien.
+    log('   Ohne Werbung - es bleibt bei der Originaldatei');
     await unlink(audioPath).catch(() => {});
+  } else {
+    try {
+      const keep = keepSegments(adRanges, duration);
+      const werbeZeit = Math.round(duration - keep.reduce((sum, [a, b]) => sum + (b - a), 0));
+      await cutAds(audioPath, keep, cleanPath);
+      const cleanDuration = await probeDuration(cleanPath);
+      log(`   Geschnitten: ${fmt(duration)} -> ${fmt(cleanDuration)} (${werbeZeit} Sek. Werbung entfernt)`);
+      const url = await publishAudio(cleanPath, `${ep.guid}.mp3`);
+      if (url) {
+        clean = {
+          url,
+          file: `${ep.guid}.mp3`,
+          durationSeconds: Math.round(cleanDuration),
+          chapters: shiftChapters(chapters, adRanges, duration)
+        };
+        log(`   Abgelegt: ${url}`);
+        log('   Themen in der geschnittenen Fassung:');
+        clean.chapters.forEach((c) => log(`     ${fmt(c.start)}  ${c.title}`));
+      }
+    } catch (err) {
+      log(`   Schneiden fehlgeschlagen: ${err.message} - es bleibt bei der Originaldatei`);
+    } finally {
+      await unlink(cleanPath).catch(() => {});
+      await unlink(audioPath).catch(() => {});
+    }
   }
 
   return {
+    podcastId: podcast.id || null,
     podcast: podcastName,
     title: ep.title,
     pubDate: ep.pubDate || null,
@@ -1389,12 +1406,27 @@ async function analyzeEpisode(ep, podcastName, structure, endMarker, expectOpeni
 }
 
 async function main() {
-  const config = JSON.parse(await readFile(CONFIG_PATH, 'utf8'));
+  const configPath = existsSync(CONFIG_PATH) ? CONFIG_PATH : CONFIG_FALLBACK;
+  if (configPath !== CONFIG_PATH) {
+    log(`Hinweis: ${CONFIG_PATH} gibt es noch nicht - es gilt ${CONFIG_FALLBACK}`);
+  }
+  const config = JSON.parse(await readFile(configPath, 'utf8'));
   const store = existsSync(OUT_PATH) ? JSON.parse(await readFile(OUT_PATH, 'utf8')) : {};
   const episodesStore = store.episodes || {};
   let changed = false;
 
   for (const podcast of config.podcasts) {
+    // Steht in der Tabelle weder "Werbung" noch "Sprungmarken" auf ja, gibt
+    // es für diesen Podcast nichts zu analysieren - und er kostet nichts.
+    const ausTabelle = 'werbung' in podcast || 'sprungmarken' in podcast;
+    if (ausTabelle && !podcast.werbung && !podcast.sprungmarken) continue;
+    if (!ausTabelle) {
+      // Alte Konfigurationsdatei: dort stand jeder Eintrag für "analysieren,
+      // Werbung schneiden" - so bleibt das Verhalten gleich.
+      podcast.werbung = podcast.expectOpeningAd !== false;
+      podcast.sprungmarken = true;
+    }
+
     log(`\n=== ${podcast.name} ===`);
     let episodes;
     try {
@@ -1426,7 +1458,7 @@ async function main() {
         continue;
       }
       try {
-        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast.name, podcast.structure || '', podcast.endMarker || '', podcast.expectOpeningAd !== false);
+        episodesStore[ep.guid] = await analyzeEpisode(ep, podcast, podcast.structure || '', podcast.endMarker || '');
         changed = true;
       } catch (err) {
         log(`   FEHLER: ${err.message}`);
