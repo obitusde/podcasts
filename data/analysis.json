@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29T09:29:01.925Z",
+  "updatedAt": "2026-10-29T09:31:33.682Z",
   "episodes": {
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
@@ -8,10 +8,10 @@
       "adRanges": [
         [
           37.4,
-          89.5
+          94
         ],
         [
-          562.1,
+          566.6,
           999999
         ]
       ],
@@ -21,37 +21,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 89.6,
+          "start": 94.1,
           "title": "Wahl in Israel"
         },
         {
-          "start": 211.8,
-          "title": "Merz-Reise nach Asien"
+          "start": 216.3,
+          "title": "Merz in Asien"
         },
         {
-          "start": 285.6,
+          "start": 290.1,
           "title": "US-Zwischenwahlen"
         },
         {
-          "start": 360.4,
-          "title": "Sparprogramm von E.ON"
+          "start": 364.9,
+          "title": "Sparprogramm bei E.ON"
         },
         {
-          "start": 430.4,
+          "start": 433.9,
           "title": "Gewinnwarnung bei Mercedes"
         },
         {
-          "start": 474.3,
-          "title": "DAX-Handel rund um die Uhr"
+          "start": 478.9,
+          "title": "Börse rund um die Uhr"
         },
         {
-          "start": 515.8,
-          "title": "Protest im Stadion Essen"
+          "start": 520.3,
+          "title": "Aktion vor Pokalspiel"
         }
       ],
-      "durationSeconds": 598,
+      "durationSeconds": 595,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:29:01.921Z"
+      "detectedAt": "2026-10-29T09:31:33.676Z"
     },
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
@@ -60,10 +60,10 @@
       "adRanges": [
         [
           37.9,
-          109
+          95.3
         ],
         [
-          571.2,
+          559.7,
           999999
         ]
       ],
@@ -73,37 +73,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 109.1,
-          "title": "Bundespräsident"
+          "start": 95.4,
+          "title": "Nachfolge für Bundespräsident"
         },
         {
-          "start": 244.6,
-          "title": "Notenbanken"
+          "start": 241.2,
+          "title": "Geldpolitik der Fed und EZB"
         },
         {
-          "start": 298.4,
-          "title": "Starke Bankenergebnisse"
+          "start": 286.4,
+          "title": "Rekordgewinne der Banken"
         },
         {
-          "start": 352.3,
-          "title": "Gesundheitspolitik"
+          "start": 340.7,
+          "title": "Linnemann zur Gesundheitspolitik"
         },
         {
-          "start": 414.5,
-          "title": "Audi-Deal mit Trump"
+          "start": 402.4,
+          "title": "Audi-Chef Döllner und Donald Trump"
         },
         {
-          "start": 467.9,
-          "title": "Alphabet-Zahlen"
+          "start": 456.3,
+          "title": "Quartalszahlen von Alphabet"
         },
         {
-          "start": 523.4,
-          "title": "Handelspolitik"
+          "start": 512.4,
+          "title": "Bordeaux-Weine in Düsseldorf"
         }
       ],
-      "durationSeconds": 598,
+      "durationSeconds": 594,
       "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:28:18.436Z"
+      "detectedAt": "2026-10-29T09:30:48.948Z"
     },
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
