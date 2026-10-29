@@ -80,7 +80,6 @@ const LINE_MAX_WORDS = 22;
 const SILENCE_DB = -30;          // ab wie leise es als Pause gilt
 const SILENCE_MIN = 0.15;        // Mindestdauer einer Pause in Sekunden
 const SNAP_WINDOW = 5;           // Suchradius um die geschätzte Grenze
-const SNAP_PREFER_MIN = 0.3;     // solche Pausen gelten als Abschnittsgrenze
 
 // Sicherheitsregel, wenn im Suchradius KEINE Pause liegt: Die Grenze wandert
 // in die Richtung, in der ein Fehler harmlos ist - lieber ein Moment Musik
@@ -375,32 +374,36 @@ async function detectSilences(filePath) {
 }
 
 /**
- * Rastet eine geschätzte Grenze auf die passendste Pause ein.
- *   kind 'contentStart' -> Inhalt beginnt: Ende einer Pause
- *   kind 'adStart'      -> Werbung beginnt: Anfang einer Pause
- * Bevorzugt werden längere Pausen (sie trennen Abschnitte), bei gleicher
- * Länge die nächstgelegene. Liegt keine im Suchradius, greift die
- * Sicherheitsregel.
+ * Rastet eine geschätzte Grenze auf die passende Pause ein.
+ *
+ *   kind 'contentStart' -> Inhalt beginnt: Ende einer Pause DAVOR
+ *   kind 'adStart'      -> Werbung beginnt: Anfang einer Pause DANACH
+ *
+ * Die Richtung ist entscheidend. Die Sendung spricht
+ *   "... nicht. [Pause] Notenbanken. [Pause] Die US-Notenbank ..."
+ * Nimmt man einfach die nächstgelegene Pause, erwischt man die NACH dem
+ * Schlagwort und springt darüber hinweg - genau das ist passiert, alles
+ * lag danach sieben Sekunden zu spät. Deshalb: Für einen Inhaltsanfang
+ * zählen nur Pausen, die vorher enden; für einen Werbeanfang nur solche,
+ * die danach beginnen. Gesucht wird jeweils die nächstgelegene.
  */
 function snapToSilence(silences, time, kind) {
-  const candidates = silences
-    .map(([from, to]) => ({
-      at: kind === 'contentStart' ? to : from,
-      length: to - from
-    }))
-    .filter((c) => Math.abs(c.at - time) <= SNAP_WINDOW);
+  const TOLERANCE = 0.5; // kleine Unschärfe der geschätzten Wortzeit
 
-  const clear = candidates.filter((c) => c.length >= SNAP_PREFER_MIN);
-  const pool = clear.length > 0 ? clear : candidates;
-  if (pool.length === 0) {
+  const candidates = silences
+    .map(([from, to]) => ({ at: kind === 'contentStart' ? to : from, length: to - from }))
+    .filter((c) => Math.abs(c.at - time) <= SNAP_WINDOW)
+    .filter((c) => (kind === 'contentStart' ? c.at <= time + TOLERANCE : c.at >= time - TOLERANCE));
+
+  if (candidates.length === 0) {
     return {
       at: kind === 'contentStart' ? time - SAFETY_CONTENT_START : time + SAFETY_AD_START,
       snapped: false
     };
   }
 
-  pool.sort((a, b) => Math.abs(a.at - time) - Math.abs(b.at - time));
-  return { at: pool[0].at, snapped: true, length: pool[0].length };
+  candidates.sort((a, b) => Math.abs(a.at - time) - Math.abs(b.at - time));
+  return { at: candidates[0].at, snapped: true, length: candidates[0].length };
 }
 
 /* ------------------------------------------------- Werbung und Themen finden */
