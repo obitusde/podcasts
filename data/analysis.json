@@ -1,6 +1,62 @@
 {
-  "updatedAt": "2026-10-29T09:06:32.615Z",
+  "updatedAt": "2026-10-29T09:23:18.841Z",
   "episodes": {
+    "62faa662abdc627404ef0d5e582d2174": {
+      "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
+      "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
+      "adRanges": [
+        [
+          37.9,
+          87.8
+        ],
+        [
+          555.8,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 87.9,
+          "title": "Bundespräsidentenwahl"
+        },
+        {
+          "start": 237,
+          "title": "Zinsentscheid der FED"
+        },
+        {
+          "start": 255.8,
+          "title": "EZB und Inflation"
+        },
+        {
+          "start": 282.4,
+          "title": "Bankenquartalszahlen"
+        },
+        {
+          "start": 336.8,
+          "title": "Gesundheitspolitik"
+        },
+        {
+          "start": 398.5,
+          "title": "Audi und Trump"
+        },
+        {
+          "start": 452.4,
+          "title": "Alphabet Quartalszahlen"
+        },
+        {
+          "start": 508.5,
+          "title": "Weinmarkt und Welthandel"
+        }
+      ],
+      "durationSeconds": 588,
+      "model": "openai/whisper-large-v3-turbo",
+      "detectedAt": "2026-10-29T09:23:18.833Z"
+    },
     "3509ad87643993be355055df45d94676": {
       "title": "Anthropic: Börsengang wird konkret / Mercedes: Sechsstellige Abfindungen für Produktionsmitarbeiter",
       "pubDate": "Tue, 27 Oct 2026 05:05:20 +0000",
@@ -100,62 +156,6 @@
       "durationSeconds": 594,
       "model": "openai/whisper-large-v3-turbo",
       "detectedAt": "2026-10-29T09:06:09.636Z"
-    },
-    "62faa662abdc627404ef0d5e582d2174": {
-      "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
-      "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
-      "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
-      "adRanges": [
-        [
-          37.9,
-          95.3
-        ],
-        [
-          559.7,
-          999999
-        ]
-      ],
-      "chapters": [
-        {
-          "start": 0,
-          "title": "Themenüberblick"
-        },
-        {
-          "start": 95.4,
-          "title": "Bundespräsidentenwahl"
-        },
-        {
-          "start": 241.2,
-          "title": "Zinsentscheid der FED"
-        },
-        {
-          "start": 259.4,
-          "title": "EZB und Inflation"
-        },
-        {
-          "start": 286.4,
-          "title": "Rekordquartale der Banken"
-        },
-        {
-          "start": 340.7,
-          "title": "Gesundheitspolitik"
-        },
-        {
-          "start": 402.4,
-          "title": "Audi und Trump-Deal"
-        },
-        {
-          "start": 456.3,
-          "title": "Alphabet Quartalszahlen"
-        },
-        {
-          "start": 507.5,
-          "title": "Weinmarkt und Weltwirtschaft"
-        }
-      ],
-      "durationSeconds": 594,
-      "model": "openai/whisper-large-v3-turbo",
-      "detectedAt": "2026-10-29T09:05:47.486Z"
     }
   }
 }
