@@ -23,8 +23,17 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 
 const API = 'https://openrouter.ai/api/v1';
-const STT_MODEL = 'openai/whisper-large-v3-turbo'; // ca. 0,2 Cent je 10 Min. Audio
-const STT_FALLBACK = 'openai/whisper-large-v3';    // falls keine Zeitstempel kommen
+// Transkriptionsmodell. Entscheidend ist nicht die Worterkennung - die war
+// bei allen gut -, sondern die Genauigkeit der Zeitstempel rund um Musik:
+// Whisper-Turbo setzte dasselbe Wort in drei Läufen auf 1:29, 1:34 und
+// 1:37. Deshalb zuerst das genauere Modell, Whisper bleibt Rückfallebene.
+// Das erste aus dieser Liste, das es bei OpenRouter gibt, wird genommen.
+const STT_PREFERENCE = [
+  'microsoft/mai-transcribe-2',      // ca. 1,7 Cent je 10 Min., Wort-Zeitstempel
+  'openai/whisper-large-v3',         // ca. 0,5 Cent
+  'openai/whisper-large-v3-turbo'    // ca. 0,2 Cent
+];
+const STT_FALLBACK = 'openai/whisper-large-v3-turbo';
 // Das Textmodell entscheidet, was Werbung ist. Die Lite-Variante hat bei
 // identischem Transkript unterschiedlich geantwortet (mal fehlte der
 // Schlussblock, mal wurde ein Beitrag fälschlich als Werbung markiert),
@@ -305,26 +314,49 @@ function buildPrompt(lines, structure) {
 }
 
 let textModelCache = null;
+let sttModelCache = null;
+let availableModelIds = null;
 
-async function pickTextModel() {
-  if (textModelCache) return textModelCache;
+// Liste der verfügbaren Modelle (einmal pro Lauf).
+async function loadModelIds() {
+  if (availableModelIds) return availableModelIds;
   try {
     const res = await fetch(`${API}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
     if (res.ok) {
-      const ids = new Set((await res.json()).data.map((m) => m.id));
-      const found = TEXT_MODEL_PREFERENCE.find((id) => ids.has(id));
-      if (found) {
-        log(`Textmodell: ${found}`);
-        textModelCache = found;
-        return found;
+      availableModelIds = new Set((await res.json()).data.map((m) => m.id));
+      if (DEBUG) {
+        const stt = [...availableModelIds].filter((id) => /transcribe|whisper|asr|scribe|voxtral/i.test(id));
+        log('Verfügbare Transkriptionsmodelle: ' + stt.sort().join(', '));
       }
-      log('Keines der bevorzugten Textmodelle ist verfügbar.');
+      return availableModelIds;
     }
+    log(`Modell-Liste: HTTP ${res.status}`);
   } catch (err) {
     log(`Modell-Liste nicht abrufbar (${err.message})`);
   }
-  textModelCache = TEXT_MODEL_FALLBACK;
-  log(`Textmodell: ${textModelCache} (Rückfallebene)`);
+  availableModelIds = new Set();
+  return availableModelIds;
+}
+
+// Transkriptionsmodell wählen: STT=<slug> erzwingt eines (für Vergleiche).
+async function pickSttModel() {
+  if (sttModelCache) return sttModelCache;
+  if (process.env.STT) {
+    sttModelCache = process.env.STT;
+    log(`Transkription: ${sttModelCache} (von Hand vorgegeben)`);
+    return sttModelCache;
+  }
+  const ids = await loadModelIds();
+  sttModelCache = STT_PREFERENCE.find((id) => ids.has(id)) || STT_FALLBACK;
+  log(`Transkription: ${sttModelCache}`);
+  return sttModelCache;
+}
+
+async function pickTextModel() {
+  if (textModelCache) return textModelCache;
+  const ids = await loadModelIds();
+  textModelCache = TEXT_MODEL_PREFERENCE.find((id) => ids.has(id)) || TEXT_MODEL_FALLBACK;
+  log(`Textmodell: ${textModelCache}`);
   return textModelCache;
 }
 
@@ -488,12 +520,22 @@ async function analyzeEpisode(ep, structure, endMarker) {
 
   const base64 = buffer.toString('base64');
 
-  let { lines, words, source } = await transcribe(base64, STT_MODEL);
-  let model = STT_MODEL;
-  if (lines.length === 0) {
-    log('   Keine Zeitstempel - zweiter Versuch mit', STT_FALLBACK);
-    ({ lines, words, source } = await transcribe(base64, STT_FALLBACK));
+  let model = await pickSttModel();
+  let lines = [];
+  let words = [];
+  let source = '';
+
+  try {
+    ({ lines, words, source } = await transcribe(base64, model));
+  } catch (err) {
+    log(`   ${model} schlug fehl: ${err.message}`);
+  }
+
+  if (lines.length === 0 && model !== STT_FALLBACK) {
+    log(`   Keine brauchbaren Zeitstempel - zweiter Versuch mit ${STT_FALLBACK}`);
+    sttModelCache = STT_FALLBACK;
     model = STT_FALLBACK;
+    ({ lines, words, source } = await transcribe(base64, model));
   }
   if (lines.length === 0) throw new Error('Transkription ohne Zeitstempel');
   log(`   Transkript: ${lines.length} Zeilen (aus ${source}, ${model})`);

@@ -29,6 +29,10 @@ on:
         description: 'Komplettes Transkript ins Protokoll schreiben'
         type: boolean
         default: false
+      stt:
+        description: 'Transkriptionsmodell erzwingen (leer = automatisch)'
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -53,6 +57,7 @@ jobs:
           FORCE: ${{ inputs.force && '1' || '0' }}
           EPISODES: ${{ inputs.episodes }}
           DEBUG: ${{ inputs.debug && '1' || '0' }}
+          STT: ${{ inputs.stt }}
         run: node tools/analyze.mjs
 
       - name: Ergebnis committen
