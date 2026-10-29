@@ -1,17 +1,18 @@
 {
-  "updatedAt": "2026-10-29T10:42:52.132Z",
+  "updatedAt": "2026-10-29T11:35:48.495Z",
   "episodes": {
     "62faa662abdc627404ef0d5e582d2174": {
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
       "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
+      "feedDurationSeconds": 506,
       "adRanges": [
         [
           37.7,
-          101.8
+          100.7
         ],
         [
-          567.6,
+          566.6,
           999999
         ]
       ],
@@ -21,33 +22,37 @@
           "title": "Themenüberblick"
         },
         {
-          "start": 101.9,
-          "title": "Bundespräsident"
+          "start": 100.74634900000001,
+          "title": "Bundespräsidenten-Suche"
         },
         {
-          "start": 236.4,
-          "title": "Notenbanken"
+          "start": 241.92675699999998,
+          "title": "Zinsentscheide von Fed und EZB"
         },
         {
-          "start": 350.4,
-          "title": "Carsten Linnemann"
+          "start": 288.14161,
+          "title": "Banken"
         },
         {
-          "start": 402,
+          "start": 349.46702899999997,
+          "title": "Gesundheitspolitik"
+        },
+        {
+          "start": 401.06192699999997,
           "title": "Audi"
         },
         {
-          "start": 460.1,
-          "title": "Alphabet"
+          "start": 464.942381,
+          "title": "Quartalszahlen von Alphabet"
         },
         {
-          "start": 521.1,
-          "title": "Bordeaux-Weine"
+          "start": 504.038776,
+          "title": "Handelspolitik"
         }
       ],
-      "durationSeconds": 598,
+      "durationSeconds": 611,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-29T10:42:52.124Z"
+      "detectedAt": "2026-10-29T11:35:48.487Z"
     },
     "75be7f726ec71e51c3d61106f50501e0": {
       "title": "Israel: Ein Land, zwei Wirklichkeiten / Handel: Merz für Freihandel mit Asien",
