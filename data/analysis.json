@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30T07:41:31.821Z",
+  "updatedAt": "2026-10-30T07:46:31.515Z",
   "episodes": {
     "91f8e152df748fd5ebd5ec0fed5a6c4f": {
       "podcastId": "handelsblatt",
@@ -10,35 +10,39 @@
       "clean": {
         "url": "https://github.com/obitusde/podcasts/releases/download/audio/91f8e152df748fd5ebd5ec0fed5a6c4f.mp3",
         "file": "91f8e152df748fd5ebd5ec0fed5a6c4f.mp3",
-        "durationSeconds": 528,
+        "durationSeconds": 543,
         "chapters": [
           {
             "start": 4.5,
             "title": "Themen der Sendung"
           },
           {
-            "start": 169.4,
-            "title": "Nvidia-Gründer Jensen Huang"
+            "start": 49.91,
+            "title": "KI-Kosten belasten Tech-Aktien"
           },
           {
-            "start": 244.3,
-            "title": "Lagarde-Rücktritt und EZB"
+            "start": 184,
+            "title": "Porträt von Nvidia-Chef Jensen Huang"
           },
           {
-            "start": 325.2,
-            "title": "US-Wahlen und Staatsverschuldung"
+            "start": 259.19,
+            "title": "Rückzug von EZB-Präsidentin Lagarde"
           },
           {
-            "start": 377.8,
-            "title": "Affäre um Berliner Linke"
+            "start": 339.8,
+            "title": "US-Zwischenwahlen und US-Schulden"
           },
           {
-            "start": 440.33,
-            "title": "Unternehmensnachfolge"
+            "start": 392.4,
+            "title": "Pannen-Dokument der Berliner Linken"
           },
           {
-            "start": 476.1,
-            "title": "Optimismus im Kanzleramt"
+            "start": 457.84,
+            "title": "Krise bei Unternehmensnachfolge"
+          },
+          {
+            "start": 490.8,
+            "title": "Buch über Optimismus in Berlin"
           }
         ]
       },
@@ -46,10 +50,10 @@
       "adRanges": [
         [
           35.3,
-          85.9
+          74.7
         ],
         [
-          578.9,
+          582.4,
           999999
         ]
       ],
@@ -59,37 +63,37 @@
           "title": "Themen der Sendung"
         },
         {
-          "start": 85.860771,
+          "start": 89.30893400000001,
           "title": "KI-Kosten belasten Tech-Aktien"
         },
         {
-          "start": 220,
-          "title": "Nvidia-Gründer Jensen Huang"
+          "start": 223.4,
+          "title": "Porträt von Nvidia-Chef Jensen Huang"
         },
         {
-          "start": 294.9,
-          "title": "Lagarde-Rücktritt und EZB"
+          "start": 298.586803,
+          "title": "Rückzug von EZB-Präsidentin Lagarde"
         },
         {
-          "start": 375.8,
-          "title": "US-Wahlen und Staatsverschuldung"
+          "start": 379.2,
+          "title": "US-Zwischenwahlen und US-Schulden"
         },
         {
-          "start": 428.4,
-          "title": "Affäre um Berliner Linke"
+          "start": 431.8,
+          "title": "Pannen-Dokument der Berliner Linken"
         },
         {
-          "start": 490.934762,
-          "title": "Unternehmensnachfolge"
+          "start": 497.241746,
+          "title": "Krise bei Unternehmensnachfolge"
         },
         {
-          "start": 526.7,
-          "title": "Optimismus im Kanzleramt"
+          "start": 530.2,
+          "title": "Buch über Optimismus in Berlin"
         }
       ],
-      "durationSeconds": 615,
+      "durationSeconds": 619,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-10-30T07:41:30.997Z"
+      "detectedAt": "2026-10-30T07:46:31.021Z"
     },
     "6a832de2-e470-3517-b34d-6d2eaf163c02": {
       "podcastId": "echo-der-zeit",
