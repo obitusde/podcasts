@@ -1,6 +1,96 @@
 {
-  "updatedAt": "2026-10-29T22:45:01.908Z",
+  "updatedAt": "2026-10-30T07:41:31.821Z",
   "episodes": {
+    "91f8e152df748fd5ebd5ec0fed5a6c4f": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Wie die KI-Kosten an der Börse Milliarden vernichten",
+      "pubDate": "Fri, 30 Oct 2026 04:57:23 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622457-m-f921c76c437ca54ffa2181f34bff12df.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/91f8e152df748fd5ebd5ec0fed5a6c4f.mp3",
+        "file": "91f8e152df748fd5ebd5ec0fed5a6c4f.mp3",
+        "durationSeconds": 528,
+        "chapters": [
+          {
+            "start": 4.5,
+            "title": "Themen der Sendung"
+          },
+          {
+            "start": 169.4,
+            "title": "Nvidia-Gründer Jensen Huang"
+          },
+          {
+            "start": 244.3,
+            "title": "Lagarde-Rücktritt und EZB"
+          },
+          {
+            "start": 325.2,
+            "title": "US-Wahlen und Staatsverschuldung"
+          },
+          {
+            "start": 377.8,
+            "title": "Affäre um Berliner Linke"
+          },
+          {
+            "start": 440.33,
+            "title": "Unternehmensnachfolge"
+          },
+          {
+            "start": 476.1,
+            "title": "Optimismus im Kanzleramt"
+          }
+        ]
+      },
+      "feedDurationSeconds": 529,
+      "adRanges": [
+        [
+          35.3,
+          85.9
+        ],
+        [
+          578.9,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.5,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 85.860771,
+          "title": "KI-Kosten belasten Tech-Aktien"
+        },
+        {
+          "start": 220,
+          "title": "Nvidia-Gründer Jensen Huang"
+        },
+        {
+          "start": 294.9,
+          "title": "Lagarde-Rücktritt und EZB"
+        },
+        {
+          "start": 375.8,
+          "title": "US-Wahlen und Staatsverschuldung"
+        },
+        {
+          "start": 428.4,
+          "title": "Affäre um Berliner Linke"
+        },
+        {
+          "start": 490.934762,
+          "title": "Unternehmensnachfolge"
+        },
+        {
+          "start": 526.7,
+          "title": "Optimismus im Kanzleramt"
+        }
+      ],
+      "durationSeconds": 615,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-30T07:41:30.997Z"
+    },
     "6a832de2-e470-3517-b34d-6d2eaf163c02": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -104,45 +194,7 @@
       "title": "Bundespräsident: Warum der Kanzler kein Staatsoberhaupt findet",
       "pubDate": "Thu, 29 Oct 2026 04:52:07 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2622456-m-e7963c15f712e81019cf34f2b65a0bb1.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/62faa662abdc627404ef0d5e582d2174.mp3",
-        "file": "62faa662abdc627404ef0d5e582d2174.mp3",
-        "durationSeconds": 504,
-        "chapters": [
-          {
-            "start": 0,
-            "title": "Themenüberblick"
-          },
-          {
-            "start": 37.71,
-            "title": "Nachfolge des Bundespräsidenten"
-          },
-          {
-            "start": 177.2,
-            "title": "Zinsentscheide von Fed und EZB"
-          },
-          {
-            "start": 230.7,
-            "title": "Ergebnisse der Großbanken"
-          },
-          {
-            "start": 284.7,
-            "title": "Gesundheitspolitik und Zuzahlungen"
-          },
-          {
-            "start": 346.5,
-            "title": "Zweifel an Audi-Deal mit Trump"
-          },
-          {
-            "start": 401.3,
-            "title": "Zahlen von Alphabet und Microsoft"
-          },
-          {
-            "start": 453.72,
-            "title": "Anekdote zu Weinpreisen"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 506,
       "adRanges": [
         [
