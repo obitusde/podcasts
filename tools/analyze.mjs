@@ -129,7 +129,8 @@ const BLOCK_PAUSE = 0.4;      // ab dieser Pausenlänge beginnt ein Abschnitt
 const BLOCK_MIN_WORDS = 3;    // kürzere Abschnitte mit dem nächsten verbinden
 const BLOCK_PAD = 0.15;       // winziger Vorlauf, damit nichts angeschnitten wird
 const AD_GAP = 0.6;           // ab dieser Tonlücke gehen Werbung und Inhalt auseinander
-const AD_SEARCH_BACK = 20;    // so weit vor dem erkannten Werbe-Ende wird nach dieser Lücke gesucht
+const CONTENT_CUSHION = 0.8;  // so viel Luft vor dem ersten Inhaltswort
+const MAX_AD_PULL_BACK = 3;   // weiter darf die Werbegrenze nie nach vorn wandern
 const PHRASE_WINDOW = 150;    // Sekunden um den genannten Abschnitt, in denen die zitierten Worte gesucht werden
 const MIN_CHAPTER_GAP = 20;   // dichter aufeinander ist kein zweites Thema, sondern dieselbe Stelle doppelt
 
@@ -1092,19 +1093,20 @@ function pauseBeforeMark(silences, time, floor = 0) {
 }
 
 /**
- * Das Ende eines Werbeblocks auf den Satzanfang danach ziehen.
+ * Dem Inhalt nach der Werbung etwas Luft geben.
  *
- * Gemessene Pausen allein reichen hier nicht: Liegt das Werbe-Ende auch nur
- * zwei Sekunden zu spät, fängt die Folge mitten im ersten Satz an - genau
- * das war beim Handelsblatt zu hören. Umgekehrt ist ein bisschen zu wenig
- * geschnitten kaum zu bemerken.
+ * Die Werbegrenze kommt aus den gemessenen Pausen und liegt damit genau
+ * dort, wo das erste Inhaltswort anfängt - auf die Hundertstelsekunde. Beim
+ * Schneiden reicht das nicht: Der erste Laut wird angeschnitten. Deshalb
+ * endet die Werbung ein kurzes Stück früher.
  *
- * Deshalb: Das erste Wort nach dem Werbe-Ende suchen, von dort auf den
- * Satzanfang zurückgehen und dem Satz noch einen kurzen Vorlauf geben. Die
- * Grenze wandert dabei nur nach vorn, nie nach hinten - es wird also immer
- * weniger geschnitten, nie mehr.
+ * Bewusst eng begrenzt. Ein erster Versuch suchte die grösste Tonlücke in
+ * den zwanzig Sekunden davor - und landete mitten in der Werbung, weil vor
+ * deren Schlusssatz ("Jetzt auch als Video-Podcast") ebenfalls eine Lücke
+ * liegt. Die Grenze darf sich deshalb höchstens um MAX_AD_PULL_BACK
+ * bewegen und nie über das letzte Werbewort hinaus.
  */
-function adEndsToSentenceStart(adRanges, words, duration) {
+function adEndsWithCushion(adRanges, words, duration) {
   if (words.length === 0) return adRanges;
 
   return adRanges.map(([from, to]) => {
@@ -1112,31 +1114,24 @@ function adEndsToSentenceStart(adRanges, words, duration) {
     const i = words.findIndex((w) => w.start >= to - 0.2);
     if (i === -1) return [from, to];
 
-    // Die Werbung und der Inhalt danach sind durch die DEUTLICHSTE Tonlücke
-    // in diesem Bereich getrennt - oft liegt dort ein Jingle. Nicht die
-    // erste Lücke von hinten nimmt man, sondern die grösste: Kündigt die
-    // Sendung ihr Thema mit einem einzelnen Schlagwort an
-    // ("Bundespräsident."), folgt danach noch eine Pause, und die erste
-    // Lücke von hinten läge hinter dem Schlagwort - es wäre weg.
-    const fenster = Math.max(from + 1, to - AD_SEARCH_BACK);
-    let k = -1;
-    let groesste = 0;
-    for (let j = 1; j < words.length; j++) {
-      if (words[j].start < fenster) continue;
-      if (words[j].start > to + 0.5) break;
-      const luecke = words[j].start - words[j - 1].end;
-      if (luecke > groesste) { groesste = luecke; k = j; }
+    // Liegt die Grenze schon im ersten Satz des Inhalts, zurück bis zu
+    // dessen Anfang - aber nur innerhalb des erlaubten Spielraums.
+    let k = i;
+    while (k > 0) {
+      const davor = words[k - 1];
+      if (words[k].start - davor.end >= AD_GAP) break;      // hier setzt der Inhalt ein
+      if (words[k].start < to - MAX_AD_PULL_BACK) break;    // weiter nicht
+      k--;
     }
-    if (k === -1 || groesste < AD_GAP) return [from, to];
 
-    // Vorlauf, damit das erste Wort nicht angeschnitten wird - aber nie so
-    // weit, dass das letzte Wort der Werbung wieder hörbar wird.
-    const inhaltStart = Math.max(words[k].start - SAFETY_CONTENT_START, words[k - 1].end + 0.1);
+    const ersterLaut = words[k].start;
+    const letztesWerbewort = k > 0 ? words[k - 1].end : 0;
+    const untergrenze = Math.max(from + 1, letztesWerbewort + 0.1, to - MAX_AD_PULL_BACK);
+    const neu = Math.max(Math.min(to, ersterLaut - CONTENT_CUSHION), untergrenze);
 
-    if (inhaltStart >= to || inhaltStart <= from + 1) return [from, to];
-
-    log(`   Werbe-Ende ${fmt(to)} -> ${fmt(inhaltStart)}: nach einer Lücke von ${groesste.toFixed(1)}s beginnt der Inhalt mit "${words[k].text} ${words[k + 1] ? words[k + 1].text : ''} ..."`);
-    return [from, inhaltStart];
+    if (neu >= to - 0.01) return [from, to];
+    log(`   Werbe-Ende ${fmt(to)} -> ${fmt(neu)}: ${(to - neu).toFixed(1)}s Luft vor "${words[k].text} ${words[k + 1] ? words[k + 1].text : ''} ..."`);
+    return [from, neu];
   });
 }
 
@@ -1547,10 +1542,9 @@ async function analyzeEpisode(ep, podcast, structure, endMarker) {
   adRanges = normalizeRanges(aligned.adRanges, duration);
   chapters = aligned.chapters;
 
-  // Und zum Schluss: Hinter der Werbung muss ein Satz anfangen, kein
-  // Satzrest. Diese Prüfung verschiebt nur nach vorn, schneidet also im
-  // Zweifel weniger weg.
-  adRanges = normalizeRanges(adEndsToSentenceStart(adRanges, words, duration), duration);
+  // Und zum Schluss: etwas Luft vor dem ersten Inhaltswort, damit es nicht
+  // angeschnitten wird. Verschiebt nur nach vorn und nur um Sekunden.
+  adRanges = normalizeRanges(adEndsWithCushion(adRanges, words, duration), duration);
 
   // Das offene Ende des Schlussblocks nach dem Normalisieren wiederherstellen
   if (adRanges.length > 0 && adRanges[adRanges.length - 1][1] >= duration - 1) {
