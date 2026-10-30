@@ -1330,7 +1330,20 @@ function shiftChapters(chapters, adRanges, duration) {
     .filter(([, b]) => b <= t)
     .reduce((summe, [a, b]) => summe + (b - a), 0);
   return chapters
-    .filter((c) => !ads.some(([a, b]) => c.start >= a && c.start < b))
+    .map((c) => {
+      const werbung = ads.find(([a, b]) => c.start >= a && c.start < b);
+      if (!werbung) return c;
+      // Ein Thema, das in einem Werbeblock zu liegen scheint, ist fast immer
+      // das erste Thema DANACH: Die Themenmarke und das Werbe-Ende fallen auf
+      // dieselbe Stelle, und ein Sekundenbruchteil entscheidet, auf welcher
+      // Seite der Grenze die Marke landet. Heute fiel so das erste Thema nach
+      // der Werbung weg. Es wird deshalb auf das Ende der Werbung gesetzt
+      // statt verworfen.
+      if (werbung[1] >= duration - 1) return null;   // Schlusswerbung: danach kommt nichts mehr
+      log(`   Thema "${c.title}" lag auf der Werbegrenze (${fmt(c.start)}) - es gilt das Werbe-Ende ${fmt(werbung[1])}`);
+      return { start: werbung[1], title: c.title };
+    })
+    .filter(Boolean)
     .map((c) => ({ start: Math.max(0, +(c.start - entferntVor(c.start)).toFixed(2)), title: c.title }))
     .sort((a, b) => a.start - b.start);
 }
