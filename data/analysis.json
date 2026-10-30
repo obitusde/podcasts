@@ -1,6 +1,53 @@
 {
-  "updatedAt": "2026-10-30T08:38:53.205Z",
+  "updatedAt": "2026-10-30T22:16:37.445Z",
   "episodes": {
+    "401e72b1-ca39-3c04-8ba6-ad3667599a19": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Bericht belastet Ruag nach Leopard-Geschäft",
+      "pubDate": "Fri, 30 Oct 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/10/Echo_der_Zeit_radio_AUDI20261030_RS_0047_068cb797d4f04fb5bc6cb1e0e3d93eec.mp3?d=ap&amp;assetId=401e72b1-ca39-3c04-8ba6-ad3667599a19",
+      "clean": null,
+      "feedDurationSeconds": 2585,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 115.70043700000001,
+          "title": "Verfehlungen beim Rüstungsbetrieb RUAG"
+        },
+        {
+          "start": 378.3,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 622.4,
+          "title": "Freihandelsabkommen Schweiz-China"
+        },
+        {
+          "start": 1285.643125,
+          "title": "EU-Rüstungsfinanzierung"
+        },
+        {
+          "start": 1670.7,
+          "title": "Allianz zwischen EU und Kanada"
+        },
+        {
+          "start": 1919.2,
+          "title": "Rückkehr Machados nach Venezuela"
+        },
+        {
+          "start": 2251.1,
+          "title": "Frauen in der Landwirtschaft"
+        }
+      ],
+      "durationSeconds": 2584,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-30T22:16:36.955Z"
+    },
     "91f8e152df748fd5ebd5ec0fed5a6c4f": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
