@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-10-30T22:16:37.445Z",
+  "updatedAt": "2026-10-31T21:30:44.562Z",
   "episodes": {
+    "2afa35d7-d86e-35be-8647-74db7363ae1a": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Streit um das Verfassungsgericht in Polen spitzt sich zu",
+      "pubDate": "Sat, 31 Oct 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/10/Echo_der_Zeit_radio_AUDI20261031_RS_0043_8440895f9abd464989c108065e1f2cc5.mp3?d=ap&amp;assetId=2afa35d7-d86e-35be-8647-74db7363ae1a",
+      "clean": null,
+      "feedDurationSeconds": 1622,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 110.2,
+          "title": "Machtkampf in Polen"
+        },
+        {
+          "start": 321,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 532.5717080000001,
+          "title": "UN-Artenschutzkonferenz"
+        },
+        {
+          "start": 803.778437,
+          "title": "Zukunft der EZB"
+        },
+        {
+          "start": 1165.4,
+          "title": "G20-Außenministertreffen"
+        },
+        {
+          "start": 1332.377812,
+          "title": "Westsahara-Konflikt"
+        }
+      ],
+      "durationSeconds": 1622,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-10-31T21:30:44.110Z"
+    },
     "401e72b1-ca39-3c04-8ba6-ad3667599a19": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
