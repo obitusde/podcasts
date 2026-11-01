@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-10-31T21:30:44.562Z",
+  "updatedAt": "2026-11-01T17:04:47.532Z",
   "episodes": {
+    "3bdea0fd-6c40-3359-a502-89ccabb9ac33": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "International: Venezuela und das Öl: Droht ein neuer Machtkampf?",
+      "pubDate": "Sun, 01 Nov 2026 07:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261101_NR_0032_e388538a564b4a2db5f79d4482cc69d8.mp3?d=ap&amp;assetId=3bdea0fd-6c40-3359-a502-89ccabb9ac33",
+      "clean": null,
+      "feedDurationSeconds": 1784,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Ölförderung am Maracaibo-See"
+        },
+        {
+          "start": 268.897812,
+          "title": "US-Investitionen in Ölindustrie"
+        },
+        {
+          "start": 760.978062,
+          "title": "Marode Stromversorgung"
+        },
+        {
+          "start": 880.1,
+          "title": "Folgen des Erdbebens"
+        },
+        {
+          "start": 1184.831375,
+          "title": "Rückkehr von Maria Corina Machado"
+        },
+        {
+          "start": 1344.417917,
+          "title": "Chavismus-Hochburg 23. Januar"
+        },
+        {
+          "start": 1640.062521,
+          "title": "Ungeduld und politische Zukunft"
+        }
+      ],
+      "durationSeconds": 1784,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-01T17:04:47.061Z"
+    },
     "2afa35d7-d86e-35be-8647-74db7363ae1a": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
