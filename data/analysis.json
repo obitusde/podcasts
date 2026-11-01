@@ -1,6 +1,41 @@
 {
-  "updatedAt": "2026-11-01T17:04:47.532Z",
+  "updatedAt": "2026-11-01T22:00:08.726Z",
   "episodes": {
+    "0a2dbbbd-6f31-335c-ba5e-9a038771f3ba": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Schwere Verwüstungen nach Jugend-Demonstrationen in der Schweiz",
+      "pubDate": "Sun, 01 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261101_RS_0072_342f1263691a49f4916e7ee0ec7aab40.mp3?d=ap&amp;assetId=0a2dbbbd-6f31-335c-ba5e-9a038771f3ba",
+      "clean": null,
+      "feedDurationSeconds": 1754,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 435.027021,
+          "title": "Proteste der Generation Z in Europa"
+        },
+        {
+          "start": 748.3,
+          "title": "Handelsabkommen Schweiz-China"
+        },
+        {
+          "start": 1028.6,
+          "title": "Lage in Brasilien nach der Wahl"
+        },
+        {
+          "start": 1370.7,
+          "title": "Proteste gegen KI-Rechenzentren"
+        }
+      ],
+      "durationSeconds": 1754,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-01T22:00:08.157Z"
+    },
     "3bdea0fd-6c40-3359-a502-89ccabb9ac33": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
