@@ -1,6 +1,57 @@
 {
-  "updatedAt": "2026-11-02T10:35:33.402Z",
+  "updatedAt": "2026-11-02T20:41:53.587Z",
   "episodes": {
+    "b3a9044c-0d9c-3d08-a5d2-6e4d848d941e": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Wie der Europarat die Demokratie stärken will",
+      "pubDate": "Mon, 02 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261102_RS_0047_912ebf152a864f9f8598d60a611dcd6b.mp3?d=ap&amp;assetId=b3a9044c-0d9c-3d08-a5d2-6e4d848d941e",
+      "clean": null,
+      "feedDurationSeconds": 2615,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 118.277896,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 377.822708,
+          "title": "Europarat will Demokratie stärken"
+        },
+        {
+          "start": 722.826458,
+          "title": "OSZE-Konferenz in Lugano"
+        },
+        {
+          "start": 949.5286460000001,
+          "title": "Neue kantonale BIP-Berechnung"
+        },
+        {
+          "start": 1284.573771,
+          "title": "Fall Hans Jucker bei SRF"
+        },
+        {
+          "start": 1380.260271,
+          "title": "Engere Kooperation von EU und Kanada"
+        },
+        {
+          "start": 1791.788667,
+          "title": "US-Midterms Wahlkampf in Omaha"
+        },
+        {
+          "start": 2103.914417,
+          "title": "Griefbots und Trauerarbeit"
+        }
+      ],
+      "durationSeconds": 2614,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-02T20:41:51.523Z"
+    },
     "2848d12aeb3f2b78bfe875e2084d6e1f": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
