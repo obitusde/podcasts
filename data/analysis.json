@@ -1,6 +1,100 @@
 {
-  "updatedAt": "2026-11-01T22:00:08.726Z",
+  "updatedAt": "2026-11-02T10:35:33.402Z",
   "episodes": {
+    "2848d12aeb3f2b78bfe875e2084d6e1f": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Hilft Unternehmen nur die Rückkehr der Deutschland AG?",
+      "pubDate": "Mon, 02 Nov 2026 04:52:34 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2622458-m-6cf6c8c0232da9c7c8c481899f3b2bb3.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/2848d12aeb3f2b78bfe875e2084d6e1f.mp3",
+        "file": "2848d12aeb3f2b78bfe875e2084d6e1f.mp3",
+        "durationSeconds": 505,
+        "chapters": [
+          {
+            "start": 5.4,
+            "title": "Themen der Sendung"
+          },
+          {
+            "start": 35.71,
+            "title": "Rückkehr der Deutschland AG"
+          },
+          {
+            "start": 155.18,
+            "title": "Übernahme der Commerzbank"
+          },
+          {
+            "start": 208.25,
+            "title": "Staatskrise in Polen"
+          },
+          {
+            "start": 268.1,
+            "title": "Robert Habeck im Interview"
+          },
+          {
+            "start": 341.4,
+            "title": "US-Börse und Tech-Aktien"
+          },
+          {
+            "start": 397.5,
+            "title": "Hack bei Kryptobörse Binance"
+          },
+          {
+            "start": 450.8,
+            "title": "Streit bei Berliner Philharmonikern"
+          }
+        ]
+      },
+      "feedDurationSeconds": 503,
+      "adRanges": [
+        [
+          35.1,
+          90.6
+        ],
+        [
+          560.6,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 5.4,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 91.207324,
+          "title": "Rückkehr der Deutschland AG"
+        },
+        {
+          "start": 210.67650799999998,
+          "title": "Übernahme der Commerzbank"
+        },
+        {
+          "start": 263.74678,
+          "title": "Staatskrise in Polen"
+        },
+        {
+          "start": 323.6,
+          "title": "Robert Habeck im Interview"
+        },
+        {
+          "start": 396.9,
+          "title": "US-Börse und Tech-Aktien"
+        },
+        {
+          "start": 453,
+          "title": "Hack bei Kryptobörse Binance"
+        },
+        {
+          "start": 506.3,
+          "title": "Streit bei Berliner Philharmonikern"
+        }
+      ],
+      "durationSeconds": 591,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-02T10:35:31.702Z"
+    },
     "0a2dbbbd-6f31-335c-ba5e-9a038771f3ba": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -175,45 +269,7 @@
       "title": "Wie die KI-Kosten an der Börse Milliarden vernichten",
       "pubDate": "Fri, 30 Oct 2026 04:57:23 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2622457-m-f921c76c437ca54ffa2181f34bff12df.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/91f8e152df748fd5ebd5ec0fed5a6c4f.mp3",
-        "file": "91f8e152df748fd5ebd5ec0fed5a6c4f.mp3",
-        "durationSeconds": 527,
-        "chapters": [
-          {
-            "start": 4.5,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 32.32,
-            "title": "KI-Kosten belasten Tech-Aktien"
-          },
-          {
-            "start": 168.58,
-            "title": "NVIDIA-Gründer Jensen Huang"
-          },
-          {
-            "start": 243.49,
-            "title": "Lagarde-Rücktritt bei der EZB"
-          },
-          {
-            "start": 324.1,
-            "title": "US-Zwischenwahlen und Schulden"
-          },
-          {
-            "start": 376.7,
-            "title": "Dokumentenaffäre der Linken"
-          },
-          {
-            "start": 420.21,
-            "title": "Firmennachfolge statt Neugründung"
-          },
-          {
-            "start": 474.1,
-            "title": "Der letzte Optimist im Kanzleramt"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 529,
       "adRanges": [
         [
