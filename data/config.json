@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-02T20:40:20.975Z",
+  "updatedAt": "2026-11-03T00:56:00.033Z",
   "podcasts": [
     {
       "id": "heutemorgen",
@@ -10,7 +10,7 @@
       "titleExcludes": null,
       "minDurationSeconds": null,
       "werbung": false,
-      "sprungmarken": false,
+      "sprungmarken": true,
       "startSeconds": 29,
       "endSeconds": null,
       "structure": null,
@@ -28,7 +28,7 @@
       "werbung": true,
       "sprungmarken": true,
       "startSeconds": 15,
-      "endSeconds": 545,
+      "endSeconds": null,
       "structure": "Die Folge ist immer gleich aufgebaut: (1) der Moderator stellt kurz die Themen der Sendung vor, (2) ein Werbeblock mit Sponsorenhinweis, (3) die einzelnen Themen nacheinander, dazwischen koennen weitere Werbebloecke liegen, (4) am Schluss ein Werbeblock bzw. Abspann mit Hinweisen auf andere Angebote. Der Werbeblock nach der Themenvorstellung dauert meist etwa eine Minute.",
       "endMarker": "Ihr Sven Prange",
       "episodes": 1
