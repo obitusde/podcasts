@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-03T07:19:41.129Z",
+  "updatedAt": "2026-11-03T07:21:39.122Z",
   "episodes": {
     "926efed4-b758-37cc-ac8d-ae9ce9f74e4d": {
       "podcastId": "heutemorgen",
@@ -9,15 +9,20 @@
       "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261103_NR_0062_b29a995526cc4e9da35f4bf0ad37455d.mp3?d=ap&amp;assetId=926efed4-b758-37cc-ac8d-ae9ce9f74e4d",
       "clean": null,
       "feedDurationSeconds": 485,
-      "adRanges": [],
+      "adRanges": [
+        [
+          465.9,
+          999999
+        ]
+      ],
       "chapters": [
         {
-          "start": 4.380833,
+          "start": 0,
           "title": "US-Zwischenwahlen"
         },
         {
-          "start": 149.47797899999998,
-          "title": "Krieg in der Ukraine"
+          "start": 148.2,
+          "title": "Hackerangriff im Ukraine-Krieg"
         },
         {
           "start": 239.682042,
@@ -30,7 +35,7 @@
       ],
       "durationSeconds": 485,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-03T07:19:39.226Z"
+      "detectedAt": "2026-11-03T07:21:38.616Z"
     },
     "739021ab1ebbc77a6f974b45c8bf1641": {
       "podcastId": "handelsblatt",
