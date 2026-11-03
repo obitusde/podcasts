@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-03T07:00:39.571Z",
+  "updatedAt": "2026-11-03T07:19:11.706Z",
   "podcasts": [
     {
       "id": "heutemorgen",
@@ -11,10 +11,10 @@
       "minDurationSeconds": null,
       "werbung": false,
       "sprungmarken": true,
-      "startSeconds": 29,
+      "startSeconds": 0,
       "endSeconds": null,
       "structure": null,
-      "endMarker": null,
+      "endMarker": "Das sind die Informationen von heute Morgen",
       "episodes": 1
     },
     {

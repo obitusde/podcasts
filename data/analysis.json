@@ -1,6 +1,37 @@
 {
-  "updatedAt": "2026-11-03T07:02:09.246Z",
+  "updatedAt": "2026-11-03T07:19:41.129Z",
   "episodes": {
+    "926efed4-b758-37cc-ac8d-ae9ce9f74e4d": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Kurz vor den Midterms: Niederlage für Trump vor Oberstem Gericht",
+      "pubDate": "Tue, 03 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261103_NR_0062_b29a995526cc4e9da35f4bf0ad37455d.mp3?d=ap&amp;assetId=926efed4-b758-37cc-ac8d-ae9ce9f74e4d",
+      "clean": null,
+      "feedDurationSeconds": 485,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 4.380833,
+          "title": "US-Zwischenwahlen"
+        },
+        {
+          "start": 149.47797899999998,
+          "title": "Krieg in der Ukraine"
+        },
+        {
+          "start": 239.682042,
+          "title": "Immobilien der Schweizer Armee"
+        },
+        {
+          "start": 381.391917,
+          "title": "Rekordgewinn bei Apple"
+        }
+      ],
+      "durationSeconds": 485,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-03T07:19:39.226Z"
+    },
     "739021ab1ebbc77a6f974b45c8bf1641": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
@@ -90,37 +121,6 @@
       "durationSeconds": 562,
       "model": "openai/whisper-large-v3",
       "detectedAt": "2026-11-03T07:02:07.795Z"
-    },
-    "926efed4-b758-37cc-ac8d-ae9ce9f74e4d": {
-      "podcastId": "heutemorgen",
-      "podcast": "HeuteMorgen",
-      "title": "Kurz vor den Midterms: Niederlage für Trump vor Oberstem Gericht",
-      "pubDate": "Tue, 03 Nov 2026 06:00:00 +0100",
-      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261103_NR_0062_b29a995526cc4e9da35f4bf0ad37455d.mp3?d=ap&amp;assetId=926efed4-b758-37cc-ac8d-ae9ce9f74e4d",
-      "clean": null,
-      "feedDurationSeconds": 485,
-      "adRanges": [],
-      "chapters": [
-        {
-          "start": 0,
-          "title": "US-Zwischenwahlen"
-        },
-        {
-          "start": 148.2,
-          "title": "Hackerangriff auf Alarm-Apps"
-        },
-        {
-          "start": 239.682042,
-          "title": "Schweizer Armee-Immobilien"
-        },
-        {
-          "start": 381.391917,
-          "title": "Rekordgewinn bei Apple"
-        }
-      ],
-      "durationSeconds": 485,
-      "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-03T07:01:11.328Z"
     },
     "b3a9044c-0d9c-3d08-a5d2-6e4d848d941e": {
       "podcastId": "echo-der-zeit",
