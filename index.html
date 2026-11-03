@@ -454,20 +454,6 @@
     opacity: 0.4;
   }
 
-  /* Modus-Zeile: kleinere Schrift und kein Umbruch, damit die Beschriftung
-     neben dem Tempo-Knopf immer auf eine Zeile passt. */
-  .mode-controls button {
-    font-size: 13px;
-    padding: 14px 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  #speed {
-    flex: 0 0 62px;
-  }
-
   .controls {
     display: flex;
     align-items: stretch;
@@ -495,19 +481,6 @@
     background: var(--accent-dim);
   }
 
-  .mode-controls {
-    margin-top: 8px;
-  }
-
-  /* Aktiver Modus: dunkle Schrift auf Orange. Weiss auf Orange war zu
-     kontrastarm, und zusammen mit einem klebenden :hover (orange Schrift
-     auf orangem Grund) war der Knopf gar nicht mehr lesbar. */
-  .mode-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #101214;
-  }
-
   /* Hover/Tap-Verhalten
      --------------------
      Mobile Browser lassen :hover nach einem Tap "kleben" - Knöpfe blieben
@@ -523,7 +496,6 @@
     .card:hover { border-color: var(--accent-dim); }
     .card.error:hover { border-color: var(--border); }
     .controls button:hover { border-color: var(--accent); color: var(--accent); }
-    .mode-btn.active:hover { color: #101214; }
     .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
   }
 
@@ -588,11 +560,6 @@
       <button id="fwd5">+5s</button>
       <button id="fwd10">+10s</button>
       <button id="fwd30">+30s</button>
-    </div>
-    <div class="controls mode-controls">
-      <button id="mode-series" class="mode-btn">Ganze Serie</button>
-      <button id="mode-roundrobin" class="mode-btn">Reihum je 1</button>
-      <button id="speed" aria-label="Abspielgeschwindigkeit">1,0&times;</button>
     </div>
   </div>
 </div>
@@ -1197,7 +1164,6 @@ const nextEpisodeBtn = document.getElementById('next-episode');
 const seekEl = document.getElementById('seek');
 const timeCurrentEl = document.getElementById('time-current');
 const timeRemainingEl = document.getElementById('time-remaining');
-const speedBtn = document.getElementById('speed');
 const refreshBtn = document.getElementById('refresh');
 const chapterRow = document.getElementById('chapter-row');
 const chapterNowEl = document.getElementById('chapter-now');
@@ -1454,8 +1420,6 @@ function onCardClick(card) {
     return;
   }
 
-  setAutoplayMode(null); // manueller Klick bricht einen laufenden Abspiel-Modus ab
-
   const podcastName = card.dataset.podcastName;
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
@@ -1520,7 +1484,6 @@ function playEpisode(card, podcastName, index) {
   activeAdRanges = clean ? [] : buildAdRanges(podcastName, episode);
   activeChapters = clean ? cleanChapters(clean) : buildChapters(episode);
   activeAnalysis = analysisFor(episode);
-  applyPlaybackRate();
 
   // Fällt die geschnittene Datei aus (gelöscht, noch nicht hochgeladen),
   // wird einmal auf die Originaldatei zurückgeschaltet.
@@ -1621,7 +1584,7 @@ audio.addEventListener('durationchange', updateTransportUI);
 
 /* ============================================================
    EIGENER TRANSPORT: grosser Play/Pause-Knopf, Fortschrittsbalken
-   mit Zeitangaben, Folgen-Navigation und Geschwindigkeit.
+   mit Zeitangaben und Folgen-Navigation.
    Alle Zeiten beziehen sich auf den getrimmten Bereich (siehe
    PODCAST_TRIM): abgeschnittene Werbung zählt weder im Balken
    noch in der Restzeit mit.
@@ -1824,130 +1787,6 @@ function updateEpisodeNavButtons() {
 if (prevEpisodeBtn) prevEpisodeBtn.addEventListener('click', () => goToEpisode(1));
 if (nextEpisodeBtn) nextEpisodeBtn.addEventListener('click', () => goToEpisode(-1));
 
-// --- Abspielgeschwindigkeit (wird gemerkt) -------------------------------
-const SPEED_KEY = 'podcastSpeed_v1';
-const SPEEDS = [1, 1.1, 1.2];
-
-function loadSpeed() {
-  const stored = parseFloat(localStorage.getItem(SPEED_KEY) || '1');
-  return SPEEDS.indexOf(stored) === -1 ? 1 : stored;
-}
-
-let playbackSpeed = loadSpeed();
-
-// Label fürs Knopf-Beschriften: 1 -> "1,0×", 1.25 -> "1,25×"
-function speedLabel(rate) {
-  const text = Number.isInteger(rate) ? rate.toFixed(1) : String(rate);
-  return text.replace('.', ',') + '×';
-}
-
-function applyPlaybackRate() {
-  audio.playbackRate = playbackSpeed;
-  if (speedBtn) speedBtn.textContent = speedLabel(playbackSpeed);
-}
-
-if (speedBtn) {
-  speedBtn.addEventListener('click', () => {
-    const next = SPEEDS[(SPEEDS.indexOf(playbackSpeed) + 1) % SPEEDS.length];
-    playbackSpeed = next;
-    try { localStorage.setItem(SPEED_KEY, String(next)); } catch (e) {}
-    applyPlaybackRate();
-  });
-}
-
-/* ============================================================
-   ABSPIEL-MODI: zwei Buttons, die beim Folgenende automatisch
-   weiterspielen. Nur einer kann gleichzeitig aktiv sein; beide
-   stoppen sich selbst am Ende (keine Endlosschleife).
-   - "Ganze Serie": spielt ab der aktuell aktiven Kachel alle
-     älteren Folgen desselben Podcasts nacheinander durch.
-   - "Reihum, je 1 Folge": spielt ab der aktuell aktiven Kachel
-     genau eine Folge pro Podcast, einmal reihum durch alle
-     geladenen Kacheln (Grid-Reihenfolge), dann Stopp.
-   ============================================================ */
-
-let autoplayMode = null; // null | 'series' | 'round-robin'
-let roundRobinOrder = [];
-let roundRobinStartIdx = 0;
-let roundRobinStep = 0;
-
-const modeSeriesBtn = document.getElementById('mode-series');
-const modeRoundRobinBtn = document.getElementById('mode-roundrobin');
-
-function setAutoplayMode(mode) {
-  autoplayMode = mode;
-  if (modeSeriesBtn) modeSeriesBtn.classList.toggle('active', mode === 'series');
-  if (modeRoundRobinBtn) modeRoundRobinBtn.classList.toggle('active', mode === 'round-robin');
-}
-
-// Spielt die aktuell auf der Karte angezeigte Folge, ausser sie läuft
-// (bzw. ist pausiert) bereits genau so - dann nicht neu starten.
-function ensurePlaying(card) {
-  const podcastName = card.dataset.podcastName;
-  const allState = loadAllState();
-  const pState = getPodcastState(allState, podcastName);
-  const currentEpisode = card.episodes[pState.currentIndex];
-  const alreadyPlayingThis = activeCard === card && activeEpisode &&
-    currentEpisode && activeEpisode.guid === currentEpisode.guid;
-  if (!alreadyPlayingThis) {
-    renderCard(card, podcastName, pState.currentIndex);
-    playEpisode(card, podcastName, pState.currentIndex);
-    activeCard = card;
-  }
-}
-
-if (modeSeriesBtn) {
-  modeSeriesBtn.addEventListener('click', () => {
-    if (autoplayMode === 'series') {
-      setAutoplayMode(null);
-      return;
-    }
-    if (!activeCard) return;
-    ensurePlaying(activeCard);
-    setAutoplayMode('series');
-  });
-}
-
-if (modeRoundRobinBtn) {
-  modeRoundRobinBtn.addEventListener('click', () => {
-    if (autoplayMode === 'round-robin') {
-      setAutoplayMode(null);
-      return;
-    }
-    if (!activeCard) return;
-    const order = Array.from(grid.children).filter((c) => c.episodes && c.episodes.length > 0);
-    const startIdx = order.indexOf(activeCard);
-    if (startIdx === -1) return;
-    roundRobinOrder = order;
-    roundRobinStartIdx = startIdx;
-    roundRobinStep = 0;
-    ensurePlaying(activeCard);
-    setAutoplayMode('round-robin');
-  });
-}
-
-// Springt zur nächsten Kachel der beim Start festgelegten Runde und
-// spielt deren aktuelle Folge. Nach genau einer vollen Runde (jede
-// Kachel einmal) wird der Modus automatisch beendet.
-function advanceRoundRobin() {
-  roundRobinStep++;
-  if (roundRobinStep >= roundRobinOrder.length) {
-    setAutoplayMode(null);
-    return;
-  }
-  const nextCard = roundRobinOrder[(roundRobinStartIdx + roundRobinStep) % roundRobinOrder.length];
-  const podcastName = nextCard.dataset.podcastName;
-  const allState = loadAllState();
-  const pState = getPodcastState(allState, podcastName);
-  if (!nextCard.episodes || pState.currentIndex >= nextCard.episodes.length) {
-    setAutoplayMode(null);
-    return;
-  }
-  renderCard(nextCard, podcastName, pState.currentIndex);
-  playEpisode(nextCard, podcastName, pState.currentIndex);
-  activeCard = nextCard;
-}
-
 // Wird sowohl vom echten 'ended'-Event aufgerufen als auch dann, wenn ein
 // konfiguriertes Trim-Ende (Werbung am Schluss) erreicht ist.
 function handleEpisodeEnd() {
@@ -1967,25 +1806,13 @@ function handleEpisodeEnd() {
     pState.currentIndex = nextIndex;
     saveAllState(allState);
     renderCard(activeCard, podcastName, nextIndex);
-    if (autoplayMode === 'series') {
-      // "Ganze Serie" aktiv -> ältere Folge direkt abspielen statt nur anzuzeigen.
-      playEpisode(activeCard, podcastName, nextIndex);
-    } else {
-      updatePlayerPreview(activeCard, podcastName, nextIndex);
-    }
+    updatePlayerPreview(activeCard, podcastName, nextIndex);
   } else {
     // Keine ältere Folge mehr geladen -> das auf der Karte anzeigen,
     // bis neue Folgen nachkommen.
     if (finishedIndex !== -1) pState.currentIndex = finishedIndex;
     saveAllState(allState);
     renderCard(activeCard, podcastName, finishedIndex !== -1 ? finishedIndex : pState.currentIndex, { noOlder: true });
-    if (autoplayMode === 'series') {
-      setAutoplayMode(null); // Serie komplett durch -> stoppen
-    }
-  }
-
-  if (autoplayMode === 'round-robin') {
-    advanceRoundRobin();
   }
 
   updateEpisodeNavButtons();
@@ -2048,7 +1875,6 @@ if ('mediaSession' in navigator) {
 
 audio.addEventListener('play', () => {
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-  applyPlaybackRate(); // manche Browser setzen die Rate beim Laden zurück
   updatePlayPauseIcon();
 });
 audio.addEventListener('pause', () => {
@@ -2164,7 +1990,6 @@ async function init() {
   migrateRenamedPodcasts();
   removeOldOrderKeys();
   renderTodayHeader();
-  applyPlaybackRate();
   updatePlayPauseIcon();
   updateEpisodeNavButtons();
 
