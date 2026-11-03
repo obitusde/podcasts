@@ -130,7 +130,10 @@ const BLOCK_MIN_WORDS = 3;    // kürzere Abschnitte mit dem nächsten verbinden
 const BLOCK_PAD = 0.15;       // winziger Vorlauf, damit nichts angeschnitten wird
 const AD_GAP = 0.6;           // ab dieser Tonlücke gehen Werbung und Inhalt auseinander
 const CONTENT_CUSHION = 0.8;  // so viel Luft vor dem ersten Inhaltswort
-const MAX_AD_PULL_BACK = 3;   // weiter darf die Werbegrenze nie nach vorn wandern
+const MAX_AD_PULL_BACK = 3;
+// Wie weit der Schlussschnitt vor das erste Wort des Marker-Satzes gelegt
+// wird - gerade so viel, dass der Satz nicht angeschnitten zu hoeren ist.
+const MARKER_PAD = 0.3;   // weiter darf die Werbegrenze nie nach vorn wandern
 const PHRASE_WINDOW = 150;    // Sekunden um den genannten Abschnitt, in denen die zitierten Worte gesucht werden
 const MIN_CHAPTER_GAP = 20;   // dichter aufeinander ist kein zweites Thema, sondern dieselbe Stelle doppelt
 
@@ -160,7 +163,9 @@ const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
 const ONLY = (process.env.ONLY || '').trim().toLowerCase();
 
 const apiKey = process.env.OPENROUTER_API_KEY;
-if (!apiKey) {
+// Beim Import durch einen Test wird nichts abgerufen - dann ist der
+// Schluessel auch nicht noetig.
+if (!apiKey && process.env.ANALYZE_IMPORT_ONLY !== '1') {
   console.error('FEHLER: Das Repository-Secret OPENROUTER_API_KEY fehlt.');
   console.error('Anlegen unter: Settings -> Secrets and variables -> Actions -> New repository secret');
   process.exit(1);
@@ -719,6 +724,62 @@ function sentenceStartIndex(words, idx) {
 }
 
 /**
+ * Sucht eine feste Wortfolge im gemessenen Wortstrom und liefert den Index
+ * der SPAETESTEN Fundstelle. Fuer den Schlussmarker: Die Verabschiedung
+ * steht am Ende der Folge, und faellt sie mehrfach, gilt die letzte.
+ *
+ * Mindestens `minLen` Woerter muessen passen. Kuerzere Teiltreffer waeren
+ * gefaehrlich: Bei zwei Woertern ("Das sind") findet sich fast ueberall
+ * etwas, und ein falscher Treffer schneidet den halben Beitrag weg.
+ */
+function findPhraseLast(words, phrase, minLen) {
+  const needle = String(phrase || '').split(/\s+/).map(normWord).filter(Boolean);
+  const min = Math.min(minLen, needle.length);
+  if (needle.length === 0 || min < 2) return null;
+
+  // Erst die ganze Wendung, dann kuerzere - Whisper versteht gelegentlich
+  // ein Wort anders, als es in der Tabelle steht.
+  for (let len = needle.length; len >= min; len--) {
+    let letzter = null;
+    for (let i = 0; i + len <= words.length; i++) {
+      let passt = true;
+      for (let j = 0; j < len; j++) {
+        if (normWord(words[i + j].text) !== needle[j]) { passt = false; break; }
+      }
+      if (passt) letzter = i;
+    }
+    if (letzter !== null) return letzter;
+  }
+  return null;
+}
+
+/**
+ * Der Schlussmarker aus der Tabelle, gesucht im durchgehenden Wortstrom.
+ *
+ * Warum nicht im Abschnittstext: Die Abschnitte entstehen aus den
+ * Sprechpausen, und Whisper zerlegt dieselbe Folge bei jedem Lauf etwas
+ * anders. Bei HeuteMorgen fiel "Das sind die Informationen von heute
+ * Morgen" einmal genau auf eine Abschnittsgrenze - der Satz stand damit
+ * nirgends vollstaendig, galt als nicht gefunden, und der Abspann blieb
+ * drin. Im Wortstrom gibt es diese Grenzen nicht.
+ *
+ * Geliefert wird die Zeit knapp VOR dem ersten Wort des Satzes. Der Marker
+ * IST der Satzanfang - anders als bei den Themen wird deshalb nicht weiter
+ * nach vorn gesucht. Gleichzeitig darf der Schnitt nicht in das Wort davor
+ * hineinreichen, sonst fehlt am Schluss des Inhalts eine Silbe.
+ */
+function findEndMarker(words, blockOf, endMarker) {
+  if (!endMarker || words.length === 0) return null;
+  const idx = findPhraseLast(words, endMarker, 3);
+  if (idx === null) return null;
+  // Steht der Marker ganz am Anfang, gibt es kein Wort davor, auf das
+  // Ruecksicht zu nehmen waere.
+  const untergrenze = idx > 0 ? words[idx - 1].end + 0.05 : 0;
+  const zeit = Math.max(untergrenze, Math.max(0, words[idx].start - MARKER_PAD));
+  return { zeit, index: idx, block: blockOf ? blockOf[idx] : null };
+}
+
+/**
  * Fragt das Modell, welche Abschnitte Werbung sind und wo Themen beginnen -
  * und setzt die Zeiten aus den gemessenen Pausen ein.
  */
@@ -778,14 +839,17 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
 
   const adBlocks = new Set((parsed.werbung || []).filter((i) => blocks[i]));
 
-  // Fester Schlussmarker: ab dem Abschnitt mit der Verabschiedung ist alles
-  // Werbung, unabhängig vom Modell.
+  // Fester Schlussmarker: ab dem Satz mit der Verabschiedung ist alles
+  // Werbung, unabhängig vom Modell. Gesucht wird im Wortstrom, nicht im
+  // Text eines einzelnen Abschnitts - siehe findEndMarker.
+  const markerWorte = [];
+  const markerBlock = [];
+  blocks.forEach((b, i) => (b.words || []).forEach((w) => { markerWorte.push(w); markerBlock.push(i); }));
+  const schlussMarke = findEndMarker(markerWorte, markerBlock, endMarker);
   if (endMarker) {
-    const needle = endMarker.toLowerCase();
-    const idx = blocks.findIndex((b) => b.text.toLowerCase().includes(needle));
-    if (idx !== -1) {
-      for (let i = idx; i < blocks.length; i++) adBlocks.add(i);
-      log(`   Schlussmarker "${endMarker}" in Abschnitt ${idx} (${fmt(blocks[idx].start)}) - ab dort Werbung`);
+    if (schlussMarke) {
+      for (let i = schlussMarke.block; i < blocks.length; i++) adBlocks.add(i);
+      log(`   Schlussmarker "${endMarker}" bei ${fmt(schlussMarke.zeit)} (Abschnitt ${schlussMarke.block}) - ab dort Werbung`);
     } else {
       log(`   Hinweis: Schlussmarker "${endMarker}" nicht gefunden`);
     }
@@ -812,6 +876,21 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
     else { flush(); group = [i]; }
   });
   flush();
+
+  // Der Schlussschnitt gehoert auf das erste Wort des Marker-Satzes, nicht
+  // auf den Anfang des Abschnitts, in dem der Satz zufaellig liegt. Nur
+  // wenn der letzte Werbeblock auch wirklich mit diesem Abschnitt beginnt -
+  // hat das Modell schon davor Werbung erkannt, bleibt deren Anfang stehen.
+  if (schlussMarke && ads.length > 0) {
+    const letzter = ads[ads.length - 1];
+    const abschnittStart = blocks[schlussMarke.block].start;
+    if (letzter[0] >= abschnittStart - 3) {
+      if (Math.abs(letzter[0] - schlussMarke.zeit) > 0.05) {
+        log(`   Schlussschnitt ${fmt(letzter[0])} -> ${fmt(schlussMarke.zeit)} (Anfang des Marker-Satzes)`);
+      }
+      letzter[0] = schlussMarke.zeit;
+    }
+  }
 
   const chapters = (parsed.themen || [])
     .map((c) => {
@@ -1039,11 +1118,10 @@ async function findAdsAndChapters(lines, words, structure, endMarker) {
   // noch Werbung. Das Modell übersieht diesen Block manchmal - diese Zeile
   // findet ihn verlässlich, ganz ohne Modell.
   if (endMarker) {
-    const needle = endMarker.toLowerCase();
-    const idx = lines.findIndex((l) => l.text.toLowerCase().includes(needle));
-    if (idx !== -1) {
-      ads.push([lines[idx].start, lines[lines.length - 1].end + 1]);
-      log(`   Schlussmarker "${endMarker}" in Zeile ${idx} (${fmt(lines[idx].start)}) - ab dort Werbung`);
+    const marke = findEndMarker(words, null, endMarker);
+    if (marke) {
+      ads.push([marke.zeit, lines[lines.length - 1].end + 1]);
+      log(`   Schlussmarker "${endMarker}" bei ${fmt(marke.zeit)} - ab dort Werbung`);
     } else {
       log(`   Hinweis: Schlussmarker "${endMarker}" nicht gefunden`);
     }
@@ -1729,7 +1807,13 @@ async function main() {
   log(`\nGespeichert: ${OUT_PATH} (${keys.length} Folgen)`);
 }
 
-main().catch((err) => {
-  console.error('Abbruch:', err);
-  process.exit(1);
-});
+// Einzelne Funktionen lassen sich so von einem Test importieren, ohne dass
+// der ganze Lauf startet.
+export { normWord, findPhraseLast, findEndMarker };
+
+if (process.env.ANALYZE_IMPORT_ONLY !== '1') {
+  main().catch((err) => {
+    console.error('Abbruch:', err);
+    process.exit(1);
+  });
+}
