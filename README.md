@@ -358,32 +358,50 @@ der bequemere Weg.
 Fehlt `data/config.json` oder ist die Tabelle nicht erreichbar, gelten die
 Listen im Code (`PODCASTS` in `index.html`, `tools/podcasts.config.json`).
 
-### Die Sammlung: eine Tagesliste der kurzen Beiträge
+### Die Sammlung: eine Tagesliste
 
 Ganz unten steht eine Kachel, die sich wie ein Podcast verhält, deren
-"Folgen" aber aus mehreren Feeds stammen: alle Beiträge **bis vier Minuten**
-aus den Podcasts, die in der Tabelle in der Spalte *Sammlung* auf ja stehen.
-Sie laufen nacheinander, mit zwei Sekunden Pause dazwischen.
+"Folgen" aber aus mehreren Feeds stammen: **alle** neuen Beiträge der
+Podcasts, die in der Tabelle in der Spalte *Sammlung* auf ja stehen. Eine
+Längengrenze gibt es nicht; was kurz genug ist, entscheidet die Auswahl der
+Podcasts. Die Beiträge laufen nacheinander, mit zwei Sekunden Pause dazwischen.
 
-- **Zweimal am Tag neu**, um 7:00 und um 15:00. Dazwischen bleibt die Liste
-  stehen, damit sie einem beim Hören nicht unter den Fingern wegrutscht.
-  Vor 7:00 gilt noch die Liste vom Vortagnachmittag.
-- **Aufgenommen wird, was seit dem vorigen Abschnitt erschienen ist**: in
-  der 7-Uhr-Liste also alles seit 15:00 des Vortags.
-- **Nichts doppelt.** Was einmal in einer Liste stand, kommt nicht wieder -
+- **Eine Liste je Tag.** Um 7:00 und um 15:00 wird sie *ergänzt*: Was
+  seitdem erschienen ist, kommt ans Ende, die gemerkte Stelle bleibt. Was
+  morgens ungehört blieb, ist mittags noch da. Erst am nächsten Morgen um
+  7:00 beginnt eine neue Liste; die alte ist dann weg, auch Ungehörtes.
+  Vor 7:00 gilt noch die Liste von gestern.
+- **Reihenfolge:** älteste zuerst, wie der Tag verlaufen ist. Neues hängt
+  hinten an.
+- **Zeitfenster:** Aufgenommen wird, was seit gestern 15:00 erschienen ist.
+  So kommt der Kommentar vom Vorabend mit, und früh erschienene Beiträge
+  fehlen abends nicht.
+- **Nichts doppelt.** Was einmal in einer Liste stand, kommt nicht wieder,
   auch nicht am nächsten Tag, wenn es noch im Feed hängt. Das Gedächtnis
-  dafür reicht zwei Wochen zurück.
+  dafür reicht zwei Wochen zurück. (DLF Audiobeiträge entfernt zusätzlich
+  im Apps Script dasselbe Thema aus verschiedenen Sendungen.)
+- **Angestossen** wird die Ergänzung beim Öffnen der App oder beim
+  Aktualisieren, sobald ein neuer Abschnitt begonnen hat; dazwischen bleibt
+  die Liste unverändert. Fehlt dabei ein Feed (nicht geladen, ausgefallen),
+  gilt der Abschnitt nicht als erledigt, und beim nächsten Mal wird
+  nachgeholt, was fehlt.
 - **Überspringen** geht mit dem Knopf in der Themenzeile und mit der
   Vorwärts-Taste am Bluetooth-Gerät; die Rückwärts-Taste geht einen Beitrag
   zurück. Beim Hören einer gewöhnlichen Folge bleiben diese Tasten wie
   bisher beim Blättern durch die Folgen.
-- **Die Stelle wird gemerkt**, wie bei jedem anderen Podcast auch.
+- **Die Stelle wird gemerkt.** War die Liste bis zum Ende gehört und kommt
+  Neues dazu, geht es beim ersten neuen Beitrag weiter.
 
 Warum die Liste im Browser entsteht und nicht im Lauf auf GitHub: DLF
 Audiobeiträge hat keinen gewöhnlichen Feed, sondern wird vom Apps Script
-zusammengestellt (`type: dlf_audio`). Der Lauf käme da nicht heran - und
-genau dieser Podcast liefert die meisten kurzen Beiträge. Die Liste liegt
-deshalb im `localStorage` des Geräts, nicht im Repository.
+zusammengestellt (`type: dlf_audio`). Der Lauf käme da nicht heran. Die
+Liste liegt deshalb im `localStorage` des Geräts, nicht im Repository; ein
+zweites Gerät hat eine eigene Liste mit eigener Position.
+
+**Dauer-Angaben** stehen in den Feeds je nach Quelle als `283`, `4:43` oder
+`00:02:49`. Die erste Fassung der Sammlung hat sie als Zahl gelesen und
+damit jeden Beitrag aus normalen Feeds verworfen. Die Sammlung liest die
+Dauer jetzt gar nicht mehr.
 
 ### Warum geschnitten und nicht nur markiert wird
 

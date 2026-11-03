@@ -1848,12 +1848,13 @@ if (prevEpisodeBtn) prevEpisodeBtn.addEventListener('click', () => goToEpisode(1
 if (nextEpisodeBtn) nextEpisodeBtn.addEventListener('click', () => goToEpisode(-1));
 
 /* ============================================================
-   SAMMLUNG: die Tagesliste der kurzen Beiträge
+   SAMMLUNG: die Tagesliste
    ------------------------------------------------------------
    Eine Kachel, die sich wie ein Podcast verhält, deren "Folgen"
-   aber aus mehreren Feeds stammen: alles bis vier Minuten aus
-   den Podcasts, die in der Tabelle in der Spalte "Sammlung" auf
-   ja stehen.
+   aber aus mehreren Feeds stammen: ALLE neuen Beiträge der
+   Podcasts, die in der Tabelle in der Spalte "Sammlung" auf ja
+   stehen. Eine Längengrenze gibt es hier nicht - was kurz genug
+   ist, entscheidet die Auswahl der Podcasts in der Tabelle.
 
    Warum die Liste hier entsteht und nicht im Lauf auf GitHub:
    DLF Audiobeiträge hat keinen gewöhnlichen Feed, sondern wird
@@ -1861,14 +1862,22 @@ if (nextEpisodeBtn) nextEpisodeBtn.addEventListener('click', () => goToEpisode(-
    Lauf käme da nicht heran - und genau dieser Podcast liefert
    die meisten kurzen Beiträge.
 
-   Die Liste wird zweimal am Tag neu gebaut, um 7:00 und um
-   15:00. Dazwischen bleibt sie stehen, damit sie einem beim
-   Hören nicht unter den Fingern wegrutscht.
+   Eine Liste je Tag. Um 7:00 und um 15:00 wird sie ERGÄNZT: Was
+   seitdem erschienen ist, kommt ans Ende, und die gemerkte
+   Stelle bleibt. Ungehörtes verschwindet also nicht mittags.
+   Erst am nächsten Morgen beginnt eine neue Liste, die alte ist
+   dann weg. Was einmal in einer Liste stand, kommt nicht wieder.
+
+   Angestossen wird das beim Öffnen der App (oder beim
+   Aktualisieren), sobald ein neuer Abschnitt begonnen hat;
+   dazwischen bleibt die Liste unverändert.
    ============================================================ */
 
 const SAMMLUNG_NAME = 'Sammlung';
-const SAMMLUNG_KEY = 'podcastSammlung_v1';
-const SAMMLUNG_MAX_SEKUNDEN = 4 * 60;    // "kurzer Beitrag"
+// v2: Die erste Fassung hat Beiträge verworfen und die Liste mittags
+// ersetzt. Das Gedächtnis aus dieser Zeit ist unbrauchbar - mit neuem
+// Schlüssel beginnt es sauber.
+const SAMMLUNG_KEY = 'podcastSammlung_v2';
 const SAMMLUNG_PAUSE_MS = 2000;          // Pause zwischen zwei Beiträgen
 const SAMMLUNG_GEDAECHTNIS_TAGE = 14;    // so lange gilt "war schon mal drin"
 
@@ -1892,47 +1901,42 @@ function istSammlung(card) {
 }
 
 /**
- * Der laufende Zeitabschnitt. "A" beginnt um 7:00, "B" um 15:00.
- * Vor 7:00 gilt noch der Nachmittag des Vortags - sonst stünde man um
- * 6 Uhr vor einer leeren Liste, weil die neue erst später gebaut wird.
- * `seit` ist der Beginn des VORIGEN Abschnitts: Aufgenommen wird, was
- * seitdem erschienen ist.
+ * Der laufende Zeitabschnitt: "A" von 7:00 bis 15:00, "B" ab 15:00 bis zum
+ * nächsten Morgen um 7:00. Der TAG wechselt um 7:00, nicht um Mitternacht:
+ * Um 6:30 gilt noch die Liste von gestern, sonst stünde man früh vor einer
+ * leeren Liste, die erst um 7:00 neu entsteht.
+ *
+ * `seit` ist der früheste Zeitpunkt, ab dem ein Beitrag in die Liste darf:
+ * gestern 15:00. So kommt auch der Kommentar vom Vorabend mit, und morgens
+ * um 5 Uhr erschienene Beiträge fehlen abends nicht.
  */
 function sammlungSlot(jetzt) {
   const d = jetzt || new Date();
   const stunde = d.getHours();
   const tag = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  let kennung = 'B';
-  let stundeBeginn = 15;
-  if (stunde >= 15) {
-    kennung = 'B';
-  } else if (stunde >= 7) {
-    kennung = 'A';
-    stundeBeginn = 7;
-  } else {
-    tag.setDate(tag.getDate() - 1);
-  }
-  const beginn = new Date(tag.getFullYear(), tag.getMonth(), tag.getDate(), stundeBeginn, 0, 0);
-  const seit = new Date(beginn);
-  seit.setHours(seit.getHours() - (kennung === 'A' ? 16 : 8));  // 15:00 -> 7:00 sind 8 Std., 7:00 -> 15:00 des Vortags 16
-  const datum = tag.getFullYear() + '-' +
-    String(tag.getMonth() + 1).padStart(2, '0') + '-' +
-    String(tag.getDate()).padStart(2, '0');
-  return { id: datum + '-' + kennung, seit };
+  if (stunde < 7) tag.setDate(tag.getDate() - 1);
+  const kennung = stunde >= 7 && stunde < 15 ? 'A' : 'B';
+  // Als Datum gebaut statt "minus 16 Stunden": So stimmt es auch an den
+  // Tagen der Zeitumstellung.
+  const seit = new Date(tag.getFullYear(), tag.getMonth(), tag.getDate() - 1, 15, 0, 0);
+  const datum = tagesText(tag);
+  return { id: datum + '-' + kennung, tag: datum, seit };
 }
 
 function ladeSammlung() {
+  try { localStorage.removeItem('podcastSammlung_v1'); } catch (e) {}   // Reste der ersten Fassung
   try {
     const roh = JSON.parse(localStorage.getItem(SAMMLUNG_KEY));
     if (roh && typeof roh === 'object') {
       return {
         slot: roh.slot || null,
+        tag: roh.tag || null,
         items: Array.isArray(roh.items) ? roh.items : [],
         gesehen: roh.gesehen && typeof roh.gesehen === 'object' ? roh.gesehen : {}
       };
     }
   } catch (e) { /* kaputter oder leerer Speicher: von vorn */ }
-  return { slot: null, items: [], gesehen: {} };
+  return { slot: null, tag: null, items: [], gesehen: {} };
 }
 
 function speichereSammlung(daten) {
@@ -1946,56 +1950,82 @@ function tagesText(d) {
 }
 
 /**
- * Baut die Liste für den laufenden Abschnitt - oder lässt sie stehen,
- * wenn sie schon zu diesem Abschnitt gehört.
+ * Ergänzt die Liste des Tages um alles, was neu ist - oder beginnt am
+ * ersten Abschnitt eines neuen Tages eine neue.
  *
- * Was einmal in einer Liste stand, kommt nicht wieder: Die Kennungen
- * wandern ins Gedächtnis, sobald die Liste gebaut ist. Sonst stünde ein
- * Beitrag, der noch im Feed hängt, am nächsten Tag erneut da.
+ * Neu ist, was im Zeitfenster liegt (siehe sammlungSlot) und noch in keiner
+ * Liste stand. Die Kennungen wandern sofort ins Gedächtnis: Sonst stünde
+ * ein Beitrag, der noch im Feed hängt, am nächsten Tag erneut da.
+ *
+ * Die Dauer spielt hier keine Rolle und wird nicht gelesen. (Sie steht je
+ * nach Feed als "283", "4:43" oder "00:02:49" da; die erste Fassung hat das
+ * als Zahl gelesen und damit jeden Beitrag aus normalen Feeds verworfen.)
+ *
+ * Fehlt ein Feed noch (nicht geladen oder ausgefallen), wird der Abschnitt
+ * NICHT als erledigt vermerkt. Beim nächsten Aufruf wird nachgeholt, was
+ * fehlt; durch das Gedächtnis kommt nichts doppelt.
  */
-function baueSammlung() {
-  const slot = sammlungSlot();
+function baueSammlung(jetzt) {
+  const slot = sammlungSlot(jetzt);
   const daten = ladeSammlung();
   if (daten.slot === slot.id) return daten;
 
-  const kandidaten = [];
+  const neuerTag = daten.tag !== slot.tag;
+  const liste = neuerTag ? [] : daten.items.slice();
+  const altLaenge = liste.length;
+
+  const heute = tagesText(jetzt || new Date());
+  const gesehen = Object.assign({}, daten.gesehen);
+  const neu = [];
+  let alleDa = true;
+
   Array.from(grid.children).forEach((card) => {
-    if (!card.podcast || !card.podcast.sammlung || !card.episodes) return;
+    if (!card.podcast || !card.podcast.sammlung) return;
+    if (!card.episodes) { alleDa = false; return; }
     card.episodes.forEach((ep) => {
-      const laenge = Number(ep.duration);
-      if (!laenge || laenge > SAMMLUNG_MAX_SEKUNDEN) return;
-      if (daten.gesehen[ep.guid]) return;
+      if (gesehen[ep.guid]) return;
       const zeit = ep.pubDate ? new Date(ep.pubDate) : null;
       if (!zeit || isNaN(zeit.getTime()) || zeit < slot.seit) return;
+      gesehen[ep.guid] = heute;      // sofort, damit derselbe Beitrag aus zwei Kacheln nicht doppelt kommt
       const kopie = Object.assign({}, ep);
       kopie.podcastName = card.podcast.name;
-      kandidaten.push(kopie);
+      neu.push(kopie);
     });
   });
 
-  kandidaten.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+  // Älteste zuerst: So liest sich die Liste wie der Tag verlief, und was
+  // später dazukommt, hängt hinten an, ohne die Reihenfolge zu stören.
+  neu.sort((a, b) => new Date(a.pubDate) - new Date(b.pubDate));
+  liste.push(...neu);
 
-  const heute = tagesText(new Date());
-  const gesehen = Object.assign({}, daten.gesehen);
-  kandidaten.forEach((ep) => { gesehen[ep.guid] = heute; });
-
-  const grenze = new Date();
+  const grenze = new Date(jetzt || Date.now());
   grenze.setDate(grenze.getDate() - SAMMLUNG_GEDAECHTNIS_TAGE);
   const grenzText = tagesText(grenze);
   Object.keys(gesehen).forEach((guid) => {
     if (String(gesehen[guid]) < grenzText) delete gesehen[guid];
   });
 
-  const neu = { slot: slot.id, items: kandidaten, gesehen };
-  speichereSammlung(neu);
+  const ergebnis = { slot: alleDa ? slot.id : daten.slot, tag: slot.tag, items: liste, gesehen };
+  speichereSammlung(ergebnis);
 
-  // Neue Liste: von vorn anfangen. Was in der alten Liste stand und nicht
-  // gehört wurde, ist weg - so war es gewollt.
   const allState = loadAllState();
   const pState = getPodcastState(allState, SAMMLUNG_NAME);
-  pState.currentIndex = 0;
+  if (neuerTag) {
+    // Neuer Tag: von vorn. Gehört-Haken und Positionen der alten Liste
+    // brauchen wir nicht mehr, sonst wächst der Speicher von Tag zu Tag.
+    pState.currentIndex = 0;
+    pState.listened = {};
+    pState.progress = {};
+  } else if (neu.length > 0 && altLaenge > 0) {
+    // War die Liste bis zum Ende gehört, geht es beim ersten neuen Beitrag
+    // weiter - sonst läge man vor dem letzten, schon gehörten.
+    const aktuell = liste[pState.currentIndex];
+    if (pState.currentIndex === altLaenge - 1 && aktuell && pState.listened[aktuell.guid]) {
+      pState.currentIndex = altLaenge;
+    }
+  }
   saveAllState(allState);
-  return neu;
+  return ergebnis;
 }
 
 // Legt die Kachel an (einmalig) und füllt sie mit der aktuellen Liste.
@@ -2014,10 +2044,13 @@ function zeigeSammlung() {
   sammlungCard.classList.remove('loading', 'error');
 
   if (daten.items.length === 0) {
-    sammlungCard.querySelector('.card-title').textContent = 'Keine neuen kurzen Beiträge';
-    sammlungCard.querySelector('.card-date').textContent = 'Nächste Liste um ' +
-      (new Date().getHours() < 7 || new Date().getHours() >= 15 ? '7:00' : '15:00');
-    setImageSrc(sammlungCard.querySelector('img'), '');
+    sammlungCard.querySelector('.card-title').textContent = 'Keine neuen Beiträge';
+    const stundeJetzt = new Date().getHours();
+    sammlungCard.querySelector('.card-date').textContent = 'Nächste Ergänzung um ' +
+      (stundeJetzt >= 7 && stundeJetzt < 15 ? '15:00' : '7:00');
+    // Ein leeres src zeigt das Symbol für ein kaputtes Bild - deshalb das
+    // Icon der App als Platzhalter.
+    setImageSrc(sammlungCard.querySelector('img'), 'icon-192.png');
     return;
   }
 
