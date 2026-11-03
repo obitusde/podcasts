@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-03T07:37:42.517Z",
+  "updatedAt": "2026-11-03T08:06:23.761Z",
   "podcasts": [
     {
       "id": "heutemorgen",
@@ -15,7 +15,8 @@
       "endSeconds": null,
       "structure": null,
       "endMarker": "Das sind die Informationen von heute Morgen",
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": false
     },
     {
       "id": "handelsblatt",
@@ -31,7 +32,8 @@
       "endSeconds": null,
       "structure": "Die Folge ist immer gleich aufgebaut: (1) der Moderator stellt kurz die Themen der Sendung vor, (2) ein Werbeblock mit Sponsorenhinweis, (3) die einzelnen Themen nacheinander, dazwischen koennen weitere Werbebloecke liegen, (4) am Schluss ein Werbeblock bzw. Abspann mit Hinweisen auf andere Angebote. Der Werbeblock nach der Themenvorstellung dauert meist etwa eine Minute.",
       "endMarker": "Ihr Sven Prange",
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": false
     },
     {
       "id": "echo-der-zeit",
@@ -47,7 +49,8 @@
       "endSeconds": null,
       "structure": "Nachrichtenmagazin von rund 40 Minuten. Zuerst eine kurze Übersicht der Schlagzeilen, danach die einzelnen Beiträge nacheinander; jeder Beitrag wird von der Moderation im Studio angekündigt. Keine Werbung.",
       "endMarker": null,
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": false
     },
     {
       "id": "kalenderblatt",
@@ -63,7 +66,8 @@
       "endSeconds": null,
       "structure": null,
       "endMarker": null,
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": false
     },
     {
       "id": "wdr-kabarett",
@@ -79,7 +83,8 @@
       "endSeconds": null,
       "structure": null,
       "endMarker": null,
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": false
     },
     {
       "id": "dieter-nuhr",
@@ -95,7 +100,8 @@
       "endSeconds": null,
       "structure": null,
       "endMarker": null,
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": false
     },
     {
       "id": "dlf-nachrichten",
@@ -111,7 +117,8 @@
       "endSeconds": null,
       "structure": null,
       "endMarker": null,
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": false
     },
     {
       "id": "dlf-kommentare",
@@ -127,7 +134,8 @@
       "endSeconds": null,
       "structure": null,
       "endMarker": null,
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": true
     },
     {
       "id": "dlf-audio",
@@ -143,7 +151,8 @@
       "endSeconds": null,
       "structure": null,
       "endMarker": null,
-      "episodes": 1
+      "episodes": 1,
+      "sammlung": true
     }
   ]
 }
