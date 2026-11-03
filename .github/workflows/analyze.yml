@@ -1,4 +1,4 @@
-# Erkennt zweimal täglich Werbeblöcke und Themen in den neuesten Folgen
+# Erkennt mehrmals täglich Werbeblöcke und Themen in den neuesten Folgen
 # (siehe tools/analyze.mjs) und schreibt das Ergebnis nach data/analysis.json.
 # Die Webseite liest diese Datei und überspringt damit die Werbung.
 #
@@ -8,19 +8,33 @@ name: Podcast-Analyse
 
 on:
   schedule:
-    # Zeiten in UTC. Morgens im Halbstundentakt, bis die Folge des Tages da
-    # ist: Der erste Lauf, der sie findet, analysiert sie; alle weiteren
-    # Läufe sehen "schon analysiert" und enden nach dem Feed-Abruf. Gibt es
-    # an dem Tag keine neue Folge, passiert gar nichts.
-    # (GitHub startet geplante Läufe oft 5-15 Minuten später als angegeben.)
-    - cron: '0,30 3-7 * * *'  # 4:00 bis 8:30 deutscher Zeit
-    - cron: '0 11 * * *'      # Sicherheitsnetz am Mittag
-    # Echo der Zeit erscheint taeglich um 18:00 und waere am naechsten
-    # Morgen schon zu alt fuer die Altersgrenze. Diese Laeufe holen es
-    # kurz nach dem Erscheinen; an Tagen ohne neue Folge enden sie nach
-    # dem Feed-Abruf und kosten nichts.
-    - cron: '17 18 * * *'     # 19:17 deutscher Zeit
-    - cron: '17 20 * * *'     # 21:17, falls der erste nichts gefunden hat
+    # Zeiten in UTC. Wann die Folgen erscheinen (deutsche/Schweizer Zeit):
+    #   Handelsblatt Morning Briefing  5:52 bis 5:57
+    #   HeuteMorgen (SRF)              6:00
+    #   Echo der Zeit (SRF)           18:00, sonntags zusätzlich 7:00
+    #
+    # Die Minuten sind bewusst krumm. GitHub stellt geplante Läufe in eine
+    # gemeinsame Warteschlange; zur vollen und zur halben Stunde planen alle,
+    # dort werden Läufe um Stunden verschoben oder ganz verworfen. Dazwischen
+    # ist es ruhiger.
+    #
+    # Dass hier viele Läufe stehen, ist Absicht und kostet fast nichts: Ein
+    # Lauf ohne neue Folge endet nach dem Feed-Abruf in rund einer halben
+    # Minute, und öffentliche Repositories zahlen keine Minuten. Mehrere
+    # Versuche sind die einzige Versicherung dagegen, dass GitHub einzelne
+    # davon verschluckt.
+    #
+    # 4-8 UTC deckt beide Zeitumstellungen ab: im Winter 5:09 bis 9:49
+    # deutscher Zeit, im Sommer 6:09 bis 10:49. Die frühen Läufe laufen in
+    # der Winterzeit ins Leere, das ist der Preis für einen Zeitplan, der
+    # zweimal im Jahr nicht angefasst werden muss.
+    - cron: '9,29,49 4-8 * * *'
+    - cron: '13 11 * * *'        # Sicherheitsnetz am Mittag
+    # Echo der Zeit erscheint um 18:00 und wäre am nächsten Morgen schon zu
+    # alt für die Altersgrenze (14 Stunden). Diese Läufe holen es am selben
+    # Abend; 16 UTC greift in der Sommerzeit, 18 UTC in der Winterzeit.
+    - cron: '19 16,18,20 * * *'
+    - cron: '49 17,19,21 * * *'
   workflow_dispatch:       # erlaubt das Starten von Hand
     inputs:
       force:
