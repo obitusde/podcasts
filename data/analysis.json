@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-11-03T07:38:06.353Z",
+  "updatedAt": "2026-11-03T18:29:58.440Z",
   "episodes": {
+    "512bc90c-f137-3188-b701-760f61585a30": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Urnen sind offen: Was von den US-Zwischenwahlen zu erwarten ist",
+      "pubDate": "Tue, 03 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261103_RS_0049_d1cb67e1558f4fdcb671b266031d674b.mp3?d=ap&amp;assetId=512bc90c-f137-3188-b701-760f61585a30",
+      "clean": null,
+      "feedDurationSeconds": 2459,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Midterms in den USA"
+        },
+        {
+          "start": 547,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 854,
+          "title": "Iran und US-Sanktionen"
+        },
+        {
+          "start": 1245.575125,
+          "title": "Auszahlung der 13. AHV-Rente"
+        },
+        {
+          "start": 1456.3,
+          "title": "Roboter im Gotthard-Basistunnel"
+        },
+        {
+          "start": 1775.2667920000001,
+          "title": "Lage in Serbien nach den Wahlen"
+        },
+        {
+          "start": 2225.5064789999997,
+          "title": "Neues Luxushotel in Rom"
+        }
+      ],
+      "durationSeconds": 2458,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-03T18:29:57.825Z"
+    },
     "926efed4-b758-37cc-ac8d-ae9ce9f74e4d": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
