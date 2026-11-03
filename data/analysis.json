@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-03T07:21:39.122Z",
+  "updatedAt": "2026-11-03T07:38:06.353Z",
   "episodes": {
     "926efed4-b758-37cc-ac8d-ae9ce9f74e4d": {
       "podcastId": "heutemorgen",
@@ -11,31 +11,31 @@
       "feedDurationSeconds": 485,
       "adRanges": [
         [
-          465.9,
+          465.1,
           999999
         ]
       ],
       "chapters": [
         {
-          "start": 0,
+          "start": 0.8,
           "title": "US-Zwischenwahlen"
         },
         {
-          "start": 148.2,
-          "title": "Hackerangriff im Ukraine-Krieg"
+          "start": 149.47797899999998,
+          "title": "Ukraine: Alarm-Apps gehackt"
         },
         {
           "start": 239.682042,
-          "title": "Immobilien der Schweizer Armee"
+          "title": "Schweizer Armee-Immobilien"
         },
         {
           "start": 381.391917,
-          "title": "Rekordgewinn bei Apple"
+          "title": "Apple-Rekordgewinn"
         }
       ],
       "durationSeconds": 485,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-03T07:21:38.616Z"
+      "detectedAt": "2026-11-03T07:38:05.788Z"
     },
     "739021ab1ebbc77a6f974b45c8bf1641": {
       "podcastId": "handelsblatt",
