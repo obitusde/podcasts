@@ -697,6 +697,7 @@ async function loadConfigFile() {
     if (p.titleContains) eintrag.titleContains = p.titleContains;
     if (p.titleExcludes) eintrag.titleExcludes = p.titleExcludes;
     if (p.minDurationSeconds) eintrag.minDurationSeconds = p.minDurationSeconds;
+    if (p.sammlung) eintrag.sammlung = true;   // liefert Beiträge für die Tagesliste
     return eintrag;
   });
 
@@ -1344,6 +1345,7 @@ async function refreshAll() {
     await loadAnalysisFile();
     const cards = Array.from(grid.children).filter((c) => c.podcast);
     await Promise.all(cards.map((card) => loadPodcast(card.podcast, card)));
+    zeigeSammlung();
   } finally {
     isRefreshing = false;
     if (refreshBtn) refreshBtn.classList.remove('busy');
@@ -1361,13 +1363,26 @@ function renderCard(card, podcastName, index, options) {
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
 
-  setImageSrc(card.querySelector('img'), getPodcastImage(podcastName, episode.imageUrl));
+  // Die Sammlung hat kein eigenes Bild: Jeder Beitrag bringt seins mit.
+  // getPodcastImage merkt sich sonst EIN Bild pro Podcastnamen und wuerde
+  // allen Beitraegen das des ersten verpassen.
+  setImageSrc(card.querySelector('img'), istSammlung(card)
+    ? (episode.imageUrl || '')
+    : getPodcastImage(podcastName, episode.imageUrl));
 
   card.querySelector('.card-title').textContent = episode.title || '(ohne Titel)';
 
   const dateEl = card.querySelector('.card-date');
   const durationText = formatDuration(episode.duration);
   const durationPrefix = durationText ? `${durationText} · ` : '';
+
+  if (istSammlung(card)) {
+    const listenedS = !!pState.listened[episode.guid];
+    dateEl.innerHTML = `Beitrag ${index + 1} von ${card.episodes.length} · ` +
+      durationPrefix + (episode.podcastName || '') +
+      (listenedS ? ' <span class="card-listened">✓ gehört</span>' : '');
+    return;
+  }
 
   if (options.noOlder) {
     dateEl.innerHTML = 'Keine ältere Folge geladen <span class="card-listened">✓ gehört</span>';
@@ -1424,6 +1439,14 @@ function onCardClick(card) {
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
 
+  if (activeCard === card && istSammlung(card)) {
+    // In der Sammlung bedeutet ein erneuter Tipp nicht "eine Folge
+    // weiter" - zum naechsten Beitrag geht es mit dem Skip-Knopf.
+    renderCard(card, podcastName, pState.currentIndex);
+    playEpisode(card, podcastName, pState.currentIndex);
+    return;
+  }
+
   if (activeCard === card) {
     if (activeEpisodeEnded) {
       // Folge ist gerade zu Ende gelaufen und die Anzeige wurde bereits
@@ -1459,6 +1482,7 @@ function onCardClick(card) {
 }
 
 function playEpisode(card, podcastName, index) {
+  sammlungAbbrechen();   // eine neue Wahl beendet das Warten auf den naechsten Beitrag
   document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
   card.classList.add('active');
   activeCard = card; // schon hier setzen - die Aufrufer tun es sonst erst danach,
@@ -1468,9 +1492,14 @@ function playEpisode(card, podcastName, index) {
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
 
-  const coverUrl = getPodcastImage(podcastName, episode.imageUrl);
+  // In der Sammlung steht in der Leiste, woher der Beitrag stammt - das
+  // sagt mehr als das Wort "Sammlung".
+  const anzeigeName = istSammlung(card) ? (episode.podcastName || podcastName) : podcastName;
+  const coverUrl = istSammlung(card)
+    ? (episode.imageUrl || '')
+    : getPodcastImage(podcastName, episode.imageUrl);
   setImageSrc(playerImg, coverUrl);
-  playerPodcast.textContent = podcastName;
+  playerPodcast.textContent = anzeigeName;
   playerTitle.textContent = (episode.title || '') + '  ·  ' + formatDateNoYear(episode.pubDate);
 
   // Liegt eine werbefrei geschnittene Fassung bereit, wird die gespielt.
@@ -1502,7 +1531,7 @@ function playEpisode(card, podcastName, index) {
     audio.addEventListener('error', fallback);
   }
 
-  setMediaMetadata(podcastName, episode, coverUrl);
+  setMediaMetadata(anzeigeName, episode, coverUrl);
 
   const savedProgress = pState.progress[episode.guid];
   const resume = () => {
@@ -1575,8 +1604,15 @@ audio.addEventListener('timeupdate', () => {
     }
   }
   updateTransportUI();
+  // Die Nummer wird beim Feuern zurückgesetzt. Browser vergeben Timer-
+  // Nummern wieder, sobald ein Timer durch ist: Stünde hier weiter eine
+  // alte Nummer, würde der nächste clearTimeout einen FREMDEN Timer
+  // abräumen, der sie inzwischen bekommen hat.
   clearTimeout(saveProgressTimer);
-  saveProgressTimer = setTimeout(persistProgress, 3000);
+  saveProgressTimer = setTimeout(() => {
+    saveProgressTimer = null;
+    persistProgress();
+  }, 3000);
 });
 audio.addEventListener('pause', persistProgress);
 audio.addEventListener('loadedmetadata', updateTransportUI);
@@ -1709,6 +1745,24 @@ function currentChapterIndex() {
 function updateChapterUI() {
   if (!chapterRow) return;
 
+  // In der Sammlung treten die Beitraege an die Stelle der Themen: "Jetzt"
+  // ist der laufende Beitrag, der Knopf springt zum naechsten.
+  if (istSammlung(activeCard) && activeCard.episodes && activeCard.episodes.length > 0) {
+    const allStateS = loadAllState();
+    const idxS = getPodcastState(allStateS, SAMMLUNG_NAME).currentIndex;
+    const jetzt = activeCard.episodes[idxS];
+    const danach = activeCard.episodes[idxS + 1];
+    chapterNowEl.textContent = jetzt ? (jetzt.title || '') : '';
+    chapterRow.title = 'Beiträge der Tagesliste';
+    chapterNextEl.textContent = danach ? 'Danach: ' + (danach.title || '') : 'Letzter Beitrag';
+    if (skipChapterBtn) skipChapterBtn.disabled = false;
+    if (chapterRow.hasAttribute('hidden')) {
+      chapterRow.removeAttribute('hidden');
+      syncMainPadding();
+    }
+    return;
+  }
+
   if (activeChapters.length === 0) {
     chapterNowEl.textContent = '';
     chapterNextEl.textContent = '';
@@ -1735,6 +1789,12 @@ function updateChapterUI() {
 // Zum nächsten Thema springen. Gibt es keines mehr, ans Ende des Inhalts
 // springen - dann greift die normale "Folge zu Ende"-Behandlung.
 function skipToNextChapter() {
+  // In der Sammlung heisst "weiter" nicht naechstes Thema, sondern
+  // naechster Beitrag.
+  if (istSammlung(activeCard)) {
+    sammlungSpringe(1);
+    return;
+  }
   if (activeChapters.length === 0) return;
   const idx = currentChapterIndex();
   const next = activeChapters[idx + 1];
@@ -1787,6 +1847,221 @@ function updateEpisodeNavButtons() {
 if (prevEpisodeBtn) prevEpisodeBtn.addEventListener('click', () => goToEpisode(1));
 if (nextEpisodeBtn) nextEpisodeBtn.addEventListener('click', () => goToEpisode(-1));
 
+/* ============================================================
+   SAMMLUNG: die Tagesliste der kurzen Beiträge
+   ------------------------------------------------------------
+   Eine Kachel, die sich wie ein Podcast verhält, deren "Folgen"
+   aber aus mehreren Feeds stammen: alles bis vier Minuten aus
+   den Podcasts, die in der Tabelle in der Spalte "Sammlung" auf
+   ja stehen.
+
+   Warum die Liste hier entsteht und nicht im Lauf auf GitHub:
+   DLF Audiobeiträge hat keinen gewöhnlichen Feed, sondern wird
+   vom Apps-Script-Proxy zusammengestellt (type dlf_audio). Der
+   Lauf käme da nicht heran - und genau dieser Podcast liefert
+   die meisten kurzen Beiträge.
+
+   Die Liste wird zweimal am Tag neu gebaut, um 7:00 und um
+   15:00. Dazwischen bleibt sie stehen, damit sie einem beim
+   Hören nicht unter den Fingern wegrutscht.
+   ============================================================ */
+
+const SAMMLUNG_NAME = 'Sammlung';
+const SAMMLUNG_KEY = 'podcastSammlung_v1';
+const SAMMLUNG_MAX_SEKUNDEN = 4 * 60;    // "kurzer Beitrag"
+const SAMMLUNG_PAUSE_MS = 2000;          // Pause zwischen zwei Beiträgen
+const SAMMLUNG_GEDAECHTNIS_TAGE = 14;    // so lange gilt "war schon mal drin"
+
+let sammlungCard = null;
+
+// Die Pause zwischen zwei Beiträgen wird NICHT über die Timer-Nummer
+// abgebrochen, sondern über diesen Zähler. Grund: Browser vergeben Timer-
+// Nummern wieder, sobald ein Timer durch ist. Ein clearTimeout mit einer
+// alten Nummer trifft dann einen fremden Timer - genau das hat die Pause
+// hier zweimal still verschluckt. Jede Pause bekommt stattdessen eine
+// Marke; wer dazwischenfunkt, erhöht den Zähler, und die alte Pause
+// erkennt beim Feuern, dass sie nicht mehr gemeint ist.
+let sammlungMarke = 0;
+
+function sammlungAbbrechen() {
+  sammlungMarke++;
+}
+
+function istSammlung(card) {
+  return !!(card && card.istSammlung);
+}
+
+/**
+ * Der laufende Zeitabschnitt. "A" beginnt um 7:00, "B" um 15:00.
+ * Vor 7:00 gilt noch der Nachmittag des Vortags - sonst stünde man um
+ * 6 Uhr vor einer leeren Liste, weil die neue erst später gebaut wird.
+ * `seit` ist der Beginn des VORIGEN Abschnitts: Aufgenommen wird, was
+ * seitdem erschienen ist.
+ */
+function sammlungSlot(jetzt) {
+  const d = jetzt || new Date();
+  const stunde = d.getHours();
+  const tag = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let kennung = 'B';
+  let stundeBeginn = 15;
+  if (stunde >= 15) {
+    kennung = 'B';
+  } else if (stunde >= 7) {
+    kennung = 'A';
+    stundeBeginn = 7;
+  } else {
+    tag.setDate(tag.getDate() - 1);
+  }
+  const beginn = new Date(tag.getFullYear(), tag.getMonth(), tag.getDate(), stundeBeginn, 0, 0);
+  const seit = new Date(beginn);
+  seit.setHours(seit.getHours() - (kennung === 'A' ? 16 : 8));  // 15:00 -> 7:00 sind 8 Std., 7:00 -> 15:00 des Vortags 16
+  const datum = tag.getFullYear() + '-' +
+    String(tag.getMonth() + 1).padStart(2, '0') + '-' +
+    String(tag.getDate()).padStart(2, '0');
+  return { id: datum + '-' + kennung, seit };
+}
+
+function ladeSammlung() {
+  try {
+    const roh = JSON.parse(localStorage.getItem(SAMMLUNG_KEY));
+    if (roh && typeof roh === 'object') {
+      return {
+        slot: roh.slot || null,
+        items: Array.isArray(roh.items) ? roh.items : [],
+        gesehen: roh.gesehen && typeof roh.gesehen === 'object' ? roh.gesehen : {}
+      };
+    }
+  } catch (e) { /* kaputter oder leerer Speicher: von vorn */ }
+  return { slot: null, items: [], gesehen: {} };
+}
+
+function speichereSammlung(daten) {
+  try { localStorage.setItem(SAMMLUNG_KEY, JSON.stringify(daten)); } catch (e) {}
+}
+
+function tagesText(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+/**
+ * Baut die Liste für den laufenden Abschnitt - oder lässt sie stehen,
+ * wenn sie schon zu diesem Abschnitt gehört.
+ *
+ * Was einmal in einer Liste stand, kommt nicht wieder: Die Kennungen
+ * wandern ins Gedächtnis, sobald die Liste gebaut ist. Sonst stünde ein
+ * Beitrag, der noch im Feed hängt, am nächsten Tag erneut da.
+ */
+function baueSammlung() {
+  const slot = sammlungSlot();
+  const daten = ladeSammlung();
+  if (daten.slot === slot.id) return daten;
+
+  const kandidaten = [];
+  Array.from(grid.children).forEach((card) => {
+    if (!card.podcast || !card.podcast.sammlung || !card.episodes) return;
+    card.episodes.forEach((ep) => {
+      const laenge = Number(ep.duration);
+      if (!laenge || laenge > SAMMLUNG_MAX_SEKUNDEN) return;
+      if (daten.gesehen[ep.guid]) return;
+      const zeit = ep.pubDate ? new Date(ep.pubDate) : null;
+      if (!zeit || isNaN(zeit.getTime()) || zeit < slot.seit) return;
+      const kopie = Object.assign({}, ep);
+      kopie.podcastName = card.podcast.name;
+      kandidaten.push(kopie);
+    });
+  });
+
+  kandidaten.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+  const heute = tagesText(new Date());
+  const gesehen = Object.assign({}, daten.gesehen);
+  kandidaten.forEach((ep) => { gesehen[ep.guid] = heute; });
+
+  const grenze = new Date();
+  grenze.setDate(grenze.getDate() - SAMMLUNG_GEDAECHTNIS_TAGE);
+  const grenzText = tagesText(grenze);
+  Object.keys(gesehen).forEach((guid) => {
+    if (String(gesehen[guid]) < grenzText) delete gesehen[guid];
+  });
+
+  const neu = { slot: slot.id, items: kandidaten, gesehen };
+  speichereSammlung(neu);
+
+  // Neue Liste: von vorn anfangen. Was in der alten Liste stand und nicht
+  // gehört wurde, ist weg - so war es gewollt.
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, SAMMLUNG_NAME);
+  pState.currentIndex = 0;
+  saveAllState(allState);
+  return neu;
+}
+
+// Legt die Kachel an (einmalig) und füllt sie mit der aktuellen Liste.
+function zeigeSammlung() {
+  const daten = baueSammlung();
+
+  if (!sammlungCard) {
+    sammlungCard = createCard({ id: 'sammlung', name: SAMMLUNG_NAME });
+    sammlungCard.istSammlung = true;
+    sammlungCard.podcast = null;   // kein Feed: weder neu laden noch als Quelle zählen
+    sammlungCard.dataset.podcastName = SAMMLUNG_NAME;
+    sammlungCard.addEventListener('click', () => onCardClick(sammlungCard));
+  }
+
+  sammlungCard.episodes = daten.items;
+  sammlungCard.classList.remove('loading', 'error');
+
+  if (daten.items.length === 0) {
+    sammlungCard.querySelector('.card-title').textContent = 'Keine neuen kurzen Beiträge';
+    sammlungCard.querySelector('.card-date').textContent = 'Nächste Liste um ' +
+      (new Date().getHours() < 7 || new Date().getHours() >= 15 ? '7:00' : '15:00');
+    setImageSrc(sammlungCard.querySelector('img'), '');
+    return;
+  }
+
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, SAMMLUNG_NAME);
+  if (pState.currentIndex >= daten.items.length) {
+    pState.currentIndex = 0;
+    saveAllState(allState);
+  }
+  renderCard(sammlungCard, SAMMLUNG_NAME, pState.currentIndex);
+}
+
+// Spielt den Beitrag an dieser Stelle der Liste.
+function spieleSammlung(index) {
+  if (!sammlungCard || !sammlungCard.episodes || index < 0 || index >= sammlungCard.episodes.length) return;
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, SAMMLUNG_NAME);
+  pState.currentIndex = index;
+  saveAllState(allState);
+  renderCard(sammlungCard, SAMMLUNG_NAME, index);
+  playEpisode(sammlungCard, SAMMLUNG_NAME, index);
+}
+
+/**
+ * Einen Beitrag weiter oder zurück. Das ist der "Skip" beim Hören der
+ * Sammlung: ein Thema, das nicht interessiert, fällt damit weg - über den
+ * Knopf in der Leiste und über die Vor-/Zurück-Taste am Bluetooth-Gerät.
+ */
+function sammlungSpringe(richtung) {
+  if (!istSammlung(activeCard) || !activeCard.episodes) return;
+  sammlungAbbrechen();
+  const allState = loadAllState();
+  const pState = getPodcastState(allState, SAMMLUNG_NAME);
+  const ziel = pState.currentIndex + richtung;
+  if (ziel < 0) return;
+  if (ziel >= activeCard.episodes.length) {
+    // Ende der Liste: anhalten statt von vorn beginnen.
+    audio.pause();
+    persistProgress();
+    return;
+  }
+  spieleSammlung(ziel);
+}
+
 // Wird sowohl vom echten 'ended'-Event aufgerufen als auch dann, wenn ein
 // konfiguriertes Trim-Ende (Werbung am Schluss) erreicht ist.
 function handleEpisodeEnd() {
@@ -1797,6 +2072,28 @@ function handleEpisodeEnd() {
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
   pState.listened[activeEpisode.guid] = true;
+
+  // Sammlung: zwei Sekunden Luft, dann laeuft der naechste Beitrag von
+  // selbst. Am Ende der Liste ist Schluss, es faengt nichts von vorn an.
+  if (istSammlung(activeCard)) {
+    const karte = activeCard;
+    const naechster = pState.currentIndex + 1;
+    saveAllState(allState);
+    if (naechster < karte.episodes.length) {
+      renderCard(karte, podcastName, pState.currentIndex);
+      const marke = ++sammlungMarke;
+      setTimeout(() => {
+        if (marke !== sammlungMarke) return;   // inzwischen wurde etwas anderes gewählt
+        if (istSammlung(activeCard)) spieleSammlung(naechster);
+      }, SAMMLUNG_PAUSE_MS);
+    } else {
+      renderCard(karte, podcastName, pState.currentIndex);
+      updateChapterUI();
+    }
+    updateEpisodeNavButtons();
+    updateTransportUI();
+    return;
+  }
 
   const finishedIndex = activeCard.episodes.findIndex(e => e.guid === activeEpisode.guid);
   const nextIndex = finishedIndex + 1; // eine Folge älter
@@ -1856,8 +2153,15 @@ if ('mediaSession' in navigator) {
   navigator.mediaSession.setActionHandler('seekbackward', () => skip(-5));
   navigator.mediaSession.setActionHandler('seekforward', () => skip(10));
 
-  navigator.mediaSession.setActionHandler('previoustrack', () => goToEpisode(1));  // älter
-  navigator.mediaSession.setActionHandler('nexttrack', () => goToEpisode(-1));     // neuer
+  // In der Sammlung schalten die Vor-/Zurück-Tasten (Kopfhörer, Autoradio)
+  // zwischen den Beiträgen - genau dafür sind sie da. Sonst bleiben sie
+  // beim Blättern durch die Folgen eines Podcasts.
+  navigator.mediaSession.setActionHandler('previoustrack', () => {
+    if (istSammlung(activeCard)) sammlungSpringe(-1); else goToEpisode(1);   // älter
+  });
+  navigator.mediaSession.setActionHandler('nexttrack', () => {
+    if (istSammlung(activeCard)) sammlungSpringe(1); else goToEpisode(-1);   // neuer
+  });
 
   // Scrubben vom Lockscreen/Autoradio aus - die Position kommt relativ zum
   // hörbaren Bereich (ohne Werbung), muss also umgerechnet werden.
@@ -1999,10 +2303,13 @@ async function init() {
   await loadConfigFile();
   await loadAnalysisFile();
 
-  getOrderedPodcasts().forEach(podcast => {
+  // Die Sammlung braucht alle Feeds, also erst laden, dann bauen. Die
+  // Kacheln erscheinen trotzdem einzeln, sobald ihr Feed da ist.
+  await Promise.all(getOrderedPodcasts().map((podcast) => {
     const card = createCard(podcast);
-    loadPodcast(podcast, card);
-  });
+    return loadPodcast(podcast, card);
+  }));
+  zeigeSammlung();
 }
 
 init();

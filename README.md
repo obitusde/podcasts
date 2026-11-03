@@ -326,6 +326,7 @@ Reihenfolge in der App.
 | Aufbau | ein Satz über den Aufbau der Sendung, für die Erkennung |
 | Schlussmarker | ab hier gilt der Rest als Werbung |
 | Folgen | wie viele der neuesten Folgen geprüft werden |
+| Sammlung | ja = liefert Beiträge für die Tagesliste (siehe unten) |
 
 Der Weg: `tools/sync-config.mjs` liest die im Web veröffentlichte Tabelle als
 CSV und schreibt sie nach `data/config.json`; die App liest nur diese Datei.
@@ -356,6 +357,33 @@ der bequemere Weg.
 
 Fehlt `data/config.json` oder ist die Tabelle nicht erreichbar, gelten die
 Listen im Code (`PODCASTS` in `index.html`, `tools/podcasts.config.json`).
+
+### Die Sammlung: eine Tagesliste der kurzen Beiträge
+
+Ganz unten steht eine Kachel, die sich wie ein Podcast verhält, deren
+"Folgen" aber aus mehreren Feeds stammen: alle Beiträge **bis vier Minuten**
+aus den Podcasts, die in der Tabelle in der Spalte *Sammlung* auf ja stehen.
+Sie laufen nacheinander, mit zwei Sekunden Pause dazwischen.
+
+- **Zweimal am Tag neu**, um 7:00 und um 15:00. Dazwischen bleibt die Liste
+  stehen, damit sie einem beim Hören nicht unter den Fingern wegrutscht.
+  Vor 7:00 gilt noch die Liste vom Vortagnachmittag.
+- **Aufgenommen wird, was seit dem vorigen Abschnitt erschienen ist**: in
+  der 7-Uhr-Liste also alles seit 15:00 des Vortags.
+- **Nichts doppelt.** Was einmal in einer Liste stand, kommt nicht wieder -
+  auch nicht am nächsten Tag, wenn es noch im Feed hängt. Das Gedächtnis
+  dafür reicht zwei Wochen zurück.
+- **Überspringen** geht mit dem Knopf in der Themenzeile und mit der
+  Vorwärts-Taste am Bluetooth-Gerät; die Rückwärts-Taste geht einen Beitrag
+  zurück. Beim Hören einer gewöhnlichen Folge bleiben diese Tasten wie
+  bisher beim Blättern durch die Folgen.
+- **Die Stelle wird gemerkt**, wie bei jedem anderen Podcast auch.
+
+Warum die Liste im Browser entsteht und nicht im Lauf auf GitHub: DLF
+Audiobeiträge hat keinen gewöhnlichen Feed, sondern wird vom Apps Script
+zusammengestellt (`type: dlf_audio`). Der Lauf käme da nicht heran - und
+genau dieser Podcast liefert die meisten kurzen Beiträge. Die Liste liegt
+deshalb im `localStorage` des Geräts, nicht im Repository.
 
 ### Warum geschnitten und nicht nur markiert wird
 

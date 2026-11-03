@@ -131,7 +131,8 @@ function tabelleZuPodcasts(rows) {
     ende: spalte('Ende'),
     aufbau: spalte('Aufbau'),
     schluss: spalte('Schlussmarker'),
-    folgen: spalte('Folgen')
+    folgen: spalte('Folgen'),
+    sammlung: spalte('Sammlung')
   };
 
   for (const pflicht of ['id', 'name', 'feed']) {
@@ -180,7 +181,10 @@ function tabelleZuPodcasts(rows) {
       endSeconds: sekunden(feld(row, idx.ende)),
       structure: feld(row, idx.aufbau) || null,
       endMarker: feld(row, idx.schluss) || null,
-      episodes: folgen && folgen > 0 ? folgen : 1
+      episodes: folgen && folgen > 0 ? folgen : 1,
+      // Liefert dieser Podcast Beiträge für die Tagesliste? Die Liste selbst
+      // entsteht in der App, siehe "SAMMLUNG" in index.html.
+      sammlung: jaNein(feld(row, idx.sammlung))
     });
   });
 
