@@ -1,6 +1,127 @@
 {
-  "updatedAt": "2026-11-02T20:41:53.587Z",
+  "updatedAt": "2026-11-03T07:02:09.246Z",
   "episodes": {
+    "739021ab1ebbc77a6f974b45c8bf1641": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Das beste Gesetz, das Katherina Reiche bisher vorgelegt hat",
+      "pubDate": "Tue, 03 Nov 2026 04:54:34 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2628971-m-8098bc0170a4a9e69155c743486c64d2.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/739021ab1ebbc77a6f974b45c8bf1641.mp3",
+        "file": "739021ab1ebbc77a6f974b45c8bf1641.mp3",
+        "durationSeconds": 524,
+        "chapters": [
+          {
+            "start": 4.5,
+            "title": "Themenvorstellung"
+          },
+          {
+            "start": 36.2,
+            "title": "Kritik am Tankpreisdeckel"
+          },
+          {
+            "start": 160.7,
+            "title": "Rekordquartal bei Apple"
+          },
+          {
+            "start": 216.7,
+            "title": "US-Wahl und Donald Trump"
+          },
+          {
+            "start": 301.9,
+            "title": "AfD-Russlandpapier"
+          },
+          {
+            "start": 349.2,
+            "title": "Sorgen am Private-Credit-Markt"
+          },
+          {
+            "start": 402.77,
+            "title": "Bärbel Bas über ihren Rücktritt"
+          },
+          {
+            "start": 450.5,
+            "title": "Kauf von Burgen und Schlössern"
+          }
+        ]
+      },
+      "feedDurationSeconds": 562,
+      "adRanges": [
+        [
+          523.7,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.5,
+          "title": "Themenvorstellung"
+        },
+        {
+          "start": 36.2,
+          "title": "Kritik am Tankpreisdeckel"
+        },
+        {
+          "start": 160.7,
+          "title": "Rekordquartal bei Apple"
+        },
+        {
+          "start": 216.7,
+          "title": "US-Wahl und Donald Trump"
+        },
+        {
+          "start": 301.9,
+          "title": "AfD-Russlandpapier"
+        },
+        {
+          "start": 349.2,
+          "title": "Sorgen am Private-Credit-Markt"
+        },
+        {
+          "start": 402.765011,
+          "title": "Bärbel Bas über ihren Rücktritt"
+        },
+        {
+          "start": 450.5,
+          "title": "Kauf von Burgen und Schlössern"
+        }
+      ],
+      "durationSeconds": 562,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-03T07:02:07.795Z"
+    },
+    "926efed4-b758-37cc-ac8d-ae9ce9f74e4d": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Kurz vor den Midterms: Niederlage für Trump vor Oberstem Gericht",
+      "pubDate": "Tue, 03 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261103_NR_0062_b29a995526cc4e9da35f4bf0ad37455d.mp3?d=ap&amp;assetId=926efed4-b758-37cc-ac8d-ae9ce9f74e4d",
+      "clean": null,
+      "feedDurationSeconds": 485,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "US-Zwischenwahlen"
+        },
+        {
+          "start": 148.2,
+          "title": "Hackerangriff auf Alarm-Apps"
+        },
+        {
+          "start": 239.682042,
+          "title": "Schweizer Armee-Immobilien"
+        },
+        {
+          "start": 381.391917,
+          "title": "Rekordgewinn bei Apple"
+        }
+      ],
+      "durationSeconds": 485,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-03T07:01:11.328Z"
+    },
     "b3a9044c-0d9c-3d08-a5d2-6e4d848d941e": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -58,45 +179,7 @@
       "title": "Hilft Unternehmen nur die Rückkehr der Deutschland AG?",
       "pubDate": "Mon, 02 Nov 2026 04:52:34 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2622458-m-6cf6c8c0232da9c7c8c481899f3b2bb3.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/2848d12aeb3f2b78bfe875e2084d6e1f.mp3",
-        "file": "2848d12aeb3f2b78bfe875e2084d6e1f.mp3",
-        "durationSeconds": 505,
-        "chapters": [
-          {
-            "start": 5.4,
-            "title": "Themen der Sendung"
-          },
-          {
-            "start": 35.71,
-            "title": "Rückkehr der Deutschland AG"
-          },
-          {
-            "start": 155.18,
-            "title": "Übernahme der Commerzbank"
-          },
-          {
-            "start": 208.25,
-            "title": "Staatskrise in Polen"
-          },
-          {
-            "start": 268.1,
-            "title": "Robert Habeck im Interview"
-          },
-          {
-            "start": 341.4,
-            "title": "US-Börse und Tech-Aktien"
-          },
-          {
-            "start": 397.5,
-            "title": "Hack bei Kryptobörse Binance"
-          },
-          {
-            "start": 450.8,
-            "title": "Streit bei Berliner Philharmonikern"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 503,
       "adRanges": [
         [
