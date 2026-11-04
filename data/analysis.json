@@ -1,6 +1,123 @@
 {
-  "updatedAt": "2026-11-03T18:29:58.440Z",
+  "updatedAt": "2026-11-04T08:11:28.501Z",
   "episodes": {
+    "73988af7c0f71173a055a246ca2429d8": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "USA: So sind die Midterms gelaufen / Auto: BMW kappt Prognose – schon wieder",
+      "pubDate": "Wed, 04 Nov 2026 05:01:53 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2628972-m-c7e5161b1dd29faaa28fa7f82e195eab.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/73988af7c0f71173a055a246ca2429d8.mp3",
+        "file": "73988af7c0f71173a055a246ca2429d8.mp3",
+        "durationSeconds": 537,
+        "chapters": [
+          {
+            "start": 4.5,
+            "title": "Themenübersicht"
+          },
+          {
+            "start": 38.3,
+            "title": "US-Midterms"
+          },
+          {
+            "start": 260.92,
+            "title": "BMW kappt Prognose"
+          },
+          {
+            "start": 312.6,
+            "title": "Beziehungen zu Großbritannien"
+          },
+          {
+            "start": 364.9,
+            "title": "Strenger gegen Huawei"
+          },
+          {
+            "start": 436.92,
+            "title": "Bilanz des Bauturbos"
+          },
+          {
+            "start": 487.08,
+            "title": "Quanten-Start-up Quint"
+          }
+        ]
+      },
+      "feedDurationSeconds": 567,
+      "adRanges": [
+        [
+          34.1,
+          105.7
+        ],
+        [
+          608.2,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.5,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 109.9,
+          "title": "US-Midterms"
+        },
+        {
+          "start": 332.517324,
+          "title": "BMW kappt Prognose"
+        },
+        {
+          "start": 384.2,
+          "title": "Beziehungen zu Großbritannien"
+        },
+        {
+          "start": 436.5,
+          "title": "Strenger gegen Huawei"
+        },
+        {
+          "start": 508.521701,
+          "title": "Bilanz des Bauturbos"
+        },
+        {
+          "start": 558.679342,
+          "title": "Quanten-Start-up Quint"
+        }
+      ],
+      "durationSeconds": 664,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-04T08:11:27.672Z"
+    },
+    "ad9392f3-884a-33c5-add1-8921d33d32b4": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Blaue Welle bei den US-Midterms",
+      "pubDate": "Wed, 04 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261104_NR_0061_7f54d90726304bedab008d11cdc83818-1.mp3?d=ap&amp;assetId=ad9392f3-884a-33c5-add1-8921d33d32b4",
+      "clean": null,
+      "feedDurationSeconds": 787,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Ergebnisse der US-Zwischenwahlen"
+        },
+        {
+          "start": 298.789021,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 376.6,
+          "title": "Folgen für Donald Trump"
+        },
+        {
+          "start": 565.6,
+          "title": "Fokus Florida und Gerrymandering"
+        }
+      ],
+      "durationSeconds": 787,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-04T08:10:11.241Z"
+    },
     "512bc90c-f137-3188-b701-760f61585a30": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -86,45 +203,7 @@
       "title": "Das beste Gesetz, das Katherina Reiche bisher vorgelegt hat",
       "pubDate": "Tue, 03 Nov 2026 04:54:34 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2628971-m-8098bc0170a4a9e69155c743486c64d2.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/739021ab1ebbc77a6f974b45c8bf1641.mp3",
-        "file": "739021ab1ebbc77a6f974b45c8bf1641.mp3",
-        "durationSeconds": 524,
-        "chapters": [
-          {
-            "start": 4.5,
-            "title": "Themenvorstellung"
-          },
-          {
-            "start": 36.2,
-            "title": "Kritik am Tankpreisdeckel"
-          },
-          {
-            "start": 160.7,
-            "title": "Rekordquartal bei Apple"
-          },
-          {
-            "start": 216.7,
-            "title": "US-Wahl und Donald Trump"
-          },
-          {
-            "start": 301.9,
-            "title": "AfD-Russlandpapier"
-          },
-          {
-            "start": 349.2,
-            "title": "Sorgen am Private-Credit-Markt"
-          },
-          {
-            "start": 402.77,
-            "title": "Bärbel Bas über ihren Rücktritt"
-          },
-          {
-            "start": 450.5,
-            "title": "Kauf von Burgen und Schlössern"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 562,
       "adRanges": [
         [
