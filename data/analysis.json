@@ -1,6 +1,53 @@
 {
-  "updatedAt": "2026-11-04T08:11:28.501Z",
+  "updatedAt": "2026-11-04T18:40:51.110Z",
   "episodes": {
+    "7f3cacee-1a47-327d-9e22-ad92b818ee41": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Wie weiter nach den Midterms?",
+      "pubDate": "Wed, 04 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261104_RS_0050_ea3dcf9b384e41b096a2df8e55e4dd35.mp3?d=ap&amp;assetId=7f3cacee-1a47-327d-9e22-ad92b818ee41",
+      "clean": null,
+      "feedDurationSeconds": 2379,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 20.4,
+          "title": "US-Zwischenwahlen: Ergebnisse"
+        },
+        {
+          "start": 726.109604,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 993.3,
+          "title": "Analyse zu den US-Zwischenwahlen"
+        },
+        {
+          "start": 1394.2,
+          "title": "Reform der Invalidenversicherung"
+        },
+        {
+          "start": 1655.5882080000001,
+          "title": "Prozess wegen illegaler Deponie"
+        },
+        {
+          "start": 1861.486729,
+          "title": "Spitalkosten für Brandkatastrophe"
+        },
+        {
+          "start": 2112.4,
+          "title": "Ausschreitungen und Lage in Kiew"
+        }
+      ],
+      "durationSeconds": 2379,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-04T18:40:50.532Z"
+    },
     "73988af7c0f71173a055a246ca2429d8": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
