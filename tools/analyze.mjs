@@ -780,10 +780,70 @@ function findEndMarker(words, blockOf, endMarker) {
 }
 
 /**
+ * Der Werbemarker aus der Tabelle: der Satz, mit dem die Sendung ihre
+ * Werbung ankündigt. Beim Handelsblatt "Nach einer kurzen Unterbrechung
+ * geht es gleich weiter. Bleiben Sie dran!" - der Satz gehört schon zur
+ * Werbung und soll mit weg.
+ *
+ * Anders als beim Schlussmarker zählen ALLE Fundstellen: Auch eine Werbung
+ * mitten in der Folge kann so angekündigt werden.
+ *
+ * Verlangt werden mindestens fünf passende Wörter (oder der ganze Satz,
+ * wenn er kürzer ist). "Nach einer kurzen" allein kommt auch in Nachrichten
+ * vor; ein Fehltreffer würde dort ein Stück Inhalt herausschneiden.
+ */
+function findAdMarkers(words, blockOf, adMarker) {
+  if (!adMarker || words.length === 0) return [];
+  const needle = String(adMarker).split(/\s+/).map(normWord).filter(Boolean);
+  if (needle.length < 2) return [];
+  const min = Math.min(5, needle.length);
+
+  for (let len = needle.length; len >= min; len--) {
+    const treffer = [];
+    for (let i = 0; i + len <= words.length; i++) {
+      let passt = true;
+      for (let j = 0; j < len; j++) {
+        if (normWord(words[i + j].text) !== needle[j]) { passt = false; break; }
+      }
+      if (passt) treffer.push(i);
+    }
+    if (treffer.length > 0) {
+      return treffer.map((idx) => {
+        const untergrenze = idx > 0 ? words[idx - 1].end + 0.05 : 0;
+        const zeit = Math.max(untergrenze, Math.max(0, words[idx].start - MARKER_PAD));
+        return { zeit, index: idx, block: blockOf ? blockOf[idx] : null };
+      });
+    }
+  }
+  return [];
+}
+
+/**
+ * Legt den Anfang eines Werbeblocks auf den Werbemarker. Nur für den Block,
+ * der mit dem Abschnitt des Markers beginnt (bis 3 Sekunden davor): Hat das
+ * Modell schon früher Werbung erkannt, bleibt deren Anfang stehen. So kann
+ * der Marker den Schnitt nur verfeinern, nie Inhalt davor wegnehmen.
+ */
+function setzeWerbeAnfaenge(ads, marken, blocks) {
+  marken.forEach((m) => {
+    const abschnitt = blocks[m.block];
+    if (!abschnitt) return;
+    const bereich = ads.find(([a, b]) => b > m.zeit && a <= abschnitt.end + 0.5);
+    if (!bereich) return;
+    if (bereich[0] < abschnitt.start - 3) return;
+    if (Math.abs(bereich[0] - m.zeit) > 0.05) {
+      log(`   Werbe-Anfang ${fmt(bereich[0])} -> ${fmt(m.zeit)} (Anfang des Werbemarkers)`);
+    }
+    bereich[0] = m.zeit;
+  });
+  return ads;
+}
+
+/**
  * Fragt das Modell, welche Abschnitte Werbung sind und wo Themen beginnen -
  * und setzt die Zeiten aus den gemessenen Pausen ein.
  */
-async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, duration) {
+async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, duration, adMarker) {
   const model = await pickTextModel();
   const prompt = buildBlockPrompt(blocks, structure);
 
@@ -855,6 +915,21 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
     }
   }
 
+  // Fester Werbemarker: Der Abschnitt mit der Ankündigung ist Werbung, auch
+  // wenn das Modell ihn übersehen hat. Den genauen Anfang setzt unten
+  // setzeWerbeAnfaenge.
+  const werbeMarken = findAdMarkers(markerWorte, markerBlock, adMarker);
+  if (adMarker) {
+    if (werbeMarken.length > 0) {
+      werbeMarken.forEach((m) => {
+        adBlocks.add(m.block);
+        log(`   Werbemarker "${adMarker}" bei ${fmt(m.zeit)} (Abschnitt ${m.block}) - ab dort Werbung`);
+      });
+    } else {
+      log(`   Hinweis: Werbemarker "${adMarker}" nicht gefunden`);
+    }
+  }
+
   // Zusammenhängende Werbeabschnitte zu Bereichen zusammenfassen. Die
   // Grenzen sind gemessene Pausen: Start = Beginn der Pause davor (direkt
   // nach dem letzten Inhaltswort), Ende = Ende der Pause danach (dort
@@ -891,6 +966,7 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
       letzter[0] = schlussMarke.zeit;
     }
   }
+  setzeWerbeAnfaenge(ads, werbeMarken, blocks);
 
   const chapters = (parsed.themen || [])
     .map((c) => {
@@ -1065,7 +1141,7 @@ async function askTextModel(prompt, model) {
   return { ok: res.ok, status: res.status, text: await res.text() };
 }
 
-async function findAdsAndChapters(lines, words, structure, endMarker) {
+async function findAdsAndChapters(lines, words, structure, endMarker, adMarker) {
   const prompt = buildPrompt(lines, structure);
 
   const model = await pickTextModel();
@@ -1126,6 +1202,16 @@ async function findAdsAndChapters(lines, words, structure, endMarker) {
       log(`   Hinweis: Schlussmarker "${endMarker}" nicht gefunden`);
     }
   }
+
+  // Werbemarker: Ein Werbeblock, der bis 15 Sekunden nach der Ankündigung
+  // beginnt, fängt mit ihr an.
+  findAdMarkers(words, null, adMarker).forEach((m) => {
+    const bereich = ads.find(([a]) => a >= m.zeit - 3 && a <= m.zeit + 15);
+    if (bereich) {
+      log(`   Werbemarker bei ${fmt(m.zeit)} - Werbe-Anfang ${fmt(bereich[0])} -> ${fmt(m.zeit)}`);
+      bereich[0] = m.zeit;
+    }
+  });
 
   const chapters = (parsed.themen || [])
     .map((c) => {
@@ -1563,11 +1649,11 @@ async function analyzeEpisode(ep, podcast, structure, endMarker) {
     const blocks = buildBlocks(words, silences, duration);
     log(`   Abschnitte aus Pausen: ${blocks.length}`);
     if (DEBUG) blocks.forEach((b, i) => log(`   [${i}] ${fmt(b.start)}-${fmt(b.end)} ${b.text.slice(0, 110)}`));
-    found = await findAdsAndChaptersFromBlocks(blocks, structure, endMarker, duration);
+    found = await findAdsAndChaptersFromBlocks(blocks, structure, endMarker, duration, podcast.adMarker || '');
   } else {
     log('   !!! KEINE PAUSEN MESSBAR - Rückfall auf die ungenauen Wort-Zeiten !!!');
     log('   (ist ffmpeg im Workflow installiert?)');
-    found = await findAdsAndChapters(lines, words, structure, endMarker);
+    found = await findAdsAndChapters(lines, words, structure, endMarker, podcast.adMarker || '');
     found.ads = trimAdsByChapters(
       found.ads.map(([from, to]) => {
         const a = snapToSilence(silences, from, 'adStart');
@@ -1809,7 +1895,7 @@ async function main() {
 
 // Einzelne Funktionen lassen sich so von einem Test importieren, ohne dass
 // der ganze Lauf startet.
-export { normWord, findPhraseLast, findEndMarker };
+export { normWord, findPhraseLast, findEndMarker, findAdMarkers, setzeWerbeAnfaenge };
 
 if (process.env.ANALYZE_IMPORT_ONLY !== '1') {
   main().catch((err) => {

@@ -131,6 +131,7 @@ function tabelleZuPodcasts(rows) {
     ende: spalte('Ende'),
     aufbau: spalte('Aufbau'),
     schluss: spalte('Schlussmarker'),
+    werbemarker: spalte('Werbemarker'),
     folgen: spalte('Folgen'),
     sammlung: spalte('Sammlung')
   };
@@ -181,6 +182,9 @@ function tabelleZuPodcasts(rows) {
       endSeconds: sekunden(feld(row, idx.ende)),
       structure: feld(row, idx.aufbau) || null,
       endMarker: feld(row, idx.schluss) || null,
+      // Satz, mit dem die Werbung angekündigt wird; ab seinem Anfang wird
+      // geschnitten (siehe findAdMarkers in analyze.mjs).
+      adMarker: feld(row, idx.werbemarker) || null,
       episodes: folgen && folgen > 0 ? folgen : 1,
       // Liefert dieser Podcast Beiträge für die Tagesliste? Die Liste selbst
       // entsteht in der App, siehe "SAMMLUNG" in index.html.

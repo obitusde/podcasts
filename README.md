@@ -324,6 +324,7 @@ Reihenfolge in der App.
 | Sprungmarken | ja = Themen erkennen |
 | Start / Ende (Sek.) | fester Vor- und Abspann |
 | Aufbau | ein Satz über den Aufbau der Sendung, für die Erkennung |
+| Werbemarker | Satz, mit dem die Werbung angekündigt wird; ab seinem Anfang wird geschnitten |
 | Schlussmarker | ab hier gilt der Rest als Werbung |
 | Folgen | wie viele der neuesten Folgen geprüft werden |
 | Sammlung | ja = liefert Beiträge für die Tagesliste (siehe unten) |
@@ -517,6 +518,31 @@ anstossen; das Protokoll zeigt Werbeblöcke, Themen, Modell und Laufzeit.
 - **Ohne Analyse** (ältere Folgen, anderer Podcast, Backend noch nicht
   aktualisiert) greifen die festen Werte aus `PODCAST_TRIM` - sie werden intern
   in genau dieselben Werbebereiche umgerechnet.
+
+### Der Wecker: Google stösst die Analyse an
+
+GitHub startet geplante Läufe nur "nach Möglichkeit". Für dieses Repository
+kamen sie Stunden zu spät oder gar nicht: Am 4.11. ist zwischen 23:30 und
+9:00 keiner der 15 geplanten Morgenläufe gestartet. Dann fehlen Schnitt und
+Sprungmarken, und die App fällt auf ihre grobe Notlösung zurück (fester
+Bereich 0:38-1:43 beim Handelsblatt, kein Schnitt am Ende).
+
+Ein von aussen angestossener Lauf (`workflow_dispatch`) startet dagegen
+sofort. `Wecker.gs` lässt deshalb Google-Zeitauslöser um 6:20, 7:00 und
+19:00 die Analyse anstossen. Die geplanten Läufe in `analyze.yml` bleiben
+als zusätzliches Netz.
+
+Einrichten, einmalig:
+
+1. Auf GitHub einen Token anlegen: Settings → Developer settings →
+   Fine-grained tokens → nur Repository `obitusde/podcasts`, Berechtigung
+   *Actions: Read and write*, sonst nichts.
+2. Im Apps-Script-Projekt neben `Code.gs` eine neue Datei *Wecker*
+   anlegen und den Inhalt von `Wecker.gs` hineinkopieren.
+3. Projekteinstellungen → Script Properties → `GITHUB_TOKEN` mit dem Token.
+4. Oben die Funktion `weckerEinrichten` wählen und einmal ausführen. Sie
+   legt die Zeitauslöser an und stösst zur Probe einen Lauf an. Neu
+   bereitstellen ist nicht nötig.
 
 ### Einmalige Schritte im Apps Script
 
