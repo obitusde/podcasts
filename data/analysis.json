@@ -1,6 +1,46 @@
 {
-  "updatedAt": "2026-11-05T05:22:00.970Z",
+  "updatedAt": "2026-11-05T12:14:38.794Z",
   "episodes": {
+    "e392d399-b1d4-35bc-8135-a0b71c55749e": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Nach Midterms-Schlappe: Trump gerät unter Druck",
+      "pubDate": "Thu, 05 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261105_NR_0057_f76932b87b524ff8b4b93857fdfdc74b.mp3?d=ap&amp;assetId=e392d399-b1d4-35bc-8135-a0b71c55749e",
+      "clean": null,
+      "feedDurationSeconds": 685,
+      "adRanges": [
+        [
+          665.9,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "US-Zwischenwahlen und Trump"
+        },
+        {
+          "start": 328.549833,
+          "title": "EU-Verbrenner-Aus"
+        },
+        {
+          "start": 406.3,
+          "title": "Neue Mafia-Generation"
+        },
+        {
+          "start": 507.03245799999996,
+          "title": "Kritik an Kosten der Stromreserve"
+        },
+        {
+          "start": 605.4889370000001,
+          "title": "Tod von Dirigent Herbert Blomstedt"
+        }
+      ],
+      "durationSeconds": 684,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-05T12:14:35.668Z"
+    },
     "6b2d6640c55a387980aec4987a5b6c77": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
