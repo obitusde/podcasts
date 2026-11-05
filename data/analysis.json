@@ -1,6 +1,53 @@
 {
-  "updatedAt": "2026-11-05T12:14:38.794Z",
+  "updatedAt": "2026-11-05T18:46:59.777Z",
   "episodes": {
+    "1f7e7d44-d218-3f32-99ed-0c6af0fdc5d7": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "EU reagiert zurückhaltend auf Wahlsieg der US-Demokraten",
+      "pubDate": "Thu, 05 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261105_RS_0049_dc16187f5472494cbc2e1379a984b66f.mp3?d=ap&amp;assetId=1f7e7d44-d218-3f32-99ed-0c6af0fdc5d7",
+      "clean": null,
+      "feedDurationSeconds": 2528,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 97.373458,
+          "title": "EU-Reaktion auf US-Midterms"
+        },
+        {
+          "start": 418.5,
+          "title": "Nachrichten"
+        },
+        {
+          "start": 739.8,
+          "title": "Resilienz der Demokratie"
+        },
+        {
+          "start": 1175.5,
+          "title": "Wahlerfolg der Demokraten in Texas"
+        },
+        {
+          "start": 1565.9,
+          "title": "Schülerproteste in Griechenland"
+        },
+        {
+          "start": 1893.383,
+          "title": "Satellitenprojekt Iris Square"
+        },
+        {
+          "start": 2189.5,
+          "title": "Feuerwerk-Initiative in der Schweiz"
+        }
+      ],
+      "durationSeconds": 2528,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-05T18:46:56.016Z"
+    },
     "e392d399-b1d4-35bc-8135-a0b71c55749e": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
