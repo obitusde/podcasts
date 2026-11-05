@@ -532,6 +532,23 @@ sofort. `Wecker.gs` lässt deshalb Google-Zeitauslöser um 6:20, 7:00 und
 19:00 die Analyse anstossen. Die geplanten Läufe in `analyze.yml` bleiben
 als zusätzliches Netz.
 
+**Der Morgenlauf wartet auf die Folge.** Die Uhrzeit im Feed sagt nicht,
+wann die Folge wirklich dort steht: HeuteMorgen trägt 6:00, war am 5.11.
+aber um 7:04 noch nicht im Feed. Läufe um 6:20 und 7:00 gingen ins Leere,
+und weil die geplanten Morgenläufe wieder ausfielen, kamen Sprungmarken
+erst um 13:13. Deshalb bleibt ein Lauf am Morgen (Montag bis Freitag)
+stehen und schaut alle vier Minuten in die Feeds, bis jede Morgensendung
+ihre Folge des Tages hat, längstens bis 10:00 (`tools/warten.mjs`).
+Morgensendung heisst: Die zuletzt analysierte Folge ist zwischen 4 und 10
+Uhr datiert. Nach jedem Durchgang wird gespeichert, eine fertige Folge ist
+also sofort in der App. Ein Durchgang ohne neue Folge ist nur ein
+Feed-Abruf und kostet nichts; eine Folge, deren Analyse zweimal scheitert,
+wird im selben Lauf nicht noch einmal bezahlt.
+
+Die App lädt die Analyse neu, wenn man nach mehr als fünf Minuten in sie
+zurückkehrt. So kommen Schnitt und Sprungmarken auch an, wenn die App
+schon vor der Analyse offen war.
+
 Einrichten, einmalig:
 
 1. Auf GitHub einen Token anlegen: Settings → Developer settings →

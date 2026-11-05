@@ -959,7 +959,7 @@ function playableToReal(position) {
 }
 
 // --- Erkannte Werbeblöcke und Themen ------------------------------------
-// data/analysis.json wird zweimal täglich von einer GitHub Action
+// data/analysis.json wird mehrmals täglich von einer GitHub Action
 // geschrieben (siehe tools/analyze.mjs) und liegt auf derselben Adresse wie
 // diese Seite. Darin steht pro Folge (Schlüssel = guid), wo die Werbung
 // liegt und wie die Themen heissen.
@@ -1336,10 +1336,12 @@ function showCardError(card, podcast, message) {
    ============================================================ */
 
 let isRefreshing = false;
+let zuletztGeladen = Date.now();   // siehe visibilitychange weiter unten
 
 async function refreshAll() {
   if (isRefreshing) return;
   isRefreshing = true;
+  zuletztGeladen = Date.now();
   if (refreshBtn) refreshBtn.classList.add('busy');
   try {
     await loadAnalysisFile();
@@ -2235,8 +2237,16 @@ async function requestWakeLock() {
   }
 }
 
+// Zurück in der App: neu laden, wenn der letzte Stand älter als fünf
+// Minuten ist. Die Analyse einer Morgensendung kommt oft erst, nachdem die
+// App schon geöffnet war - ohne das bliebe sie bis zum Tippen auf
+// "Aktualisieren" ohne Schnitt und Sprungmarken.
+const NEU_LADEN_NACH_MS = 5 * 60 * 1000;
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') requestWakeLock();
+  if (document.visibilityState !== 'visible') return;
+  requestWakeLock();
+  if (Date.now() - zuletztGeladen > NEU_LADEN_NACH_MS) refreshAll();
 });
 requestWakeLock();
 

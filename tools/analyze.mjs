@@ -162,6 +162,16 @@ const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
 // neuer Eintrag ausprobieren lässt, ohne die anderen neu zu analysieren.
 const ONLY = (process.env.ONLY || '').trim().toLowerCase();
 
+// Am Morgen fragt die Action den Feed mehrmals ab, bis die Folge des Tages
+// da ist (siehe tools/warten.mjs). Zwischen den Durchgängen merkt sich
+// diese Datei, wie neu die neueste Folge im Feed war und welche Folgen
+// beim Analysieren gescheitert sind. Ohne STAND_DATEI ändert sich nichts.
+const STAND_DATEI = process.env.STAND_DATEI || '';
+// Eine Folge, deren Analyse so oft gescheitert ist, wird in diesem Lauf
+// nicht mehr angefasst - sonst kostete jeder Durchgang erneut Geld.
+const MAX_VERSUCHE = 2;
+let stand = { feeds: {}, fehler: {} };
+
 const apiKey = process.env.OPENROUTER_API_KEY;
 // Beim Import durch einen Test wird nichts abgerufen - dann ist der
 // Schluessel auch nicht noetig.
@@ -1797,6 +1807,9 @@ async function main() {
   const store = existsSync(OUT_PATH) ? JSON.parse(await readFile(OUT_PATH, 'utf8')) : {};
   const episodesStore = store.episodes || {};
   let changed = false;
+  if (STAND_DATEI && existsSync(STAND_DATEI)) {
+    try { stand = { feeds: {}, fehler: {}, ...JSON.parse(await readFile(STAND_DATEI, 'utf8')) }; } catch { /* neu anfangen */ }
+  }
 
   for (const podcast of config.podcasts) {
     if (ONLY && ![podcast.id, podcast.name].some((x) => String(x || '').toLowerCase() === ONLY)) continue;
@@ -1820,6 +1833,10 @@ async function main() {
       log(`   Feed nicht ladbar: ${err.message}`);
       continue;
     }
+    stand.feeds[podcast.id] = {
+      name: podcast.name,
+      neuesteMs: episodes.length && Number.isFinite(episodes[0].pubDateMs) ? episodes[0].pubDateMs : null,
+    };
 
     const maxAgeHours = podcast.maxAgeHours ?? DEFAULT_MAX_AGE_HOURS;
 
@@ -1842,10 +1859,15 @@ async function main() {
         log(`   keine neue Folge (neueste ist ${ageHours.toFixed(1)} Std. alt: ${ep.title})`);
         continue;
       }
+      if ((stand.fehler[ep.guid] || 0) >= MAX_VERSUCHE) {
+        log(`   übersprungen, ${MAX_VERSUCHE}x gescheitert: ${ep.title}`);
+        continue;
+      }
       try {
         episodesStore[ep.guid] = await analyzeEpisode(ep, podcast, podcast.structure || '', podcast.endMarker || '');
         changed = true;
       } catch (err) {
+        stand.fehler[ep.guid] = (stand.fehler[ep.guid] || 0) + 1;
         log(`   FEHLER: ${err.message}`);
       }
     }
@@ -1897,8 +1919,12 @@ async function main() {
 // der ganze Lauf startet.
 export { normWord, findPhraseLast, findEndMarker, findAdMarkers, setzeWerbeAnfaenge };
 
+async function schreibeStand() {
+  if (STAND_DATEI) await writeFile(STAND_DATEI, JSON.stringify(stand, null, 2) + '\n');
+}
+
 if (process.env.ANALYZE_IMPORT_ONLY !== '1') {
-  main().catch((err) => {
+  main().then(schreibeStand).catch((err) => {
     console.error('Abbruch:', err);
     process.exit(1);
   });
