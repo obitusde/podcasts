@@ -1,6 +1,100 @@
 {
-  "updatedAt": "2026-11-04T18:40:51.110Z",
+  "updatedAt": "2026-11-05T05:22:00.970Z",
   "episodes": {
+    "6b2d6640c55a387980aec4987a5b6c77": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Midterms: Mega-Thema Bezahlbarkeit / Bundesregierung: Kapitalrente wird verschoben",
+      "pubDate": "Thu, 05 Nov 2026 04:48:56 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2628973-m-61e2dbfd9a5ae60ec8b327d8796f8ab9.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/6b2d6640c55a387980aec4987a5b6c77.mp3",
+        "file": "6b2d6640c55a387980aec4987a5b6c77.mp3",
+        "durationSeconds": 480,
+        "chapters": [
+          {
+            "start": 4.5,
+            "title": "Themen der Sendung"
+          },
+          {
+            "start": 36.35,
+            "title": "US-Zwischenwahlen und Bezahlbarkeit"
+          },
+          {
+            "start": 177.87,
+            "title": "Tech-Aktien und KI-Rechenzentren"
+          },
+          {
+            "start": 234.94,
+            "title": "Tod von Hubert Aiwanger"
+          },
+          {
+            "start": 281.04,
+            "title": "Verzögerung bei der Rentenreform"
+          },
+          {
+            "start": 328.2,
+            "title": "Telekom-Fusionspläne von Höttges"
+          },
+          {
+            "start": 396.1,
+            "title": "Inditex übernimmt P&C-Filialen"
+          },
+          {
+            "start": 431.3,
+            "title": "Nachruf auf Kinderbuchautor Janosch"
+          }
+        ]
+      },
+      "feedDurationSeconds": 498,
+      "adRanges": [
+        [
+          34.4,
+          92.9
+        ],
+        [
+          538.1,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.5,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 94.850363,
+          "title": "US-Zwischenwahlen und Bezahlbarkeit"
+        },
+        {
+          "start": 236.36941,
+          "title": "Tech-Aktien und KI-Rechenzentren"
+        },
+        {
+          "start": 293.44458,
+          "title": "Tod von Hubert Aiwanger"
+        },
+        {
+          "start": 339.544444,
+          "title": "Verzögerung bei der Rentenreform"
+        },
+        {
+          "start": 386.7,
+          "title": "Telekom-Fusionspläne von Höttges"
+        },
+        {
+          "start": 454.6,
+          "title": "Inditex übernimmt P&C-Filialen"
+        },
+        {
+          "start": 489.8,
+          "title": "Nachruf auf Kinderbuchautor Janosch"
+        }
+      ],
+      "durationSeconds": 590,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-05T05:21:58.926Z"
+    },
     "7f3cacee-1a47-327d-9e22-ad92b818ee41": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -54,41 +148,7 @@
       "title": "USA: So sind die Midterms gelaufen / Auto: BMW kappt Prognose – schon wieder",
       "pubDate": "Wed, 04 Nov 2026 05:01:53 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2628972-m-c7e5161b1dd29faaa28fa7f82e195eab.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/73988af7c0f71173a055a246ca2429d8.mp3",
-        "file": "73988af7c0f71173a055a246ca2429d8.mp3",
-        "durationSeconds": 537,
-        "chapters": [
-          {
-            "start": 4.5,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 38.3,
-            "title": "US-Midterms"
-          },
-          {
-            "start": 260.92,
-            "title": "BMW kappt Prognose"
-          },
-          {
-            "start": 312.6,
-            "title": "Beziehungen zu Großbritannien"
-          },
-          {
-            "start": 364.9,
-            "title": "Strenger gegen Huawei"
-          },
-          {
-            "start": 436.92,
-            "title": "Bilanz des Bauturbos"
-          },
-          {
-            "start": 487.08,
-            "title": "Quanten-Start-up Quint"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 567,
       "adRanges": [
         [
