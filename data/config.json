@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T14:41:09.253Z",
+  "updatedAt": "2026-11-06T16:02:28.347Z",
   "podcasts": [
     {
       "id": "heutemorgen",
@@ -150,6 +150,24 @@
       "name": "DLF Audiobeiträge",
       "feed": null,
       "type": "dlf_audio",
+      "titleContains": null,
+      "titleExcludes": null,
+      "minDurationSeconds": null,
+      "werbung": false,
+      "sprungmarken": false,
+      "startSeconds": 0,
+      "endSeconds": null,
+      "structure": null,
+      "endMarker": null,
+      "adMarker": null,
+      "episodes": 1,
+      "sammlung": true
+    },
+    {
+      "id": "tagesschau-audio",
+      "name": "Tagesschau Audio",
+      "feed": null,
+      "type": "tagesschau_audio",
       "titleContains": null,
       "titleExcludes": null,
       "minDurationSeconds": null,
