@@ -1,0 +1,21 @@
+# Erkundung: listet auf, wie tagesschau.de seine Audiobeiträge ausliefert
+# (siehe tools/tagesschau-audio.mjs). Ändert nichts. Von Hand starten.
+name: Tagesschau-Audio erkunden
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Artikel mit Audiobeitrag (leer = Beispielartikel)'
+        type: string
+        default: ''
+
+jobs:
+  erkunden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node tools/tagesschau-audio.mjs ${{ inputs.url }}
