@@ -2088,12 +2088,13 @@ function ladeSammlung() {
       return {
         slot: roh.slot || null,
         tag: roh.tag || null,
+        quellen: Array.isArray(roh.quellen) ? roh.quellen : [],
         items: Array.isArray(roh.items) ? roh.items : [],
         gesehen: roh.gesehen && typeof roh.gesehen === 'object' ? roh.gesehen : {}
       };
     }
   } catch (e) { /* kaputter oder leerer Speicher: von vorn */ }
-  return { slot: null, tag: null, items: [], gesehen: {} };
+  return { slot: null, tag: null, quellen: [], items: [], gesehen: {} };
 }
 
 function speichereSammlung(daten) {
@@ -2125,7 +2126,18 @@ function tagesText(d) {
 function baueSammlung(jetzt) {
   const slot = sammlungSlot(jetzt);
   const daten = ladeSammlung();
-  if (daten.slot === slot.id) return daten;
+
+  // Welche Quellen liefern gerade? Kommt in der Tabelle eine dazu (z.B.
+  // Tagesschau Audio), muss die laufende Liste auch innerhalb ihres Zeit-
+  // fensters nachgefüllt werden - sonst käme die neue Quelle erst beim
+  // nächsten Fenster, im schlimmsten Fall erst am nächsten Morgen.
+  const quellen = Array.from(grid.children)
+    .filter((c) => c.podcast && c.podcast.sammlung)
+    .map((c) => c.podcast.id)
+    .sort();
+  const bekannt = daten.quellen || [];
+  const nichtsNeues = quellen.every((id) => bekannt.includes(id));
+  if (daten.slot === slot.id && nichtsNeues) return daten;
 
   const neuerTag = daten.tag !== slot.tag;
   const liste = neuerTag ? [] : daten.items.slice();
@@ -2162,7 +2174,13 @@ function baueSammlung(jetzt) {
     if (String(gesehen[guid]) < grenzText) delete gesehen[guid];
   });
 
-  const ergebnis = { slot: alleDa ? slot.id : daten.slot, tag: slot.tag, items: liste, gesehen };
+  const ergebnis = {
+    slot: alleDa ? slot.id : daten.slot,
+    // Nur gemerkt, wenn alle Quellen da waren; sonst wird beim nächsten Mal
+    // wieder versucht.
+    quellen: alleDa ? quellen : (neuerTag ? [] : bekannt),
+    tag: slot.tag, items: liste, gesehen
+  };
   speichereSammlung(ergebnis);
 
   const allState = loadAllState();
