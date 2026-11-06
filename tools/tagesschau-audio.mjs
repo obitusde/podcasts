@@ -130,3 +130,21 @@ try {
   console.log('    Schlüssel: ' + Object.keys(j).join(', '));
   console.log('    ' + JSON.stringify(j).slice(0, 1500));
 } catch (e) { console.log('    FEHLER ' + e.message); }
+
+// 7. Alle Beiträge der Audio-Seite: Zeit, Länge, Titel - wie weit reicht sie zurück?
+try {
+  const html = await hole('https://www.tagesschau.de/multimedia/audio');
+  const liste = [];
+  for (const m of html.matchAll(/data-v="([^"]*AU-\d{8}[^"]*)"/g)) {
+    try {
+      const j = JSON.parse(entity(m[1]));
+      const meta = j.mc && j.mc.meta;
+      const url = j.mc.streams[0].media[0].url;
+      liste.push(`${meta.broadcastedOnDateTime}  ${String(meta.durationSeconds).padStart(4)}s  ${meta.title}  | ${meta.synopsis || ''} | ${url.split('/').pop()}`);
+    } catch (e) { liste.push('nicht lesbar: ' + e.message); }
+  }
+  console.log(`    ${liste.length} Beiträge:`);
+  liste.forEach((z) => console.log('      ' + z));
+  const weiter = umgebung(html, /pageIndex|weitere|mehr laden|loadMore|nextPage/gi, 4, 160);
+  weiter.forEach((t) => console.log('    weiter? … ' + entity(t) + ' …'));
+} catch (e) { console.log('    FEHLER ' + e.message); }
