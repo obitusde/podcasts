@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-11-06T05:22:57.084Z",
+  "updatedAt": "2026-11-06T18:30:46.538Z",
   "episodes": {
+    "82e13d32-4b3d-321c-8d76-4a864e1a6801": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Wie geht es der US-Wirtschaft unter Präsident Trump?",
+      "pubDate": "Fri, 06 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261106_RS_0047_7207e15d309c496382b7e3db3c0ecef3.mp3?d=ap&amp;assetId=82e13d32-4b3d-321c-8d76-4a864e1a6801",
+      "clean": null,
+      "feedDurationSeconds": 2486,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 442.6,
+          "title": "Zustand der US-Wirtschaft"
+        },
+        {
+          "start": 1025.5,
+          "title": "Politische Wetten auf Wahlausgänge"
+        },
+        {
+          "start": 1294.6976670000001,
+          "title": "Ungarn öffnet Geheimdienstakten"
+        },
+        {
+          "start": 1581.6808330000001,
+          "title": "Bankenskandal in Paraguay"
+        },
+        {
+          "start": 1797.9,
+          "title": "Abstimmung über die Heiratsstrafe"
+        },
+        {
+          "start": 2095.4,
+          "title": "Versuchsaffen aus Südostasien"
+        }
+      ],
+      "durationSeconds": 2486,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-06T18:30:46.042Z"
+    },
     "3e6783545aa5b9413d3bfaff40e4987f": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
