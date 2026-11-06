@@ -103,3 +103,30 @@ for (const url of [
     }
   } catch (e) { console.log('    FEHLER ' + e.message); }
 }
+
+// 5. Wie Titel, MP3 und Länge auf der Audio-Seite zusammenhängen
+const entity = (s) => s.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+try {
+  const html = await hole('https://www.tagesschau.de/multimedia/audio');
+  let n = 0;
+  for (const m of html.matchAll(/data-v="([^"]*AU-\d{8}[^"]*)"/g)) {
+    console.log('    data-v: ' + entity(m[1]).slice(0, 1800));
+    if (++n >= 2) break;
+  }
+  if (!n) umgebung(html, /AU-\d{8}-\d{4}-\d{4}\.mp3/g, 2, 900).forEach((t) => console.log('      … ' + entity(t) + ' …'));
+} catch (e) { console.log('    FEHLER ' + e.message); }
+
+// 6. Eine Audio-Einzelseite aus dem RSS
+try {
+  const rss = await hole('https://www.tagesschau.de/multimedia/audio/index~rss2.xml');
+  const links = [...rss.matchAll(/<link>(https:\/\/www\.tagesschau\.de\/multimedia\/audio\/audio-\d+\.html)<\/link>/g)].map((m) => m[1]);
+  console.log(`    Einzelseiten im RSS: ${links.length}`);
+  const html = await hole(links[0]);
+  const mp3 = [...new Set([...html.matchAll(/https?:[^"'\s<>&]+?\.mp3/gi)].map((m) => m[0]))];
+  console.log('    MP3 der Einzelseite: ' + mp3.slice(0, 4).join('  '));
+  for (const m of html.matchAll(/data-v="([^"]*\.mp3[^"]*)"/g)) { console.log('    data-v: ' + entity(m[1]).slice(0, 1800)); break; }
+  const api = links[0].replace('https://www.tagesschau.de/', 'https://www.tagesschau.de/api2u/').replace(/\.html$/, '.json');
+  const j = JSON.parse(await hole(api));
+  console.log('    Schlüssel: ' + Object.keys(j).join(', '));
+  console.log('    ' + JSON.stringify(j).slice(0, 1500));
+} catch (e) { console.log('    FEHLER ' + e.message); }
