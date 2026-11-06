@@ -148,3 +148,18 @@ try {
   const weiter = umgebung(html, /pageIndex|weitere|mehr laden|loadMore|nextPage/gi, 4, 160);
   weiter.forEach((t) => console.log('    weiter? … ' + entity(t) + ' …'));
 } catch (e) { console.log('    FEHLER ' + e.message); }
+
+// 8. Der Proxy (Apps Script): liefert er die Beiträge?
+try {
+  const quelle = (await import('node:fs')).readFileSync('index.html', 'utf8');
+  const proxy = /const PROXY_URL = "([^"]+)"/.exec(quelle)[1];
+  const res = await fetch(proxy + '?mode=tagesschau', { redirect: 'follow' });
+  const text = await res.text();
+  console.log(`\n### Proxy ?mode=tagesschau\n    HTTP ${res.status}, ${text.length} Zeichen`);
+  const j = JSON.parse(text);
+  if (j.error) console.log('    FEHLER vom Proxy: ' + j.error);
+  const eps = j.episodes || [];
+  console.log(`    ${eps.length} Beiträge, aus dem Zwischenspeicher: ${j._cached}`);
+  eps.slice(0, 5).forEach((e) => console.log(`      ${e.pubDate} | ${e.duration}s | ${e.title} | ${e.audioUrl}`));
+  if (eps.length) console.log('    ältester: ' + eps[eps.length - 1].pubDate);
+} catch (e) { console.log('    FEHLER ' + e.message); }
