@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T18:30:46.538Z",
+  "updatedAt": "2026-11-06T18:32:40.678Z",
   "episodes": {
     "82e13d32-4b3d-321c-8d76-4a864e1a6801": {
       "podcastId": "echo-der-zeit",
@@ -13,15 +13,15 @@
       "chapters": [
         {
           "start": 0,
-          "title": "Themenüberblick"
+          "title": "Themenübersicht"
         },
         {
           "start": 442.6,
-          "title": "Zustand der US-Wirtschaft"
+          "title": "US-Wirtschaft und Trumps Zölle"
         },
         {
           "start": 1025.5,
-          "title": "Politische Wetten auf Wahlausgänge"
+          "title": "Wetten auf politische Ereignisse"
         },
         {
           "start": 1294.6976670000001,
@@ -33,16 +33,16 @@
         },
         {
           "start": 1797.9,
-          "title": "Abstimmung über die Heiratsstrafe"
+          "title": "Abstimmung zur Heiratsstrafe"
         },
         {
           "start": 2095.4,
-          "title": "Versuchsaffen aus Südostasien"
+          "title": "Affenhandel für Forschung"
         }
       ],
       "durationSeconds": 2486,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-06T18:30:46.042Z"
+      "detectedAt": "2026-11-06T18:32:40.121Z"
     },
     "3e6783545aa5b9413d3bfaff40e4987f": {
       "podcastId": "handelsblatt",
