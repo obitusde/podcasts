@@ -173,7 +173,8 @@
     background: var(--player-bg);
     border-top: 2px solid var(--player-border);
     box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.5);
-    padding: 10px 20px 16px;
+    /* Unten wenig Rand, damit die Knöpfe nah an den Daumen rücken. */
+    padding: 8px 16px calc(6px + env(safe-area-inset-bottom, 0px));
     transform: translateY(100%);
     transition: transform 0.25s ease;
   }
@@ -198,12 +199,12 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
 
   .player-info img {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 6px;
     object-fit: cover;
     flex-shrink: 0;
@@ -227,13 +228,13 @@
      Zurück kommt sie mit einem Tipp auf den laufenden Podcast. */
   .close-btn {
     flex-shrink: 0;
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 10px;
     background: var(--player-btn-bg);
     border: 2px solid var(--text);
     color: var(--text);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     line-height: 1;
     cursor: pointer;
@@ -261,39 +262,79 @@
     display: none;
   }
 
-  /* Themen-Zeile */
+  /* Themenliste: alle Themen der Folge (in der Sammlung: alle Beiträge),
+     das laufende hervorgehoben. Drei Zeilen sind sichtbar, der Rest
+     scrollt; ein Tipp auf eine Zeile springt dorthin. */
   .chapter-row {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 6px;
   }
 
   .chapter-row[hidden] {
     display: none;
   }
 
-  .chapter-texts {
-    min-width: 0;
+  .chapter-list {
     flex: 1;
-  }
-
-  #chapter-now {
+    min-width: 0;
+    list-style: none;
     margin: 0;
+    padding: 0;
+    max-height: 114px;   /* drei Zeilen à 38px */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 10px;
+    background: var(--player-btn-bg);
+    position: relative;  /* Bezug für offsetTop der Zeilen */
+  }
+
+  .chapter-list button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 38px;
+    padding: 6px 10px;
+    border: none;
+    border-left: 4px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: inherit;
     font-size: 14px;
-    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .chapter-list li + li button {
+    border-top: 1px solid #262d35;
+  }
+
+  .chapter-list .zeit {
+    flex-shrink: 0;
+    min-width: 36px;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.85;
+  }
+
+  .chapter-list .titel {
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  #chapter-next {
-    margin: 1px 0 0;
-    font-size: 12.5px;
-    color: var(--text-dim);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .chapter-list li.jetzt button {
+    color: var(--text);
+    font-weight: 700;
+    border-left-color: var(--accent);
+    background: rgba(255, 139, 92, 0.14);
+  }
+
+  .chapter-list button:active {
+    background: var(--accent-dim);
   }
 
   .chapter-btn {
@@ -302,12 +343,24 @@
     border: 1px solid var(--player-border);
     color: var(--text);
     border-radius: 10px;
-    padding: 12px 12px;
+    padding: 0 10px;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
     white-space: nowrap;
+    /* Wort über dem Symbol: schmal, damit die Titel mehr Platz haben */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 64px;
+  }
+
+  .chapter-btn .symbol {
+    font-size: 20px;
+    line-height: 1;
   }
 
   .chapter-btn:active {
@@ -319,7 +372,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .seek-row .time {
@@ -336,7 +389,7 @@
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
-    height: 30px; /* grosse Trefferfläche für den Finger */
+    height: 28px; /* grosse Trefferfläche für den Finger */
     margin: 0;
     cursor: pointer;
   }
@@ -376,13 +429,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 8px;
   }
 
   .play-btn {
-    width: 78px;
-    height: 78px;
+    width: 66px;
+    height: 66px;
     flex-shrink: 0;
     border-radius: 50%;
     background: var(--accent);
@@ -396,8 +449,8 @@
   }
 
   .play-btn svg {
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     fill: currentColor;
   }
 
@@ -412,7 +465,7 @@
     border: 1px solid var(--player-border);
     color: var(--text);
     border-radius: 10px;
-    padding: 16px 6px;
+    padding: 13px 6px;
     font-size: 15px;
     font-weight: 700;
     white-space: nowrap;
@@ -469,7 +522,7 @@
     border: 1px solid var(--player-border);
     color: var(--text);
     border-radius: 10px;
-    padding: 16px 4px;
+    padding: 13px 4px;
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
@@ -531,15 +584,11 @@
     </div>
     <audio id="audio" preload="metadata"></audio>
 
-    <!-- Themen der Folge: nur das laufende und das nächste, mehr würde
-         zu viel Platz kosten. Wird ausgeblendet, wenn das Backend für die
-         Folge keine Themen erkannt hat. -->
+    <!-- Themen der Folge (in der Sammlung: ihre Beiträge). Wird
+         ausgeblendet, wenn es für die Folge keine Themen gibt. -->
     <div id="chapter-row" class="chapter-row" hidden>
-      <div class="chapter-texts">
-        <p id="chapter-now"></p>
-        <p id="chapter-next"></p>
-      </div>
-      <button id="skip-chapter" class="chapter-btn" aria-label="Thema überspringen">Thema&nbsp;&#9197;</button>
+      <ol id="chapter-list" class="chapter-list" aria-label="Themen"></ol>
+      <button id="skip-chapter" class="chapter-btn" aria-label="Thema überspringen"><span>Thema</span><span class="symbol">&#9197;</span></button>
     </div>
 
     <div class="seek-row">
@@ -653,6 +702,10 @@ const PODCAST_TRIM = {
 // mitten in einer Folge stehen weiterhin oben im Code - sie sind nur noch
 // Rückfallebene für den Fall, dass keine Analyse vorliegt.
 let CONFIG_TRIM = {};
+// Podcasts, bei denen in der Tabelle "Werbung schneiden" steht. Nur deren
+// Anbieter bauen Werbung dynamisch ein, sodass dieselbe Adresse
+// unterschiedlich lange Dateien liefern kann (siehe checkAnalysisFitsFile).
+let CONFIG_WERBUNG = new Set();
 
 function getTrim(podcastName) {
   const ausTabelle = CONFIG_TRIM[podcastName];
@@ -702,6 +755,7 @@ async function loadConfigFile() {
   });
 
   CONFIG_TRIM = {};
+  CONFIG_WERBUNG = new Set(daten.podcasts.filter((p) => p.werbung).map((p) => p.name));
   daten.podcasts.forEach((p) => {
     if (p.startSeconds || p.endSeconds) {
       CONFIG_TRIM[p.name] = { startSeconds: p.startSeconds || 0, endSeconds: p.endSeconds || null };
@@ -848,6 +902,16 @@ function checkAnalysisFitsFile(podcastName, episode) {
 
   if (analysed && Math.abs(duration - analysed) <= 5) return; // alles wie erwartet
 
+  // Ohne dynamische Werbung (SRF, DLF) ändert sich die Datei nicht. Eine
+  // kleine Abweichung kommt dann nur daher, dass das Handy die Länge einer
+  // MP3 anders schätzt als die Analyse - am 6.11. fielen deshalb die
+  // Sprungmarken von HeuteMorgen weg. Erst eine grobe Abweichung (eine
+  // andere Fassung der Folge) lässt die Marken fallen.
+  if (!CONFIG_WERBUNG.has(podcastName) && analysed && Math.abs(duration - analysed) <= Math.max(15, analysed * 0.05)) {
+    console.log('Länge weicht leicht ab (' + Math.round(duration) + 's statt ' + Math.round(analysed) + 's) - Marken gelten');
+    return;
+  }
+
   if (feed && Math.abs(duration - feed) <= 5) {
     // Fassung ohne Werbung: Die Themen liegen um die Werbezeit früher, die
     // vor ihnen lag.
@@ -885,11 +949,37 @@ function audioDuration() {
   return audio.duration && isFinite(audio.duration) ? audio.duration : Infinity;
 }
 
+// "ab Sekunde" und "Ende bei" aus der Tabelle gelten immer - auch wenn
+// eine Analyse oder die geschnittene Datei gespielt wird. Die Werte zählen
+// in der Originaldatei; in der geschnittenen Datei liegen sie um die
+// herausgeschnittene Werbung davor früher.
+let activeTabellenSchnitt = null;  // {startSeconds, endSeconds} oder null
+
+function inGeschnitteneZeit(t) {
+  if (!activeClean || !activeAnalysis || !Array.isArray(activeAnalysis.adRanges)) return t;
+  let weg = 0;
+  activeAnalysis.adRanges.forEach((r) => {
+    const von = Number(r[0]), bis = Number(r[1]);
+    if (isFinite(von) && isFinite(bis) && von < t) weg += Math.min(bis, t) - von;
+  });
+  return Math.max(0, t - weg);
+}
+
+function schnittBereiche() {
+  const t = activeTabellenSchnitt;
+  if (!t) return [];
+  const bereiche = [];
+  if (t.startSeconds > 0) bereiche.push([0, inGeschnitteneZeit(t.startSeconds)]);
+  if (t.endSeconds > 0) bereiche.push([inGeschnitteneZeit(t.endSeconds), Number.MAX_SAFE_INTEGER]);
+  return bereiche.filter((r) => r[1] > r[0]);
+}
+
 // Werbebereiche, auf die tatsächliche Dateilänge begrenzt.
 function adRanges() {
   const duration = audioDuration();
-  if (!isFinite(duration)) return activeAdRanges;
-  return activeAdRanges
+  const alle = activeAdRanges.concat(schnittBereiche()).sort((a, b) => a[0] - b[0]);
+  if (!isFinite(duration)) return alle;
+  return alle
     .map((r) => [Math.max(0, Math.min(r[0], duration)), Math.max(0, Math.min(r[1], duration))])
     .filter((r) => r[1] > r[0]);
 }
@@ -1167,8 +1257,7 @@ const timeCurrentEl = document.getElementById('time-current');
 const timeRemainingEl = document.getElementById('time-remaining');
 const refreshBtn = document.getElementById('refresh');
 const chapterRow = document.getElementById('chapter-row');
-const chapterNowEl = document.getElementById('chapter-now');
-const chapterNextEl = document.getElementById('chapter-next');
+const chapterListEl = document.getElementById('chapter-list');
 const skipChapterBtn = document.getElementById('skip-chapter');
 
 let activeCard = null;       // Karte, die zuletzt geklickt/fokussiert wurde
@@ -1515,6 +1604,7 @@ function playEpisode(card, podcastName, index) {
   activeAdRanges = clean ? [] : buildAdRanges(podcastName, episode);
   activeChapters = clean ? cleanChapters(clean) : buildChapters(episode);
   activeAnalysis = analysisFor(episode);
+  activeTabellenSchnitt = CONFIG_TRIM[podcastName] || null;
 
   // Fällt die geschnittene Datei aus (gelöscht, noch nicht hochgeladen),
   // wird einmal auf die Originaldatei zurückgeschaltet.
@@ -1744,30 +1834,43 @@ function currentChapterIndex() {
   return idx;
 }
 
-function updateChapterUI() {
-  if (!chapterRow) return;
-
-  // In der Sammlung treten die Beitraege an die Stelle der Themen: "Jetzt"
-  // ist der laufende Beitrag, der Knopf springt zum naechsten.
+// Die Einträge der Themenliste: in der Sammlung die Beiträge, sonst die
+// Themen der Folge. Liefert auch, welcher gerade läuft.
+function themenEintraege() {
   if (istSammlung(activeCard) && activeCard.episodes && activeCard.episodes.length > 0) {
-    const allStateS = loadAllState();
-    const idxS = getPodcastState(allStateS, SAMMLUNG_NAME).currentIndex;
-    const jetzt = activeCard.episodes[idxS];
-    const danach = activeCard.episodes[idxS + 1];
-    chapterNowEl.textContent = jetzt ? (jetzt.title || '') : '';
-    chapterRow.title = 'Beiträge der Tagesliste';
-    chapterNextEl.textContent = danach ? 'Danach: ' + (danach.title || '') : 'Letzter Beitrag';
-    if (skipChapterBtn) skipChapterBtn.disabled = false;
-    if (chapterRow.hasAttribute('hidden')) {
-      chapterRow.removeAttribute('hidden');
-      syncMainPadding();
-    }
-    return;
+    const idx = getPodcastState(loadAllState(), SAMMLUNG_NAME).currentIndex;
+    return {
+      schluessel: 'S|' + activeCard.episodes.map((e) => e.guid).join('|'),
+      jetzt: idx,
+      eintraege: activeCard.episodes.map((e) => ({
+        zeit: formatDuration(e.duration),
+        titel: e.title || '(ohne Titel)'
+      }))
+    };
   }
+  if (activeChapters.length === 0) return null;
+  return {
+    schluessel: 'T|' + (activeEpisode ? activeEpisode.guid : '') + '|' +
+      activeChapters.map((c) => Math.round(c.start) + c.title).join('|'),
+    jetzt: currentChapterIndex(),
+    eintraege: activeChapters.map((c) => ({
+      zeit: formatSeconds(realToPlayable(c.start)),
+      titel: c.title
+    }))
+  };
+}
 
-  if (activeChapters.length === 0) {
-    chapterNowEl.textContent = '';
-    chapterNextEl.textContent = '';
+let themenSchluessel = '';   // welche Liste gerade gezeichnet ist
+let themenJetzt = -1;        // welche Zeile hervorgehoben ist
+
+function updateChapterUI() {
+  if (!chapterRow || !chapterListEl) return;
+  const liste = themenEintraege();
+
+  if (!liste) {
+    themenSchluessel = '';
+    themenJetzt = -1;
+    chapterListEl.textContent = '';
     if (!chapterRow.hasAttribute('hidden')) {
       chapterRow.setAttribute('hidden', '');
       syncMainPadding();
@@ -1775,17 +1878,66 @@ function updateChapterUI() {
     return;
   }
 
-  const idx = currentChapterIndex();
-  const next = activeChapters[idx + 1];
-  chapterNowEl.textContent = activeChapters[idx] ? activeChapters[idx].title : '';
-  chapterRow.title = 'Themen und Werbezeiten aus der automatischen Analyse';
-  chapterNextEl.textContent = next ? 'Danach: ' + next.title : 'Letztes Thema';
-  if (skipChapterBtn) skipChapterBtn.disabled = false;
+  // Die Liste wird nur neu gezeichnet, wenn sich ihr Inhalt ändert - diese
+  // Funktion läuft bei jedem Zeit-Update mehrmals pro Sekunde.
+  if (liste.schluessel !== themenSchluessel) {
+    themenSchluessel = liste.schluessel;
+    themenJetzt = -1;
+    chapterListEl.textContent = '';
+    liste.eintraege.forEach((e, i) => {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.index = String(i);
+      const zeit = document.createElement('span');
+      zeit.className = 'zeit';
+      zeit.textContent = e.zeit;
+      const titel = document.createElement('span');
+      titel.className = 'titel';
+      titel.textContent = e.titel;
+      btn.append(zeit, titel);
+      li.appendChild(btn);
+      chapterListEl.appendChild(li);
+    });
+  }
 
+  if (liste.jetzt !== themenJetzt) {
+    themenJetzt = liste.jetzt;
+    Array.from(chapterListEl.children).forEach((li, i) => li.classList.toggle('jetzt', i === themenJetzt));
+    // Das laufende Thema oben in der Liste zeigen, das davor noch
+    // angeschnitten. Nur die Liste scrollt, nie die Seite.
+    const li = chapterListEl.children[themenJetzt];
+    if (li) chapterListEl.scrollTop = Math.max(0, li.offsetTop - 12);
+  }
+
+  if (skipChapterBtn) skipChapterBtn.disabled = false;
   if (chapterRow.hasAttribute('hidden')) {
     chapterRow.removeAttribute('hidden');
     syncMainPadding();
+    // Erst jetzt hat die Liste eine Höhe; die Scrollposition nachziehen.
+    const li = chapterListEl.children[themenJetzt];
+    if (li) chapterListEl.scrollTop = Math.max(0, li.offsetTop - 12);
   }
+}
+
+// Tipp auf eine Zeile: dorthin springen.
+if (chapterListEl) {
+  chapterListEl.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-index]');
+    if (!btn) return;
+    const i = Number(btn.dataset.index);
+    if (istSammlung(activeCard)) {
+      sammlungAbbrechen();
+      spieleSammlung(i);
+      return;
+    }
+    const c = activeChapters[i];
+    if (!c) return;
+    audio.currentTime = c.start;
+    activeEpisodeEnded = false;
+    if (audio.paused) audio.play();
+    updateTransportUI();
+  });
 }
 
 // Zum nächsten Thema springen. Gibt es keines mehr, ans Ende des Inhalts

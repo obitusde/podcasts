@@ -186,7 +186,7 @@ dem Handy zu klein und lassen sich nicht vergrössern):
 - **Fortschrittsbalken** mit verstrichener Zeit links und Restzeit rechts. Beides
   bezieht sich auf den hörbaren Bereich - weggeschnittene Werbung (`PODCAST_TRIM`)
   zählt nicht mit.
-- **Grosser runder Play/Pause-Knopf** (78 px) in der Mitte, flankiert von
+- **Grosser runder Play/Pause-Knopf** (66 px) in der Mitte, flankiert von
   `◀ älter` / `neuer ▶` für die Folgen-Navigation innerhalb desselben Podcasts.
 - Sprung-Zeile: `-10s`, `-5s`, `+5s`, `+10s`, `+30s` - diese Sprünge bleiben
   innerhalb des getrimmten Bereichs.
@@ -512,9 +512,20 @@ anstossen; das Protokoll zeigt Werbeblöcke, Themen, Modell und Laufzeit.
   verstrichene Zeit, Restzeit, die Sprungknöpfe (`+30s` springt 30 Sekunden
   *Inhalt* weiter, nicht in einen Werbeblock) und die Meldung ans Betriebssystem.
   Dafür sorgen `realToPlayable()` / `playableToReal()` in `index.html`.
-- **Themen**: Über dem Fortschrittsbalken stehen nur das laufende und das
-  nächste Thema, dazu der Knopf `Thema ⏭`. Mehr Themen würden zu viel Platz
-  kosten. Gibt es für eine Folge keine Themen, verschwindet die Zeile ganz.
+- **Themen**: Über dem Fortschrittsbalken steht die Liste aller Themen mit
+  ihrer Zeit, das laufende hervorgehoben; drei Zeilen sind sichtbar, der Rest
+  scrollt, und die Liste läuft mit. Ein Tipp auf eine Zeile springt dorthin,
+  daneben springt `Thema ⏭` zum nächsten. In der Sammlung stehen dort die
+  Beiträge der Tagesliste. Gibt es keine Themen, verschwindet die Liste ganz.
+- **Start / Ende aus der Tabelle gelten immer**, auch für eine analysierte
+  Folge und die geschnittene Datei. Dort werden sie um die vorher
+  herausgeschnittene Werbung umgerechnet.
+- **Längenprüfung**: Die Marken gelten nur für die Fassung, die analysiert
+  wurde. Bei Podcasts mit *Werbung schneiden* fallen sie ab 5 Sekunden
+  Abweichung weg (der Anbieter baut Werbung dynamisch ein). Bei allen anderen
+  erst ab 15 Sekunden bzw. 5 %: Die Datei ändert sich dort nicht, und das
+  Handy schätzt die Länge einer MP3 oft ein paar Sekunden anders als die
+  Analyse. Daran fielen am 6.11. die Sprungmarken von HeuteMorgen weg.
 - **Ohne Analyse** (ältere Folgen, anderer Podcast, Backend noch nicht
   aktualisiert) greifen die festen Werte aus `PODCAST_TRIM` - sie werden intern
   in genau dieselben Werbebereiche umgerechnet.
