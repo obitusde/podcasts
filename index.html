@@ -1340,8 +1340,11 @@ function createCard(podcast) {
 
 async function loadPodcast(podcast, card) {
   try {
+    // Sonderfälle ohne eigenen Feed: Der Proxy stellt die Liste zusammen.
     const url = podcast.type === 'dlf_audio'
       ? PROXY_URL + '?mode=dlfaudio'
+      : podcast.type === 'tagesschau_audio'
+      ? PROXY_URL + '?mode=tagesschau'
       : PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
         (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '') +
         (podcast.titleContains ? '&titleContains=' + encodeURIComponent(podcast.titleContains) : '') +

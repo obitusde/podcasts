@@ -162,8 +162,10 @@ function tabelleZuPodcasts(rows) {
     gesehen.add(id);
 
     const sonderfall = !/^https?:\/\//i.test(feed);
-    if (sonderfall && feed !== 'dlf_audio') {
-      throw new Error(`Zeile ${zeile}: "${feed}" ist weder eine Adresse noch das Stichwort dlf_audio`);
+    // Stichwörter für Quellen ohne eigenen Feed (der Proxy liest sie aus)
+    const STICHWOERTER = ['dlf_audio', 'tagesschau_audio'];
+    if (sonderfall && !STICHWOERTER.includes(feed)) {
+      throw new Error(`Zeile ${zeile}: "${feed}" ist weder eine Adresse noch eines der Stichwörter ${STICHWOERTER.join(', ')}`);
     }
 
     const folgen = sekunden(feld(row, idx.folgen));

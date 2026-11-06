@@ -317,7 +317,7 @@ Reihenfolge in der App.
 | ID | ändert sich nie; daran hängt der Hörfortschritt beim Umbenennen |
 | Aktiv | nein = ausblenden, ohne die Zeile zu löschen |
 | Name | Überschrift in der App |
-| Feed-URL | Adresse des Feeds, oder `dlf_audio` für den Sonderfall |
+| Feed-URL | Adresse des Feeds, oder ein Stichwort für eine Quelle ohne Feed: `dlf_audio`, `tagesschau_audio` |
 | Nur Titel mit / Titel ohne | Folgenfilter |
 | Mindestlänge (Sek.) | kürzere Folgen werden ausgeblendet |
 | Werbung | ja = Werbung schneiden und die Datei bei GitHub ablegen |
@@ -403,6 +403,26 @@ zweites Gerät hat eine eigene Liste mit eigener Position.
 `00:02:49`. Die erste Fassung der Sammlung hat sie als Zahl gelesen und
 damit jeden Beitrag aus normalen Feeds verworfen. Die Sammlung liest die
 Dauer jetzt gar nicht mehr.
+
+### Tagesschau Audio (Stichwort `tagesschau_audio`)
+
+tagesschau.de listet seine kurzen Audiobeiträge (Korrespondentenberichte,
+Börse, Hintergrund; meist 1 bis 4 Minuten) auf
+`tagesschau.de/multimedia/audio`. Einen Feed mit Tondateien gibt es nicht:
+Der RSS dort enthält keine MP3-Adressen. Deshalb liest der Proxy
+(`Code.gs`, `?mode=tagesschau`) die Seite. Jeder Beitrag steckt dort als JSON
+im Attribut `data-v` des Players, mit MP3, Titel, Länge und Sendezeit.
+
+- Die Seite zeigt nur die letzten rund 24 Beiträge, etwa 17 Stunden. Der
+  Proxy merkt sich jeden gesehenen Beitrag 36 Stunden lang (Script
+  Properties), damit an einem dichten Tag nichts verloren geht. Die Liste
+  wächst bei jedem Abruf der App und beim DLF-Zeitauslöser mit.
+- Gleicher Titel kommt nur einmal (die längere Fassung bleibt).
+- Gelesen wird höchstens alle 10 Minuten. Kosten: keine, kein Modellaufruf.
+- In der Tabelle: Feed-URL `tagesschau_audio`, Sammlung `ja`.
+- `tools/tagesschau-audio.mjs` (Lauf *Tagesschau-Audio erkunden*) zeigt, was
+  auf der Seite steht. Damit lässt sich prüfen, ob tagesschau den Aufbau
+  geändert hat, wenn die Liste plötzlich leer bleibt.
 
 ### Warum geschnitten und nicht nur markiert wird
 

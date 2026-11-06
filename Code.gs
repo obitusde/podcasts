@@ -31,6 +31,20 @@ var DLF_AUDIO_MAX_DURATION_SECONDS = 300; // alles über 5 Min. wird verworfen
 var DLF_AUDIO_MODEL = 'google/gemini-3.1-flash-lite';
 var DLF_AUDIO_PROP_KEY = 'dlfAudioEpisodes_v1';
 
+// --- Tagesschau Audiobeiträge ---
+// tagesschau.de listet seine kurzen Audiobeiträge (Korrespondenten,
+// Börse, Hintergrund) auf einer eigenen Seite. Einen Feed MIT Tondateien
+// gibt es nicht - der RSS dort enthält keine MP3-Adressen -, deshalb wird
+// die Seite gelesen: Jeder Beitrag steckt dort als JSON im Attribut data-v
+// des Players, mit MP3, Titel, Länge und Sendezeit.
+// Die Seite zeigt nur die letzten rund 24 Beiträge (etwa 17 Stunden). Damit
+// an einem dichten Tag nichts verloren geht, merkt sich der Proxy jeden
+// gesehenen Beitrag TAGESSCHAU_STUNDEN lang.
+var TAGESSCHAU_AUDIO_URL = 'https://www.tagesschau.de/multimedia/audio';
+var TAGESSCHAU_PROP_KEY = 'tagesschauAudio_v1';
+var TAGESSCHAU_STUNDEN = 36;
+var TAGESSCHAU_MAX = 80;
+
 // --- Titel-Bereinigung "Kommentare und Themen der Woche" ---
 // Dieser Feed stellt jedem Titel "Kommentar - " oder "Kommentar zum/zur X: "
 // voran, was im schmalen Karten-Layout nur Platz frisst (der Podcast-Name
@@ -56,6 +70,10 @@ function doGet(e) {
 
   if (params.mode === 'dlfaudio') {
     return handleDlfAudioForFrontend();
+  }
+
+  if (params.mode === 'tagesschau') {
+    return handleTagesschauAudio();
   }
 
   var feedUrl = params.feed;
@@ -513,6 +531,10 @@ function escapeHtml(str) {
  * LLM-Call durch einen simplen Seitenaufruf ausgelöst wird.
  */
 function refreshDlfAudioCache() {
+  // Bei der Gelegenheit auch die Tagesschau-Liste wachsen lassen - ohne
+  // eigenen Zeitauslöser. Ein Fehler dort darf den DLF-Lauf nicht stoppen.
+  try { refreshTagesschauAudio(); } catch (e) { Logger.log('Tagesschau: ' + e.message); }
+
   var cutoff = new Date(Date.now() - DLF_AUDIO_HOURS_BACK * 3600 * 1000);
   var pool = [];
 
@@ -688,6 +710,126 @@ function handleDlfAudioForFrontend() {
     });
   }
   return jsonResponse(JSON.parse(stored), true);
+}
+
+/**
+ * Tagesschau-Audiobeiträge als Feed für die App: neueste zuerst, im selben
+ * Format wie ein normaler Feed. Liest die Seite höchstens alle 10 Minuten
+ * (CACHE_SECONDS) und mischt das Ergebnis in die gemerkte Liste.
+ */
+function handleTagesschauAudio() {
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get('tagesschau_feed');
+  if (cached) return jsonResponse(JSON.parse(cached), true);
+
+  var episodes;
+  try {
+    episodes = refreshTagesschauAudio();
+  } catch (err) {
+    // Seite nicht erreichbar: lieber die gemerkte Liste als gar nichts
+    var stored = loadPropertyChunked(TAGESSCHAU_PROP_KEY);
+    episodes = stored ? JSON.parse(stored) : [];
+    if (!episodes.length) return jsonResponse({ error: 'tagesschau.de nicht lesbar: ' + err.message });
+  }
+  var result = { podcastTitle: 'Tagesschau Audio', episodes: episodes };
+  try { cache.put('tagesschau_feed', JSON.stringify(result), CACHE_SECONDS); } catch (e) {}
+  return jsonResponse(result);
+}
+
+/**
+ * Liest die Audio-Seite, mischt neue Beiträge in die gemerkte Liste und
+ * gibt die Liste zurück. Wird auch vom DLF-Zeitauslöser mit aufgerufen,
+ * damit die Liste wächst, selbst wenn die App eine Weile nicht offen war.
+ */
+function refreshTagesschauAudio() {
+  var resp = UrlFetchApp.fetch(TAGESSCHAU_AUDIO_URL, { muteHttpExceptions: true, followRedirects: true });
+  if (resp.getResponseCode() >= 400) throw new Error('HTTP ' + resp.getResponseCode());
+  var neu = parseTagesschauAudio(resp.getContentText());
+  if (!neu.length) throw new Error('keine Beiträge auf der Seite gefunden');
+
+  var stored = loadPropertyChunked(TAGESSCHAU_PROP_KEY);
+  var alle = mergeTagesschau(stored ? JSON.parse(stored) : [], neu, Date.now());
+  savePropertyChunked(TAGESSCHAU_PROP_KEY, JSON.stringify(alle));
+  return alle;
+}
+
+// Reine Funktion (ohne Google-Dienste), damit sie sich testen lässt.
+function parseTagesschauAudio(html) {
+  var episodes = [];
+  var re = /data-v="([^"]*AU-\d{8}[^"]*)"/g;
+  var m;
+  while ((m = re.exec(html)) !== null) {
+    try {
+      var j = JSON.parse(decodeHtmlAttr(m[1]));
+      var meta = j.mc && j.mc.meta;
+      var media = j.mc && j.mc.streams && j.mc.streams[0] && j.mc.streams[0].media;
+      if (!meta || !media || !media.length) continue;
+      // Die normale Fassung (128 kbit/s), nicht die .hi.mp3 - halb so gross.
+      var mp3 = null;
+      for (var i = 0; i < media.length; i++) {
+        if (/\.mp3$/i.test(media[i].url) && !/\.hi\.mp3$/i.test(media[i].url)) { mp3 = media[i].url; break; }
+      }
+      if (!mp3) mp3 = media[0].url;
+      var datum = parseIsoOffset(meta.broadcastedOnDateTime);
+      var bild = null;
+      if (meta.images && meta.images[0] && meta.images[0].url) {
+        var groesse = j.pc && j.pc.generic && j.pc.generic.imageTemplateConfig &&
+          j.pc.generic.imageTemplateConfig.size && j.pc.generic.imageTemplateConfig.size[0] &&
+          j.pc.generic.imageTemplateConfig.size[0].value;
+        bild = groesse ? meta.images[0].url.replace('{size}', groesse).replace('{width}', '320') : null;
+      }
+      episodes.push({
+        guid: mp3.split('/').pop().replace(/\.mp3$/i, ''),
+        title: meta.title || '(ohne Titel)',
+        pubDate: datum ? datum.toUTCString() : null,
+        pubMs: datum ? datum.getTime() : 0,
+        audioUrl: mp3,
+        imageUrl: bild,
+        duration: meta.durationSeconds ? String(meta.durationSeconds) : null,
+        description: String(meta.synopsis || '').replace(/^Autor\/in:\s*/, '')
+      });
+    } catch (e) { /* ein kaputter Eintrag soll den Rest nicht stören */ }
+  }
+  return episodes;
+}
+
+// Alte und neue Liste zusammenführen: nach guid eindeutig, zu alte raus,
+// gleicher Titel nur einmal (die längere Fassung bleibt), neueste zuerst.
+function mergeTagesschau(alt, neu, jetztMs) {
+  var grenze = jetztMs - TAGESSCHAU_STUNDEN * 3600 * 1000;
+  var nachGuid = {};
+  alt.concat(neu).forEach(function (e) {
+    if (!e || !e.guid || (e.pubMs && e.pubMs < grenze)) return;
+    nachGuid[e.guid] = e;
+  });
+  var nachTitel = {};
+  Object.keys(nachGuid).forEach(function (k) {
+    var e = nachGuid[k];
+    var t = String(e.title).toLowerCase().trim();
+    var bisher = nachTitel[t];
+    if (!bisher || Number(e.duration || 0) > Number(bisher.duration || 0)) nachTitel[t] = e;
+  });
+  return Object.keys(nachTitel).map(function (t) { return nachTitel[t]; })
+    .sort(function (a, b) { return (b.pubMs || 0) - (a.pubMs || 0); })
+    .slice(0, TAGESSCHAU_MAX);
+}
+
+function decodeHtmlAttr(s) {
+  return s.replace(/&quot;/g, '"').replace(/&#39;|&#x27;|&apos;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&#(\d+);/g, function (_, n) { return String.fromCharCode(Number(n)); })
+    .replace(/&#x([0-9a-f]+);/gi, function (_, n) { return String.fromCharCode(parseInt(n, 16)); })
+    .replace(/&amp;/g, '&');
+}
+
+// "2026-11-06T13:35:00+0000" -> Date. Date.parse versteht die Zeitzone
+// ohne Doppelpunkt nicht überall, deshalb von Hand.
+function parseIsoOffset(text) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(Z|([+-])(\d{2}):?(\d{2}))?$/.exec(String(text || ''));
+  if (!m) return null;
+  var ms = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  if (m[8]) ms -= (m[8] === '-' ? -1 : 1) * ((+m[9]) * 60 + (+m[10])) * 60000;
+  return new Date(ms);
 }
 
 function saveDlfAudioResult(result) {
