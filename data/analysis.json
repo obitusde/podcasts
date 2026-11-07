@@ -1,6 +1,41 @@
 {
-  "updatedAt": "2026-11-06T18:32:40.678Z",
+  "updatedAt": "2026-11-07T18:05:31.083Z",
   "episodes": {
+    "96cbf5bc-5291-3e86-b0ad-85c1968ce53f": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Experte: Der Westen ist nicht machtlos gegen hybride Angriffe",
+      "pubDate": "Sat, 07 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261107_RS_0043_37c5acfe79d74a4e91e9bd31d349e35b.mp3?d=ap&amp;assetId=96cbf5bc-5291-3e86-b0ad-85c1968ce53f",
+      "clean": null,
+      "feedDurationSeconds": 1698,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 349.29839599999997,
+          "title": "Russlands hybride Kriegsführung"
+        },
+        {
+          "start": 794.5,
+          "title": "Klinische Studien in der Schweiz"
+        },
+        {
+          "start": 1049.4,
+          "title": "Textilarbeiter-Proteste in Bangladesch"
+        },
+        {
+          "start": 1308.1,
+          "title": "Medienfreiheit in Venezuela"
+        }
+      ],
+      "durationSeconds": 1698,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-07T18:05:30.661Z"
+    },
     "82e13d32-4b3d-321c-8d76-4a864e1a6801": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
