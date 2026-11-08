@@ -1,6 +1,25 @@
 {
-  "updatedAt": "2026-11-07T18:05:31.083Z",
+  "updatedAt": "2026-11-08T06:05:05.738Z",
   "episodes": {
+    "3edfc78f-beaf-3f70-9964-ce6f6d4b59ef": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "International: Simbabwe und die grosse Landfrage",
+      "pubDate": "Sun, 08 Nov 2026 07:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261108_NR_0033_16816eb15bf149e688de9ecfa935a9ff.mp3?d=ap&amp;assetId=3edfc78f-beaf-3f70-9964-ce6f6d4b59ef",
+      "clean": null,
+      "feedDurationSeconds": 1652,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 1.1,
+          "title": "Landreform in Simbabwe"
+        }
+      ],
+      "durationSeconds": 1651,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-08T06:05:05.293Z"
+    },
     "96cbf5bc-5291-3e86-b0ad-85c1968ce53f": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
