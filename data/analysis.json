@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-11-08T06:05:05.738Z",
+  "updatedAt": "2026-11-08T18:05:58.649Z",
   "episodes": {
+    "053876b2-b4f8-3766-9887-8fc49ea96c61": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "SVP-Nationalrat Aeschi will auch Bundesrat werden",
+      "pubDate": "Sun, 08 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261108_RS_0043_44b8d3b2c8b34ad2a85abe54024bee84.mp3?d=ap&amp;assetId=053876b2-b4f8-3766-9887-8fc49ea96c61",
+      "clean": null,
+      "feedDurationSeconds": 1742,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 22.4,
+          "title": "Bundesratskandidatur Thomas Aeschi"
+        },
+        {
+          "start": 251.017729,
+          "title": "Nachrichten des Tages"
+        },
+        {
+          "start": 486.7,
+          "title": "Regierungsbildung in Israel"
+        },
+        {
+          "start": 889.8,
+          "title": "Jean-Luc Mélenchon in Frankreich"
+        },
+        {
+          "start": 1140.7144170000001,
+          "title": "Ilse Aigner als Bundespräsidentin"
+        },
+        {
+          "start": 1402.5,
+          "title": "AHV-Finanzierung und SVP-Basis"
+        }
+      ],
+      "durationSeconds": 1742,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-08T18:05:58.195Z"
+    },
     "3edfc78f-beaf-3f70-9964-ce6f6d4b59ef": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
