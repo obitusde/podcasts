@@ -1,6 +1,45 @@
 {
-  "updatedAt": "2026-11-09T05:26:09.976Z",
+  "updatedAt": "2026-11-09T18:13:36.350Z",
   "episodes": {
+    "16b7c23f-aa80-3689-bf11-60a7ae99a940": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Verschiebungen in Trumps Machtzentrum",
+      "pubDate": "Mon, 09 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261109_RS_0057_30a28b7aba73407ab47ef09214d0c2c3.mp3?d=ap&amp;assetId=16b7c23f-aa80-3689-bf11-60a7ae99a940",
+      "clean": null,
+      "feedDurationSeconds": 2449,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 448.387208,
+          "title": "Trumps Machtzirkel"
+        },
+        {
+          "start": 806.194792,
+          "title": "Südafrika: ANC verliert Zuspruch"
+        },
+        {
+          "start": 1176.171833,
+          "title": "Proteste in Albanien"
+        },
+        {
+          "start": 1459.8,
+          "title": "Neue Depressionsforschung"
+        },
+        {
+          "start": 2127.4,
+          "title": "Arbeitsmarkt für Musiker"
+        }
+      ],
+      "durationSeconds": 2449,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-09T18:13:35.923Z"
+    },
     "3b23b576-e116-373d-a123-f8f5be76b432": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
