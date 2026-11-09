@@ -1,6 +1,100 @@
 {
-  "updatedAt": "2026-11-08T18:05:58.649Z",
+  "updatedAt": "2026-11-09T05:21:12.743Z",
   "episodes": {
+    "c66e739fd490bd6f934d8a07e7eec22e": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Nvidia: Fiel der Chef auf eine Spionin herein?",
+      "pubDate": "Mon, 09 Nov 2026 04:52:22 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2628975-m-8d51b8221dec232548393caaa64b54f3.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/c66e739fd490bd6f934d8a07e7eec22e.mp3",
+        "file": "c66e739fd490bd6f934d8a07e7eec22e.mp3",
+        "durationSeconds": 521,
+        "chapters": [
+          {
+            "start": 4.6,
+            "title": "Themenübersicht"
+          },
+          {
+            "start": 37.5,
+            "title": "Affäre um Nvidia-Chef"
+          },
+          {
+            "start": 169.54,
+            "title": "Aigner als Bundespräsidentin"
+          },
+          {
+            "start": 241.96,
+            "title": "Trump nach den Zwischenwahlen"
+          },
+          {
+            "start": 303.4,
+            "title": "Boom bei Tech-Anleihen"
+          },
+          {
+            "start": 371.3,
+            "title": "Ermittlungen bei Audi"
+          },
+          {
+            "start": 414.4,
+            "title": "Boom bei Rüstungs-Startups"
+          },
+          {
+            "start": 477.7,
+            "title": "Immobilien für Kinder"
+          }
+        ]
+      },
+      "feedDurationSeconds": 521,
+      "adRanges": [
+        [
+          37.5,
+          105.1
+        ],
+        [
+          589,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.6,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 105.060771,
+          "title": "Affäre um Nvidia-Chef"
+        },
+        {
+          "start": 237.138231,
+          "title": "Aigner als Bundespräsidentin"
+        },
+        {
+          "start": 309.564762,
+          "title": "Trump nach den Zwischenwahlen"
+        },
+        {
+          "start": 371,
+          "title": "Boom bei Tech-Anleihen"
+        },
+        {
+          "start": 438.9,
+          "title": "Ermittlungen bei Audi"
+        },
+        {
+          "start": 482,
+          "title": "Boom bei Rüstungs-Startups"
+        },
+        {
+          "start": 545.3,
+          "title": "Immobilien für Kinder"
+        }
+      ],
+      "durationSeconds": 624,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-09T05:21:10.909Z"
+    },
     "053876b2-b4f8-3766-9887-8fc49ea96c61": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -147,41 +241,7 @@
       "title": "Börse: Tech-Werte brechen ein / Rüstung: Der Bund wird Panzerbauer",
       "pubDate": "Fri, 06 Nov 2026 04:53:48 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2628974-m-54f8cb90c8a7fc4e49ab6082acdf94e4.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/3e6783545aa5b9413d3bfaff40e4987f.mp3",
-        "file": "3e6783545aa5b9413d3bfaff40e4987f.mp3",
-        "durationSeconds": 526,
-        "chapters": [
-          {
-            "start": 4.5,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 36.12,
-            "title": "KI-Blutbad an US-Börsen"
-          },
-          {
-            "start": 235.3,
-            "title": "Rüstungsindustrie in Deutschland"
-          },
-          {
-            "start": 292.39,
-            "title": "Neue Chefin im Bundeskartellamt"
-          },
-          {
-            "start": 332.94,
-            "title": "Soziologe sieht Fruststau"
-          },
-          {
-            "start": 389.2,
-            "title": "E-Scooter-Hersteller eGRED"
-          },
-          {
-            "start": 462.1,
-            "title": "Heinz Ketchup und Abnehmspritze"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 526,
       "adRanges": [
         [
