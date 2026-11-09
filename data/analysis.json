@@ -1,6 +1,37 @@
 {
-  "updatedAt": "2026-11-09T05:21:12.743Z",
+  "updatedAt": "2026-11-09T05:26:09.976Z",
   "episodes": {
+    "3b23b576-e116-373d-a123-f8f5be76b432": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Klimakonferenz in Antalya: So will sich die Schweiz einbringen",
+      "pubDate": "Mon, 09 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261109_NR_0059_64676bbf4cc841fca28521c218904c36.mp3?d=ap&amp;assetId=3b23b576-e116-373d-a123-f8f5be76b432",
+      "clean": null,
+      "feedDurationSeconds": 590,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 4.379729,
+          "title": "Weltklimakonferenz in Antalya"
+        },
+        {
+          "start": 369.6,
+          "title": "US-Chipkonzern Nvidia"
+        },
+        {
+          "start": 458.76408299999997,
+          "title": "Trumps Ausschaffungspolitik"
+        },
+        {
+          "start": 482.229313,
+          "title": "Angriff im polnischen Krakau"
+        }
+      ],
+      "durationSeconds": 590,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-09T05:26:07.927Z"
+    },
     "c66e739fd490bd6f934d8a07e7eec22e": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
