@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-10T08:38:54.320Z",
+  "updatedAt": "2026-11-10T08:40:03.558Z",
   "episodes": {
     "83255eed-f543-3879-8f47-6c21dcdedd9c": {
       "podcastId": "heutemorgen",
@@ -17,24 +17,24 @@
         },
         {
           "start": 346.67981199999997,
-          "title": "Hackerangriffe auf Supermärkte"
+          "title": "Hackerangriffe in Europa"
         },
         {
           "start": 425.4,
-          "title": "Verfahren gegen Pete Hegseth"
+          "title": "Verfahren gegen US-Minister Hegseth"
         },
         {
           "start": 459.079167,
-          "title": "FBI ermittelt bei Nvidia-Chef"
+          "title": "Spionageverdacht bei Nvidia-Chef"
         },
         {
           "start": 495.1,
-          "title": "Gespräche von Ukraine und Russland"
+          "title": "Ukraine-Gespräche in Abu Dhabi"
         }
       ],
       "durationSeconds": 574,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-10T08:38:52.592Z"
+      "detectedAt": "2026-11-10T08:40:01.015Z"
     },
     "4cbe42f7da5c28c83e10c7671bae546c": {
       "podcastId": "handelsblatt",
