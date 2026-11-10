@@ -1,6 +1,100 @@
 {
-  "updatedAt": "2026-11-09T18:13:36.350Z",
+  "updatedAt": "2026-11-10T05:33:11.119Z",
   "episodes": {
+    "4cbe42f7da5c28c83e10c7671bae546c": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Die wahre Bilanz der Klimagipfel (und eine Überraschung)",
+      "pubDate": "Tue, 10 Nov 2026 04:53:47 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2640051-m-0d0443eede6e2fdd76bebedc41a848f6.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/4cbe42f7da5c28c83e10c7671bae546c.mp3",
+        "file": "4cbe42f7da5c28c83e10c7671bae546c.mp3",
+        "durationSeconds": 490,
+        "chapters": [
+          {
+            "start": 4.5,
+            "title": "Themenübersicht"
+          },
+          {
+            "start": 34.1,
+            "title": "Klimakonferenz COP 31"
+          },
+          {
+            "start": 160.81,
+            "title": "Affäre um Nvidia-Chef"
+          },
+          {
+            "start": 240.1,
+            "title": "Zukunft des Kampfjets FCAS"
+          },
+          {
+            "start": 275,
+            "title": "Prognose von Andrea Nahles"
+          },
+          {
+            "start": 331.1,
+            "title": "UniCredit und Commerzbank"
+          },
+          {
+            "start": 396.55,
+            "title": "Abnehmspritzen als Benefit"
+          },
+          {
+            "start": 453.3,
+            "title": "Höchstes Windrad der Welt"
+          }
+        ]
+      },
+      "feedDurationSeconds": 519,
+      "adRanges": [
+        [
+          34.1,
+          93.3
+        ],
+        [
+          549.6,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.5,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 93.25342400000001,
+          "title": "Klimakonferenz COP 31"
+        },
+        {
+          "start": 220.012812,
+          "title": "Affäre um Nvidia-Chef"
+        },
+        {
+          "start": 299.3,
+          "title": "Zukunft des Kampfjets FCAS"
+        },
+        {
+          "start": 334.2,
+          "title": "Prognose von Andrea Nahles"
+        },
+        {
+          "start": 390.3,
+          "title": "UniCredit und Commerzbank"
+        },
+        {
+          "start": 455.752268,
+          "title": "Abnehmspritzen als Benefit"
+        },
+        {
+          "start": 512.5,
+          "title": "Höchstes Windrad der Welt"
+        }
+      ],
+      "durationSeconds": 614,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-10T05:33:10.034Z"
+    },
     "16b7c23f-aa80-3689-bf11-60a7ae99a940": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -77,45 +171,7 @@
       "title": "Nvidia: Fiel der Chef auf eine Spionin herein?",
       "pubDate": "Mon, 09 Nov 2026 04:52:22 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2628975-m-8d51b8221dec232548393caaa64b54f3.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/c66e739fd490bd6f934d8a07e7eec22e.mp3",
-        "file": "c66e739fd490bd6f934d8a07e7eec22e.mp3",
-        "durationSeconds": 521,
-        "chapters": [
-          {
-            "start": 4.6,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 37.5,
-            "title": "Affäre um Nvidia-Chef"
-          },
-          {
-            "start": 169.54,
-            "title": "Aigner als Bundespräsidentin"
-          },
-          {
-            "start": 241.96,
-            "title": "Trump nach den Zwischenwahlen"
-          },
-          {
-            "start": 303.4,
-            "title": "Boom bei Tech-Anleihen"
-          },
-          {
-            "start": 371.3,
-            "title": "Ermittlungen bei Audi"
-          },
-          {
-            "start": 414.4,
-            "title": "Boom bei Rüstungs-Startups"
-          },
-          {
-            "start": 477.7,
-            "title": "Immobilien für Kinder"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 521,
       "adRanges": [
         [
