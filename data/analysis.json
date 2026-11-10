@@ -1,6 +1,53 @@
 {
-  "updatedAt": "2026-11-10T08:40:03.558Z",
+  "updatedAt": "2026-11-10T18:42:39.878Z",
   "episodes": {
+    "cbb20a0f-102e-3076-af7e-6d6937eb4c02": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Bundesstrafgericht verurteilt Mafia-Mann aus dem Aargau",
+      "pubDate": "Tue, 10 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261110_RS_0049_9d966150978b41f0bae76d4408afaaa2.mp3?d=ap&amp;assetId=cbb20a0f-102e-3076-af7e-6d6937eb4c02",
+      "clean": null,
+      "feedDurationSeconds": 2523,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0.8,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 125.035354,
+          "title": "Mafia-Prozess in Bellinzona"
+        },
+        {
+          "start": 524.7593750000001,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 829.227167,
+          "title": "Russische Verluste im Ukraine-Krieg"
+        },
+        {
+          "start": 1252.8,
+          "title": "Doping bei Kindern im Sport"
+        },
+        {
+          "start": 1770.4,
+          "title": "Uiguren in Thailand"
+        },
+        {
+          "start": 1957,
+          "title": "KI in der kaufmännischen Lehre"
+        },
+        {
+          "start": 2199.9381249999997,
+          "title": "Rheinschifffahrt bei Niedrigwasser"
+        }
+      ],
+      "durationSeconds": 2523,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-10T18:42:39.378Z"
+    },
     "83255eed-f543-3879-8f47-6c21dcdedd9c": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
