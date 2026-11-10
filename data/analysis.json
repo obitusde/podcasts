@@ -1,6 +1,41 @@
 {
-  "updatedAt": "2026-11-10T05:33:11.119Z",
+  "updatedAt": "2026-11-10T08:38:54.320Z",
   "episodes": {
+    "83255eed-f543-3879-8f47-6c21dcdedd9c": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Die Welt verbrennt weniger Kohle, Öl und Gas",
+      "pubDate": "Tue, 10 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261110_NR_0062_6e6b3422bb1b43308e20a2130fce34af.mp3?d=ap&amp;assetId=83255eed-f543-3879-8f47-6c21dcdedd9c",
+      "clean": null,
+      "feedDurationSeconds": 574,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Weltweiter CO2-Ausstoss"
+        },
+        {
+          "start": 346.67981199999997,
+          "title": "Hackerangriffe auf Supermärkte"
+        },
+        {
+          "start": 425.4,
+          "title": "Verfahren gegen Pete Hegseth"
+        },
+        {
+          "start": 459.079167,
+          "title": "FBI ermittelt bei Nvidia-Chef"
+        },
+        {
+          "start": 495.1,
+          "title": "Gespräche von Ukraine und Russland"
+        }
+      ],
+      "durationSeconds": 574,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-10T08:38:52.592Z"
+    },
     "4cbe42f7da5c28c83e10c7671bae546c": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
