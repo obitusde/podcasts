@@ -1,6 +1,57 @@
 {
-  "updatedAt": "2026-11-11T05:25:35.318Z",
+  "updatedAt": "2026-11-11T18:46:18.123Z",
   "episodes": {
+    "129e04fb-ff67-35c2-bdeb-a3fea2942c4b": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Bundesrat erhöht Druck beim Arzttarif",
+      "pubDate": "Wed, 11 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261111_RS_0050_fe1b7ec6b25e42a9bbb2ff4e394f7fe2.mp3?d=ap&amp;assetId=129e04fb-ff67-35c2-bdeb-a3fea2942c4b",
+      "clean": null,
+      "feedDurationSeconds": 2543,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 102.994833,
+          "title": "Neues Tarifsystem im Gesundheitswesen"
+        },
+        {
+          "start": 306.931146,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 627.5,
+          "title": "Hilfe für den Gazastreifen"
+        },
+        {
+          "start": 1054.27725,
+          "title": "Zukunft der US-Republikaner"
+        },
+        {
+          "start": 1429.0158330000002,
+          "title": "Asbest-Prozess in Italien"
+        },
+        {
+          "start": 1674.2,
+          "title": "Klimaschutz in Dänemark"
+        },
+        {
+          "start": 1942.911687,
+          "title": "Nazi-Geschichte von Davos"
+        },
+        {
+          "start": 2236.7,
+          "title": "Feuerwerksinitiative"
+        }
+      ],
+      "durationSeconds": 2543,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-11T18:46:17.431Z"
+    },
     "625331c1-5b1a-3764-b32a-b6ceb949d54b": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
