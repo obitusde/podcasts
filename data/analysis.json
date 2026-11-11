@@ -1,6 +1,96 @@
 {
-  "updatedAt": "2026-11-10T18:42:39.878Z",
+  "updatedAt": "2026-11-11T05:21:03.608Z",
   "episodes": {
+    "f5cb62456556ed2313055240b4a2530b": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Steuern: Vereinfachen statt senken ? / Anthropic: Der zweitgrößte Börsengang aller Zeiten",
+      "pubDate": "Wed, 11 Nov 2026 04:55:59 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2640052-m-f3c1b4bfafc873b121832583dd7d5e14.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/f5cb62456556ed2313055240b4a2530b.mp3",
+        "file": "f5cb62456556ed2313055240b4a2530b.mp3",
+        "durationSeconds": 469,
+        "chapters": [
+          {
+            "start": 4.6,
+            "title": "Themenübersicht"
+          },
+          {
+            "start": 34.7,
+            "title": "Steuerreform"
+          },
+          {
+            "start": 142.1,
+            "title": "Börsengang von Anthropic"
+          },
+          {
+            "start": 210.9,
+            "title": "Bayers neue Hoffnung"
+          },
+          {
+            "start": 261.57,
+            "title": "Gespräche in Abu Dhabi"
+          },
+          {
+            "start": 320.4,
+            "title": "Neuer Verein Ekonomisten"
+          },
+          {
+            "start": 362.7,
+            "title": "Chinesische E-Busse"
+          },
+          {
+            "start": 426.3,
+            "title": "Karneval im Rheinland"
+          }
+        ]
+      },
+      "feedDurationSeconds": 492,
+      "adRanges": [
+        [
+          469,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.6,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 34.698730000000005,
+          "title": "Steuerreform"
+        },
+        {
+          "start": 142.1,
+          "title": "Börsengang von Anthropic"
+        },
+        {
+          "start": 210.9,
+          "title": "Bayers neue Hoffnung"
+        },
+        {
+          "start": 261.57120199999997,
+          "title": "Gespräche in Abu Dhabi"
+        },
+        {
+          "start": 320.4,
+          "title": "Neuer Verein Ekonomisten"
+        },
+        {
+          "start": 362.7,
+          "title": "Chinesische E-Busse"
+        },
+        {
+          "start": 426.3,
+          "title": "Karneval im Rheinland"
+        }
+      ],
+      "durationSeconds": 493,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-11T05:21:02.231Z"
+    },
     "cbb20a0f-102e-3076-af7e-6d6937eb4c02": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -89,45 +179,7 @@
       "title": "Die wahre Bilanz der Klimagipfel (und eine Überraschung)",
       "pubDate": "Tue, 10 Nov 2026 04:53:47 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2640051-m-0d0443eede6e2fdd76bebedc41a848f6.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/4cbe42f7da5c28c83e10c7671bae546c.mp3",
-        "file": "4cbe42f7da5c28c83e10c7671bae546c.mp3",
-        "durationSeconds": 490,
-        "chapters": [
-          {
-            "start": 4.5,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 34.1,
-            "title": "Klimakonferenz COP 31"
-          },
-          {
-            "start": 160.81,
-            "title": "Affäre um Nvidia-Chef"
-          },
-          {
-            "start": 240.1,
-            "title": "Zukunft des Kampfjets FCAS"
-          },
-          {
-            "start": 275,
-            "title": "Prognose von Andrea Nahles"
-          },
-          {
-            "start": 331.1,
-            "title": "UniCredit und Commerzbank"
-          },
-          {
-            "start": 396.55,
-            "title": "Abnehmspritzen als Benefit"
-          },
-          {
-            "start": 453.3,
-            "title": "Höchstes Windrad der Welt"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 519,
       "adRanges": [
         [
