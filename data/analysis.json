@@ -1,6 +1,108 @@
 {
-  "updatedAt": "2026-11-11T18:46:18.123Z",
+  "updatedAt": "2026-11-12T05:21:15.331Z",
   "episodes": {
+    "a368ff7baa71e16678875743fc751eb0": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Bundesregierung: Großer Kompromiss bei kleinen Steuern",
+      "pubDate": "Thu, 12 Nov 2026 04:58:40 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2640053-m-5e37c92d2644ddc7dd209c64b550a623.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/a368ff7baa71e16678875743fc751eb0.mp3",
+        "file": "a368ff7baa71e16678875743fc751eb0.mp3",
+        "durationSeconds": 566,
+        "chapters": [
+          {
+            "start": 4.6,
+            "title": "Themen der Sendung"
+          },
+          {
+            "start": 37.3,
+            "title": "Kompromiss bei Steuern"
+          },
+          {
+            "start": 144.5,
+            "title": "Nvidia-CEO vor Rauswurf"
+          },
+          {
+            "start": 200.27,
+            "title": "Warnung vor Staatsschuldenkrise"
+          },
+          {
+            "start": 304.86,
+            "title": "Volkswagen geht das Geld aus"
+          },
+          {
+            "start": 364.9,
+            "title": "Allianz erhöht Gewinnprognose"
+          },
+          {
+            "start": 399.65,
+            "title": "Geldanlage in Unternehmensanleihen"
+          },
+          {
+            "start": 459.47,
+            "title": "Autonomes E-Bike von Veluto"
+          },
+          {
+            "start": 519.27,
+            "title": "Rekord durch GTA-Download"
+          }
+        ]
+      },
+      "feedDurationSeconds": 565,
+      "adRanges": [
+        [
+          36.6,
+          103.5
+        ],
+        [
+          633,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.6,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 104.19873,
+          "title": "Kompromiss bei Steuern"
+        },
+        {
+          "start": 211.4,
+          "title": "Nvidia-CEO vor Rauswurf"
+        },
+        {
+          "start": 267.16664399999996,
+          "title": "Warnung vor Staatsschuldenkrise"
+        },
+        {
+          "start": 371.763855,
+          "title": "Volkswagen geht das Geld aus"
+        },
+        {
+          "start": 431.8,
+          "title": "Allianz erhöht Gewinnprognose"
+        },
+        {
+          "start": 466.553401,
+          "title": "Geldanlage in Unternehmensanleihen"
+        },
+        {
+          "start": 526.3664630000001,
+          "title": "Autonomes E-Bike von Veluto"
+        },
+        {
+          "start": 586.1693200000001,
+          "title": "Rekord durch GTA-Download"
+        }
+      ],
+      "durationSeconds": 668,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-12T05:21:13.743Z"
+    },
     "129e04fb-ff67-35c2-bdeb-a3fea2942c4b": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -102,45 +204,7 @@
       "title": "Steuern: Vereinfachen statt senken ? / Anthropic: Der zweitgrößte Börsengang aller Zeiten",
       "pubDate": "Wed, 11 Nov 2026 04:55:59 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2640052-m-f3c1b4bfafc873b121832583dd7d5e14.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/f5cb62456556ed2313055240b4a2530b.mp3",
-        "file": "f5cb62456556ed2313055240b4a2530b.mp3",
-        "durationSeconds": 469,
-        "chapters": [
-          {
-            "start": 4.6,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 34.7,
-            "title": "Steuerreform"
-          },
-          {
-            "start": 142.1,
-            "title": "Börsengang von Anthropic"
-          },
-          {
-            "start": 210.9,
-            "title": "Bayers neue Hoffnung"
-          },
-          {
-            "start": 261.57,
-            "title": "Gespräche in Abu Dhabi"
-          },
-          {
-            "start": 320.4,
-            "title": "Neuer Verein Ekonomisten"
-          },
-          {
-            "start": 362.7,
-            "title": "Chinesische E-Busse"
-          },
-          {
-            "start": 426.3,
-            "title": "Karneval im Rheinland"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 492,
       "adRanges": [
         [
