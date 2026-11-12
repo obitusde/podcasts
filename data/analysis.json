@@ -1,6 +1,50 @@
 {
-  "updatedAt": "2026-11-12T05:21:15.331Z",
+  "updatedAt": "2026-11-12T05:26:00.675Z",
   "episodes": {
+    "c6908697-7f24-3a7f-b284-6860a31376dd": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Erstmals seit 1982: Demokrat holt Senatssitz in Mississippi",
+      "pubDate": "Thu, 12 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261112_NR_0058_370088314ced47a8b86dee34369e7118.mp3?d=ap&amp;assetId=c6908697-7f24-3a7f-b284-6860a31376dd",
+      "clean": null,
+      "feedDurationSeconds": 581,
+      "adRanges": [
+        [
+          556.6,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "US-Senatswahl in Mississippi"
+        },
+        {
+          "start": 111.293458,
+          "title": "CS-Beschattung: Vorwürfe an Rohner"
+        },
+        {
+          "start": 262.54531199999997,
+          "title": "Proteste in Spanien"
+        },
+        {
+          "start": 303.959896,
+          "title": "Angriff auf Spital in Gaza"
+        },
+        {
+          "start": 341.2,
+          "title": "Wiederwahl von Bundesrichtern"
+        },
+        {
+          "start": 488.4,
+          "title": "Eishockey: Spielabbruch in Zug"
+        }
+      ],
+      "durationSeconds": 580,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-12T05:25:59.172Z"
+    },
     "a368ff7baa71e16678875743fc751eb0": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
