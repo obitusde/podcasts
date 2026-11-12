@@ -1,6 +1,61 @@
 {
-  "updatedAt": "2026-11-12T05:26:00.675Z",
+  "updatedAt": "2026-11-12T18:57:56.168Z",
   "episodes": {
+    "aac65293-e2aa-3079-b8f9-4050b2791dfa": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Nvidia-Chef Jensen Huang tritt nach Affären zurück",
+      "pubDate": "Thu, 12 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261112_RS_0071_73bab2401694489d94a0ac7716b7b817.mp3?d=ap&amp;assetId=aac65293-e2aa-3079-b8f9-4050b2791dfa",
+      "clean": null,
+      "feedDurationSeconds": 2467,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 99.6,
+          "title": "Rücktritt von Nvidia-Chef Wang"
+        },
+        {
+          "start": 382.775583,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 653.863833,
+          "title": "Streit um das Bundesbudget"
+        },
+        {
+          "start": 863.3,
+          "title": "Ukraine-Gespräche und Europa"
+        },
+        {
+          "start": 1091.651479,
+          "title": "US-Zwischenwahl in Mississippi"
+        },
+        {
+          "start": 1387,
+          "title": "Machtkampf in Indonesien"
+        },
+        {
+          "start": 1560.5415,
+          "title": "Proteste im Kanton Waadt"
+        },
+        {
+          "start": 1864.5935,
+          "title": "Initiative zur Heiratsstrafe"
+        },
+        {
+          "start": 2143.888771,
+          "title": "KI im Schweizer Journalismus"
+        }
+      ],
+      "durationSeconds": 2467,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-12T18:57:55.548Z"
+    },
     "c6908697-7f24-3a7f-b284-6860a31376dd": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
