@@ -658,8 +658,7 @@ function buildBlockPrompt(blocks, structure) {
     '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
     'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
     '',
-    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es beginnt, und einen kurzen deutschen Titel (höchstens 40 Zeichen). Gemeint sind die Hauptthemen der Sendung, nicht jede einzelne Meldung: Eine Nachrichtenübersicht mit mehreren Kurzmeldungen ist EIN Thema. Börsenkurse und Wetter mitten in der Sendung sind kein eigenes Thema; folgt aber ganz am Schluss der Sendung (nach den Hauptthemen und dem Sport) ein Block mit Börsen-, Devisen- oder Wetterdaten, ist dieser Block EIN eigenes Thema, Titel zum Beispiel "Börse und Kurse". Eine Themenvorstellung am Anfang, in der die Sendung ihre Themen aufzählt, ist ebenfalls EIN Thema - die einzelnen Themen beginnen erst danach, dort wo die Sendung sie ausführlich behandelt. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Bei zehn Minuten Sendung sind es meist sechs bis zehn Themen, bei vierzig Minuten acht bis zwölf.',
-    'Prüfe zuletzt das Ende der Sendung: Folgt nach dem letzten Beitrag (und einem kurzen Sportbericht) noch ein Block mit Börsen-, Devisen- oder Wetterdaten, etwa "Und die Börsendaten von ...", nenne ihn als LETZTES Thema. Er beginnt oft mitten im selben Abschnitt wie das Thema davor - dann nenne denselben Abschnitt ein zweites Mal; die Anmoderation sagt, wo genau.',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es beginnt, und einen kurzen deutschen Titel (höchstens 40 Zeichen). Gemeint sind die Hauptthemen der Sendung, nicht jede einzelne Meldung: Eine Nachrichtenübersicht mit mehreren Kurzmeldungen ist EIN Thema, Börsenkurse und Wetter sind kein eigenes Thema (der Börsenblock am Schluss wird getrennt erkannt, siehe findBoersenSchluss). Eine Themenvorstellung am Anfang, in der die Sendung ihre Themen aufzählt, ist ebenfalls EIN Thema - die einzelnen Themen beginnen erst danach, dort wo die Sendung sie ausführlich behandelt. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Bei zehn Minuten Sendung sind es meist sechs bis zehn Themen, bei vierzig Minuten acht bis zwölf.',
     '',
     'Zu jedem Thema gehören ZWEI Textstellen, wortwörtlich aus dem Abschnittstext abgeschrieben, jeweils MINDESTENS VIER zusammenhängende Wörter:',
     '- "anmoderation": die ersten Wörter des Satzes, mit dem die Moderation im Studio das Thema ANKÜNDIGT oder einordnet.',
@@ -1053,7 +1052,52 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
       return !zuDicht;
     });
 
+  // Börsenblock am Schluss: das Modell nennt ihn nicht als Thema (siehe
+  // findBoersenSchluss), also wird er hier aus dem Wortstrom nachgetragen.
+  if (chapters.length > 0) {
+    const ersteSchlussWerbung = ads.length > 0 ? ads[ads.length - 1][0] : null;
+    const t = findBoersenSchluss(markerWorte, chapters[chapters.length - 1].start, ersteSchlussWerbung);
+    if (t !== null) {
+      log(`   Börsenblock am Schluss gefunden: ${fmt(t)} - als letztes Thema eingetragen`);
+      chapters.push({ start: Math.max(0, t - BLOCK_PAD), title: 'Börse und Kurse' });
+    }
+  }
+
   return { ads: trimAdsByChapters(ads, chapters), chapters };
+}
+
+/**
+ * Der Block mit Börsen- und Devisenkursen am Ende einer Sendung, bei
+ * HeuteMorgen nach dem Sport: "Und die Börsendaten von Six, der Dow Jones ...".
+ *
+ * Warum nicht das Modell: Der Block beginnt im selben Pausen-Abschnitt wie
+ * der Sport davor, und das Modell nennt Themen je Abschnitt. Auch mit
+ * ausdrücklicher Anweisung (zweimal ausprobiert, am 13.11.) hat es ihn
+ * nicht genannt. Ohne eigenes Thema beendet "Thema überspringen" vom Sport
+ * aus die Folge.
+ *
+ * Gesucht wird nach dem letzten genannten Thema ein Satz, der mit
+ * "Börsendaten"/"Börsenkurse" beginnt (höchstens fünf Wörter davor), und
+ * zwar nur in den letzten 90 Sekunden - so löst ein Börsenbericht mitten
+ * in einer Sendung nichts aus. Liefert die Zeit des Satzanfangs oder null.
+ * `vorWerbung`: ab dieser Zeit liegt Werbung/Abspann; der Block muss davor stehen.
+ */
+function findBoersenSchluss(words, letztesThemaStart, vorWerbung) {
+  if (!words || words.length === 0) return null;
+  const ende = words[words.length - 1].end;
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    if (w.start < letztesThemaStart + MIN_CHAPTER_GAP_LATER) continue;
+    if (ende - w.start > 90) continue;
+    if (ende - w.start < 5) break;
+    if (vorWerbung !== null && vorWerbung !== undefined && w.start >= vorWerbung) break;
+    if (!/^börsen(daten|kurse|bericht)$/.test(normWord(w.text))) continue;
+    const satz = sentenceStartIndex(words, i);
+    if (i - satz > 5) continue;
+    if (words[satz].start < letztesThemaStart + MIN_CHAPTER_GAP_LATER) continue;
+    return words[satz].start;
+  }
+  return null;
 }
 
 /* ------------------------------------------------- Werbung und Themen finden */
@@ -1925,7 +1969,7 @@ async function main() {
 
 // Einzelne Funktionen lassen sich so von einem Test importieren, ohne dass
 // der ganze Lauf startet.
-export { normWord, findPhraseLast, findEndMarker, findAdMarkers, setzeWerbeAnfaenge };
+export { normWord, findPhraseLast, findEndMarker, findAdMarkers, setzeWerbeAnfaenge, findBoersenSchluss };
 
 async function schreibeStand() {
   if (STAND_DATEI) await writeFile(STAND_DATEI, JSON.stringify(stand, null, 2) + '\n');
