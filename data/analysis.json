@@ -1,6 +1,53 @@
 {
-  "updatedAt": "2026-11-13T08:51:05.330Z",
+  "updatedAt": "2026-11-13T18:32:56.441Z",
   "episodes": {
+    "68ff92aa-04fb-3990-a425-f28bbcc54f21": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Microsoft-Panne: das Problem der digitalen Abhängigkeit",
+      "pubDate": "Fri, 13 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261113_RS_0047_f79ae33f62024d43b5b9ad08701a4aa7.mp3?d=ap&amp;assetId=68ff92aa-04fb-3990-a425-f28bbcc54f21",
+      "clean": null,
+      "feedDurationSeconds": 2407,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 105.27225,
+          "title": "Globale Microsoft-Panne"
+        },
+        {
+          "start": 344,
+          "title": "Nachrichten"
+        },
+        {
+          "start": 621.2677500000001,
+          "title": "Schweizer Rüstungsexporte"
+        },
+        {
+          "start": 1170.369521,
+          "title": "Unnötige Medizinbehandlungen"
+        },
+        {
+          "start": 1412.6,
+          "title": "Hongkongs Northern Metropolis"
+        },
+        {
+          "start": 1759.045042,
+          "title": "Menschenrechte in Pakistan"
+        },
+        {
+          "start": 2072.3,
+          "title": "Pilatus Tower in Luzern"
+        }
+      ],
+      "durationSeconds": 2407,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-13T18:32:55.930Z"
+    },
     "b93dc73b-0872-365b-9274-cb6094ac9d9c": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
