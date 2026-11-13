@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13T05:34:03.910Z",
+  "updatedAt": "2026-11-13T08:33:03.567Z",
   "episodes": {
     "b93dc73b-0872-365b-9274-cb6094ac9d9c": {
       "podcastId": "heutemorgen",
@@ -13,19 +13,19 @@
       "chapters": [
         {
           "start": 0,
-          "title": "Rücktritt von Nvidia-Chef Wang"
+          "title": "Rücktritt von Nvidia-Chef"
         },
         {
           "start": 284.4,
-          "title": "Europa bei Ukraine-Gesprächen"
+          "title": "Europa und Ukraine-Gespräche"
         },
         {
           "start": 331.449771,
-          "title": "US-Einwanderungszahlen unter Trump"
+          "title": "US-Einwanderungspolitik unter Trump"
         },
         {
           "start": 380.790146,
-          "title": "Luftangriff auf Spital in Gaza"
+          "title": "Angriff auf Spital im Gazastreifen"
         },
         {
           "start": 420.391146,
@@ -33,7 +33,7 @@
         },
         {
           "start": 480.673271,
-          "title": "Klimaanlagen-Baubewilligung Zürich"
+          "title": "Klimaanlagen im Kanton Zürich"
         },
         {
           "start": 639.565833,
@@ -42,7 +42,7 @@
       ],
       "durationSeconds": 687,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-13T05:34:02.146Z"
+      "detectedAt": "2026-11-13T08:33:03.121Z"
     },
     "6ede3bc02db92e981dea872f603b54a1": {
       "podcastId": "handelsblatt",
