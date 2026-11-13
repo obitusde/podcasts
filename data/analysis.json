@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-11-13T05:21:18.708Z",
+  "updatedAt": "2026-11-13T05:34:03.910Z",
   "episodes": {
+    "b93dc73b-0872-365b-9274-cb6094ac9d9c": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Welche Folgen der Rücktritt von Nvidia-Chef Huang habe könnte",
+      "pubDate": "Fri, 13 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261113_NR_0071_d70109f144564f9c93c9fc13e28c8aaa.mp3?d=ap&amp;assetId=b93dc73b-0872-365b-9274-cb6094ac9d9c",
+      "clean": null,
+      "feedDurationSeconds": 687,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Rücktritt von Nvidia-Chef Wang"
+        },
+        {
+          "start": 284.4,
+          "title": "Europa bei Ukraine-Gesprächen"
+        },
+        {
+          "start": 331.449771,
+          "title": "US-Einwanderungszahlen unter Trump"
+        },
+        {
+          "start": 380.790146,
+          "title": "Luftangriff auf Spital in Gaza"
+        },
+        {
+          "start": 420.391146,
+          "title": "Weltweite Microsoft-Störung"
+        },
+        {
+          "start": 480.673271,
+          "title": "Klimaanlagen-Baubewilligung Zürich"
+        },
+        {
+          "start": 639.565833,
+          "title": "Schweizer Eishockey-Meisterschaft"
+        }
+      ],
+      "durationSeconds": 687,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-13T05:34:02.146Z"
+    },
     "6ede3bc02db92e981dea872f603b54a1": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
