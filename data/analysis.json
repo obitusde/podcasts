@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13T08:33:03.567Z",
+  "updatedAt": "2026-11-13T08:44:47.025Z",
   "episodes": {
     "b93dc73b-0872-365b-9274-cb6094ac9d9c": {
       "podcastId": "heutemorgen",
@@ -12,12 +12,12 @@
       "adRanges": [],
       "chapters": [
         {
-          "start": 0,
-          "title": "Rücktritt von Nvidia-Chef"
+          "start": 4.395208,
+          "title": "Rücktritt von Nvidia-Chef Wang"
         },
         {
           "start": 284.4,
-          "title": "Europa und Ukraine-Gespräche"
+          "title": "Gespräche zum Ukraine-Krieg"
         },
         {
           "start": 331.449771,
@@ -37,12 +37,12 @@
         },
         {
           "start": 639.565833,
-          "title": "Schweizer Eishockey-Meisterschaft"
+          "title": "Meldungen aus dem Sport"
         }
       ],
       "durationSeconds": 687,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-13T08:33:03.121Z"
+      "detectedAt": "2026-11-13T08:44:46.572Z"
     },
     "6ede3bc02db92e981dea872f603b54a1": {
       "podcastId": "handelsblatt",
