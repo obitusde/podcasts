@@ -1,6 +1,96 @@
 {
-  "updatedAt": "2026-11-12T18:57:56.168Z",
+  "updatedAt": "2026-11-13T05:21:18.708Z",
   "episodes": {
+    "6ede3bc02db92e981dea872f603b54a1": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Warum Mercedes nicht mehr an Deutschland glaubt",
+      "pubDate": "Fri, 13 Nov 2026 04:57:54 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2640054-m-20cf733d19e634034c9c1ef3fbc380ff.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/6ede3bc02db92e981dea872f603b54a1.mp3",
+        "file": "6ede3bc02db92e981dea872f603b54a1.mp3",
+        "durationSeconds": 519,
+        "chapters": [
+          {
+            "start": 4.6,
+            "title": "Themen der Sendung"
+          },
+          {
+            "start": 32.34,
+            "title": "Investitionsstopp bei Mercedes"
+          },
+          {
+            "start": 148,
+            "title": "Skandal um Nvidia-Chef"
+          },
+          {
+            "start": 240,
+            "title": "DAX auf Rekordhoch"
+          },
+          {
+            "start": 289.7,
+            "title": "Streit zwischen CDU und CSU"
+          },
+          {
+            "start": 364.5,
+            "title": "Neuer EZB-Chefvolkswirt"
+          },
+          {
+            "start": 419.9,
+            "title": "Das neue Altersvorsorgedepot"
+          },
+          {
+            "start": 509.2,
+            "title": "Erfolg für die Deutsche Bahn"
+          }
+        ]
+      },
+      "feedDurationSeconds": 520,
+      "adRanges": [
+        [
+          518.5,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.6,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 32.340748000000005,
+          "title": "Investitionsstopp bei Mercedes"
+        },
+        {
+          "start": 148,
+          "title": "Skandal um Nvidia-Chef"
+        },
+        {
+          "start": 239.995896,
+          "title": "DAX auf Rekordhoch"
+        },
+        {
+          "start": 289.7,
+          "title": "Streit zwischen CDU und CSU"
+        },
+        {
+          "start": 364.5,
+          "title": "Neuer EZB-Chefvolkswirt"
+        },
+        {
+          "start": 419.9,
+          "title": "Das neue Altersvorsorgedepot"
+        },
+        {
+          "start": 509.2,
+          "title": "Erfolg für die Deutsche Bahn"
+        }
+      ],
+      "durationSeconds": 521,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-13T05:21:17.172Z"
+    },
     "aac65293-e2aa-3079-b8f9-4050b2791dfa": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -106,49 +196,7 @@
       "title": "Bundesregierung: Großer Kompromiss bei kleinen Steuern",
       "pubDate": "Thu, 12 Nov 2026 04:58:40 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2640053-m-5e37c92d2644ddc7dd209c64b550a623.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/a368ff7baa71e16678875743fc751eb0.mp3",
-        "file": "a368ff7baa71e16678875743fc751eb0.mp3",
-        "durationSeconds": 566,
-        "chapters": [
-          {
-            "start": 4.6,
-            "title": "Themen der Sendung"
-          },
-          {
-            "start": 37.3,
-            "title": "Kompromiss bei Steuern"
-          },
-          {
-            "start": 144.5,
-            "title": "Nvidia-CEO vor Rauswurf"
-          },
-          {
-            "start": 200.27,
-            "title": "Warnung vor Staatsschuldenkrise"
-          },
-          {
-            "start": 304.86,
-            "title": "Volkswagen geht das Geld aus"
-          },
-          {
-            "start": 364.9,
-            "title": "Allianz erhöht Gewinnprognose"
-          },
-          {
-            "start": 399.65,
-            "title": "Geldanlage in Unternehmensanleihen"
-          },
-          {
-            "start": 459.47,
-            "title": "Autonomes E-Bike von Veluto"
-          },
-          {
-            "start": 519.27,
-            "title": "Rekord durch GTA-Download"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 565,
       "adRanges": [
         [
