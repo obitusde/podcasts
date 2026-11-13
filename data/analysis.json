@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13T08:48:08.726Z",
+  "updatedAt": "2026-11-13T08:51:05.330Z",
   "episodes": {
     "b93dc73b-0872-365b-9274-cb6094ac9d9c": {
       "podcastId": "heutemorgen",
@@ -12,12 +12,12 @@
       "adRanges": [],
       "chapters": [
         {
-          "start": 0.3,
-          "title": "Rücktritt von Nvidia-Chef"
+          "start": 0,
+          "title": "Rücktritt von Nvidia-Chef Wang"
         },
         {
-          "start": 284.8,
-          "title": "Europa und Ukraine-Krieg"
+          "start": 284.4,
+          "title": "Europa und der Ukraine-Krieg"
         },
         {
           "start": 331.449771,
@@ -25,11 +25,11 @@
         },
         {
           "start": 380.790146,
-          "title": "Luftangriff auf Spital in Gaza"
+          "title": "Gaza: Kritik an Israel nach Angriff"
         },
         {
           "start": 420.391146,
-          "title": "Weltweite Microsoft-Störung"
+          "title": "Weltweite IT-Störung bei Microsoft"
         },
         {
           "start": 480.673271,
@@ -38,11 +38,15 @@
         {
           "start": 639.565833,
           "title": "Schweizer Eishockey-Meisterschaft"
+        },
+        {
+          "start": 653.4,
+          "title": "Börse und Kurse"
         }
       ],
       "durationSeconds": 687,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-13T08:48:08.283Z"
+      "detectedAt": "2026-11-13T08:51:02.989Z"
     },
     "6ede3bc02db92e981dea872f603b54a1": {
       "podcastId": "handelsblatt",
