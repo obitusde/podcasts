@@ -281,6 +281,20 @@ Ablauf:
    geschnittene Fassung, spielt der Player sie; fehlt sie, fällt er auf die
    Originaldatei mit den festen Werten zurück.
 
+### Der Börsenblock am Schluss (HeuteMorgen)
+
+Nach dem Sport folgen bei HeuteMorgen Börsen- und Devisenkurse und der
+Abbinder. Das Modell nennt diesen Block nicht als Thema (er beginnt im selben
+Pausen-Abschnitt wie der Sport, und das Modell nennt Themen je Abschnitt;
+auch mit ausdrücklicher Anweisung klappte es nicht). Ohne eigenes Thema
+beendete `Thema überspringen` vom Sport aus die Folge. Deshalb sucht
+`findBoersenSchluss` in `tools/analyze.mjs` im Wortstrom nach dem letzten
+Thema einen Satz, der mit "Börsendaten", "Börsenkurse" oder "Börsenbericht"
+beginnt, nur in den letzten 90 Sekunden und vor einer Schlusswerbung, und
+trägt ihn als letztes Thema "Börse und Kurse" ein. Ein Börsenbericht mitten
+in der Sendung löst nichts aus. Beginnt der Block bei einer Sendung einmal
+anders, bleibt es beim alten Verhalten: Er gehört dann zum Thema davor.
+
 ### Wo die Themenerkennung an ihre Grenze stösst
 
 Eine Marke pro Folge liegt gelegentlich daneben, und das ist kein Fehler,
