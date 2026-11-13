@@ -136,6 +136,12 @@ const MAX_AD_PULL_BACK = 3;
 const MARKER_PAD = 0.3;   // weiter darf die Werbegrenze nie nach vorn wandern
 const PHRASE_WINDOW = 150;    // Sekunden um den genannten Abschnitt, in denen die zitierten Worte gesucht werden
 const MIN_CHAPTER_GAP = 20;   // dichter aufeinander ist kein zweites Thema, sondern dieselbe Stelle doppelt
+// Das gilt vor allem für die Themenvorstellung am Anfang, wo jedes Thema nur
+// kurz genannt wird. Später in der Sendung gibt es kurze Themen, die wirklich
+// dicht aufeinander folgen: bei HeuteMorgen sind es am Schluss Sport (13 s)
+// und danach die Börsendaten. Dort genügt ein kleinerer Abstand.
+const INTRO_SECONDS = 120;
+const MIN_CHAPTER_GAP_LATER = 10;
 
 const PAD_BEFORE = 0.3;          // Werbeblock minimal weiter fassen
 const PAD_AFTER = 0.4;
@@ -652,7 +658,7 @@ function buildBlockPrompt(blocks, structure) {
     '- Musik-Abschnitte, die zwischen solchen Abschnitten liegen',
     'KEINE Werbung: die Vorstellung der Themen am Anfang, Begrüssung und Verabschiedung, normale Berichte über Firmen und Hinweise der Redaktion auf eigene Berichte oder Kollegen.',
     '',
-    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es beginnt, und einen kurzen deutschen Titel (höchstens 40 Zeichen). Gemeint sind die Hauptthemen der Sendung, nicht jede einzelne Meldung: Eine Nachrichtenübersicht mit mehreren Kurzmeldungen ist EIN Thema, Börsenkurse und Wetter sind kein eigenes Thema. Eine Themenvorstellung am Anfang, in der die Sendung ihre Themen aufzählt, ist ebenfalls EIN Thema - die einzelnen Themen beginnen erst danach, dort wo die Sendung sie ausführlich behandelt. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Bei zehn Minuten Sendung sind es meist sechs bis zehn Themen, bei vierzig Minuten acht bis zwölf.',
+    'Aufgabe 2 - Themen: Nenne für jedes Thema des redaktionellen Teils die Nummer des Abschnitts, in dem es beginnt, und einen kurzen deutschen Titel (höchstens 40 Zeichen). Gemeint sind die Hauptthemen der Sendung, nicht jede einzelne Meldung: Eine Nachrichtenübersicht mit mehreren Kurzmeldungen ist EIN Thema. Börsenkurse und Wetter mitten in der Sendung sind kein eigenes Thema; folgt aber ganz am Schluss der Sendung (nach den Hauptthemen und dem Sport) ein Block mit Börsen-, Devisen- oder Wetterdaten, ist dieser Block EIN eigenes Thema, Titel zum Beispiel "Börse und Kurse". Eine Themenvorstellung am Anfang, in der die Sendung ihre Themen aufzählt, ist ebenfalls EIN Thema - die einzelnen Themen beginnen erst danach, dort wo die Sendung sie ausführlich behandelt. Ein Thema darf nicht in einem Werbeabschnitt beginnen. Bei zehn Minuten Sendung sind es meist sechs bis zehn Themen, bei vierzig Minuten acht bis zwölf.',
     '',
     'Zu jedem Thema gehören ZWEI Textstellen, wortwörtlich aus dem Abschnittstext abgeschrieben, jeweils MINDESTENS VIER zusammenhängende Wörter:',
     '- "anmoderation": die ersten Wörter des Satzes, mit dem die Moderation im Studio das Thema ANKÜNDIGT oder einordnet.',
@@ -1040,7 +1046,8 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
     // ist die richtige - die frühere fällt weg.
     .filter((c, i, alle) => {
       if (i === 0) return true;
-      const zuDicht = c.start - alle[i - 1].start < MIN_CHAPTER_GAP;
+      const luecke = c.start < INTRO_SECONDS ? MIN_CHAPTER_GAP : MIN_CHAPTER_GAP_LATER;
+      const zuDicht = c.start - alle[i - 1].start < luecke;
       if (zuDicht) log(`   Thema "${c.title}" ${fmt(c.start)} verworfen: nur ${Math.round(c.start - alle[i - 1].start)} Sek. nach "${alle[i - 1].title}"`);
       return !zuDicht;
     });
