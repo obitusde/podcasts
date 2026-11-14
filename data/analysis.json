@@ -1,6 +1,45 @@
 {
-  "updatedAt": "2026-11-13T18:32:56.441Z",
+  "updatedAt": "2026-11-14T18:06:48.181Z",
   "episodes": {
+    "6fd3777d-dbc5-3b12-b1e0-1162a545583d": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "EU-Vertragspaket: Allfällige Abstimmung nicht nächstes Jahr",
+      "pubDate": "Sat, 14 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261114_RS_0053_d68cc8ed3a2042229b29f80501a6767f.mp3?d=ap&amp;assetId=6fd3777d-dbc5-3b12-b1e0-1162a545583d",
+      "clean": null,
+      "feedDurationSeconds": 1607,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 93.1,
+          "title": "EU-Vertragspaket"
+        },
+        {
+          "start": 278.688063,
+          "title": "Nachrichten"
+        },
+        {
+          "start": 538.2,
+          "title": "Gipfeltreffen USA-China-Russland"
+        },
+        {
+          "start": 868.9,
+          "title": "Politische Lage in Rumänien"
+        },
+        {
+          "start": 1273.6,
+          "title": "90. Geburtstag Wolf Biermanns"
+        }
+      ],
+      "durationSeconds": 1606,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-14T18:06:47.709Z"
+    },
     "68ff92aa-04fb-3990-a425-f28bbcc54f21": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
