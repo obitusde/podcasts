@@ -1,6 +1,25 @@
 {
-  "updatedAt": "2026-11-14T18:06:48.181Z",
+  "updatedAt": "2026-11-15T06:06:02.550Z",
   "episodes": {
+    "aea762d2-f83e-36a6-a0e9-a4d761712172": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "International: Der Kampf um den Kanal: Oh, wie reich wär Panama",
+      "pubDate": "Sun, 15 Nov 2026 07:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261115_NR_0035_e527d89bee734229b7ab7a73fcd36e28.mp3?d=ap&amp;assetId=aea762d2-f83e-36a6-a0e9-a4d761712172",
+      "clean": null,
+      "feedDurationSeconds": 1510,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Der Panama-Kanal"
+        }
+      ],
+      "durationSeconds": 1510,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-15T06:06:00.530Z"
+    },
     "6fd3777d-dbc5-3b12-b1e0-1162a545583d": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
