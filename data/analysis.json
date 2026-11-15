@@ -1,6 +1,45 @@
 {
-  "updatedAt": "2026-11-15T06:06:02.550Z",
+  "updatedAt": "2026-11-15T17:43:41.477Z",
   "episodes": {
+    "d84941a4-b073-3f30-9112-225e9de599ac": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Echo der Zeit",
+      "pubDate": "Sun, 15 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261115_RS_0052_d92974a32704452db3e20bb4779a1c50.mp3?d=ap&amp;assetId=d84941a4-b073-3f30-9112-225e9de599ac",
+      "clean": null,
+      "feedDurationSeconds": 1721,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 89.2,
+          "title": "Schweizer Munition in Russland"
+        },
+        {
+          "start": 332.752271,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 688.855854,
+          "title": "Militäreinsatz El Salvadors in Haiti"
+        },
+        {
+          "start": 1120.715958,
+          "title": "Online-Wahlkampf vor Wahlen"
+        },
+        {
+          "start": 1380.950708,
+          "title": "Massendemonstration in Prag"
+        }
+      ],
+      "durationSeconds": 1720,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-15T17:43:41.057Z"
+    },
     "aea762d2-f83e-36a6-a0e9-a4d761712172": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
