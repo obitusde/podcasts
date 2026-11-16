@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T09:06:09.842Z",
+  "updatedAt": "2026-11-16T10:12:57.239Z",
   "episodes": {
     "a36d4056-61a1-38e4-8a5e-78b0ea8afae9": {
       "podcastId": "heutemorgen",
@@ -12,16 +12,16 @@
       "adRanges": [],
       "chapters": [
         {
-          "start": 4.3873750000000005,
-          "title": "Weltklimakonferenz"
+          "start": 0,
+          "title": "Weltklimakonferenz: Stromziel"
         },
         {
           "start": 364.902292,
-          "title": "Flugstopp in den USA"
+          "title": "Flugprobleme in den USA"
         },
         {
           "start": 433.1,
-          "title": "WTA Finals in Indian Wells"
+          "title": "WTA Finals Tennis"
         },
         {
           "start": 452.6,
@@ -30,7 +30,7 @@
       ],
       "durationSeconds": 499,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-16T09:06:09.321Z"
+      "detectedAt": "2026-11-16T10:12:56.629Z"
     },
     "1685bcc0cfee3989652fd6018425d14d": {
       "podcastId": "handelsblatt",
