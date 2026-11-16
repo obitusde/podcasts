@@ -756,10 +756,12 @@ async function loadConfigFile() {
 
   CONFIG_TRIM = {};
   CONFIG_WERBUNG = new Set(daten.podcasts.filter((p) => p.werbung).map((p) => p.name));
+  // Jeder Podcast aus der Tabelle gilt mit SEINEN Werten - auch eine 0 in
+  // "Start" ist eine Angabe. Sonst griff bei HeuteMorgen, wo in der Tabelle 0
+  // steht, in der Notlösung der feste Wert aus PODCAST_TRIM (29 s) und die
+  // Folge begann bei 0:29 statt am Anfang.
   daten.podcasts.forEach((p) => {
-    if (p.startSeconds || p.endSeconds) {
-      CONFIG_TRIM[p.name] = { startSeconds: p.startSeconds || 0, endSeconds: p.endSeconds || null };
-    }
+    CONFIG_TRIM[p.name] = { startSeconds: p.startSeconds || 0, endSeconds: p.endSeconds || null };
   });
 
   console.log('Konfiguration aus der Tabelle: ' + PODCASTS.length + ' Podcasts');
@@ -1232,9 +1234,12 @@ function getPodcastState(allState, podcastName) {
       lastSeenGuid: null,
       currentIndex: 0,
       progress: {},   // guid -> Sekunden
-      listened: {}    // guid -> true
+      listened: {},   // guid -> true
+      skipped: {}     // guid -> true (nur Sammlung: per Skip übergangen)
     };
   }
+  // Ältere gespeicherte Stände kennen "skipped" noch nicht.
+  if (!allState[podcastName].skipped) allState[podcastName].skipped = {};
   return allState[podcastName];
 }
 
@@ -1522,7 +1527,7 @@ function onCardClick(card) {
   // Ist die Leiste gerade ausgeblendet (weggewischt oder mit × geschlossen)
   // und man tippt die laufende Kachel an, soll NUR die Leiste zurückkommen -
   // sonst würde dieser Tipp wie gewohnt eine Folge weiterblättern.
-  if (activeCard === card && isPlayerBarHidden()) {
+  if (activeCard === card && isPlayerBarHidden() && !activeEpisodeEnded) {
     showPlayerBar();
     // Mit × geschlossen (= angehalten)? Dann an derselben Stelle weiterspielen.
     if (audio.src && audio.paused && !activeEpisodeEnded) audio.play();
@@ -1533,11 +1538,25 @@ function onCardClick(card) {
   const allState = loadAllState();
   const pState = getPodcastState(allState, podcastName);
 
-  if (activeCard === card && istSammlung(card)) {
-    // In der Sammlung bedeutet ein erneuter Tipp nicht "eine Folge
-    // weiter" - zum naechsten Beitrag geht es mit dem Skip-Knopf.
-    renderCard(card, podcastName, pState.currentIndex);
-    playEpisode(card, podcastName, pState.currentIndex);
+  if (istSammlung(card)) {
+    if (!card.episodes || card.episodes.length === 0) return;   // leere Liste: nichts zu spielen
+    let ziel = pState.currentIndex;
+    // Läuft oder pausiert gerade ein Beitrag, geht es dort weiter (die Stelle
+    // ist gemerkt). Sonst beginnt die Sammlung beim ersten Beitrag, der weder
+    // gehört noch übersprungen ist - sind alle durch, von vorn.
+    const imGange = activeCard === card && !activeEpisodeEnded;
+    if (!imGange) {
+      ziel = sammlungOffener(card.episodes, pState);
+      if (ziel === -1) {
+        pState.listened = {};
+        pState.skipped = {};
+        ziel = 0;
+      }
+      pState.currentIndex = ziel;
+      saveAllState(allState);
+    }
+    renderCard(card, podcastName, ziel);
+    playEpisode(card, podcastName, ziel);
     return;
   }
 
@@ -1931,6 +1950,14 @@ if (chapterListEl) {
     const i = Number(btn.dataset.index);
     if (istSammlung(activeCard)) {
       sammlungAbbrechen();
+      // Wer einen späteren Beitrag antippt, hat die dazwischen übersprungen.
+      const allStateL = loadAllState();
+      const pStateL = getPodcastState(allStateL, SAMMLUNG_NAME);
+      for (let k = pStateL.currentIndex; k < i; k++) {
+        const e = activeCard.episodes[k];
+        if (e && !pStateL.listened[e.guid]) pStateL.skipped[e.guid] = true;
+      }
+      saveAllState(allStateL);
       spieleSammlung(i);
       return;
     }
@@ -2067,6 +2094,43 @@ function istSammlung(card) {
  * gestern 15:00. So kommt auch der Kommentar vom Vorabend mit, und morgens
  * um 5 Uhr erschienene Beiträge fehlen abends nicht.
  */
+// Erster Beitrag der Liste, der weder gehört noch übersprungen ist; -1, wenn
+// alle erledigt sind.
+function sammlungOffener(items, pState) {
+  const uebersprungen = pState.skipped || {};
+  for (let i = 0; i < items.length; i++) {
+    const guid = items[i].guid;
+    if (!pState.listened[guid] && !uebersprungen[guid]) return i;
+  }
+  return -1;
+}
+
+// Dauer aus dem Feed in Sekunden: "283", "4:43" oder "00:02:49".
+function dauerSekunden(d) {
+  if (d === null || d === undefined || d === '') return 0;
+  const teile = String(d).trim().split(':').map(Number);
+  if (teile.some(Number.isNaN)) return 0;
+  return teile.reduce((summe, x) => summe * 60 + x, 0);
+}
+
+// Doppelte erkennen: Zwei Titel gelten als dasselbe Thema, wenn sie mindestens
+// drei längere Wörter (ab vier Buchstaben) teilen und diese mindestens 60 %
+// des kürzeren Titels ausmachen. Lieber ein Doppeltes zu viel als ein
+// verschwundener Beitrag: Mit nur zwei gemeinsamen Wörtern teilen sich auch
+// verschiedene Beiträge schnell Allerweltswörter. Gedacht für dieselbe Meldung aus
+// verschiedenen Quellen ("Estland schließt ab 1. Dezember Grenzübergänge zu
+// Russland" bei Tagesschau und DLF) und für den wiederholten Börsenbericht.
+function titelWoerter(titel) {
+  return new Set(String(titel || '').toLowerCase().replace(/[^a-zäöüß0-9 ]+/g, ' ')
+    .split(/\s+/).filter((w) => w.length >= 4));
+}
+function titelAehnlich(a, b) {
+  const A = titelWoerter(a), B = titelWoerter(b);
+  let gemeinsam = 0;
+  A.forEach((w) => { if (B.has(w)) gemeinsam++; });
+  return gemeinsam >= 3 && gemeinsam / Math.min(A.size, B.size) >= 0.6;
+}
+
 function sammlungSlot(jetzt) {
   const d = jetzt || new Date();
   const stunde = d.getHours();
@@ -2162,10 +2226,25 @@ function baueSammlung(jetzt) {
     });
   });
 
+  // Doppelte raus: dieselbe Meldung aus mehreren Quellen oder derselbe Bericht
+  // zweimal. Unter Doppelten bleibt der längere Beitrag; was schon in der
+  // Liste steht, hat Vorrang (es könnte schon gehört sein).
+  const laengsteZuerst = neu.slice().sort((a, b) => dauerSekunden(b.duration) - dauerSekunden(a.duration));
+  const behalten = [];
+  laengsteZuerst.forEach((ep) => {
+    const doppelt = liste.some((x) => titelAehnlich(x.title, ep.title)) ||
+      behalten.some((x) => titelAehnlich(x.title, ep.title));
+    if (doppelt) {
+      console.log('Sammlung: doppelt, nicht aufgenommen: ' + ep.title);
+    } else {
+      behalten.push(ep);
+    }
+  });
+
   // Älteste zuerst: So liest sich die Liste wie der Tag verlief, und was
   // später dazukommt, hängt hinten an, ohne die Reihenfolge zu stören.
-  neu.sort((a, b) => new Date(a.pubDate) - new Date(b.pubDate));
-  liste.push(...neu);
+  behalten.sort((a, b) => new Date(a.pubDate) - new Date(b.pubDate));
+  liste.push(...behalten);
 
   const grenze = new Date(jetzt || Date.now());
   grenze.setDate(grenze.getDate() - SAMMLUNG_GEDAECHTNIS_TAGE);
@@ -2190,8 +2269,9 @@ function baueSammlung(jetzt) {
     // brauchen wir nicht mehr, sonst wächst der Speicher von Tag zu Tag.
     pState.currentIndex = 0;
     pState.listened = {};
+    pState.skipped = {};
     pState.progress = {};
-  } else if (neu.length > 0 && altLaenge > 0) {
+  } else if (behalten.length > 0 && altLaenge > 0) {
     // War die Liste bis zum Ende gehört, geht es beim ersten neuen Beitrag
     // weiter - sonst läge man vor dem letzten, schon gehörten.
     const aktuell = liste[pState.currentIndex];
@@ -2213,6 +2293,10 @@ function zeigeSammlung() {
     sammlungCard.podcast = null;   // kein Feed: weder neu laden noch als Quelle zählen
     sammlungCard.dataset.podcastName = SAMMLUNG_NAME;
     sammlungCard.addEventListener('click', () => onCardClick(sammlungCard));
+    // Die Sammlung ist die dritte Karte: nach den ersten beiden Podcasts der
+    // Tabelle, vor allen übrigen.
+    const andere = Array.from(grid.children).filter((c) => c !== sammlungCard);
+    grid.insertBefore(sammlungCard, andere[2] || null);
   }
 
   sammlungCard.episodes = daten.items;
@@ -2234,6 +2318,16 @@ function zeigeSammlung() {
   if (pState.currentIndex >= daten.items.length) {
     pState.currentIndex = 0;
     saveAllState(allState);
+  }
+  // Die Karte zeigt den ersten Beitrag, der noch offen ist. Läuft gerade ein
+  // Beitrag der Sammlung (oder ist pausiert), bleibt es bei dem.
+  const imGange = activeCard === sammlungCard && audio.src && !activeEpisodeEnded;
+  if (!imGange) {
+    const offen = sammlungOffener(daten.items, pState);
+    if (offen !== -1 && offen !== pState.currentIndex) {
+      pState.currentIndex = offen;
+      saveAllState(allState);
+    }
   }
   renderCard(sammlungCard, SAMMLUNG_NAME, pState.currentIndex);
 }
@@ -2261,10 +2355,20 @@ function sammlungSpringe(richtung) {
   const pState = getPodcastState(allState, SAMMLUNG_NAME);
   const ziel = pState.currentIndex + richtung;
   if (ziel < 0) return;
+  // Vorwärts zählt als "übersprungen": Der Beitrag kommt beim nächsten Start
+  // der Sammlung nicht wieder. Rückwärts ändert nichts.
+  const aktuell = activeCard.episodes[pState.currentIndex];
+  if (richtung > 0 && aktuell && !pState.listened[aktuell.guid]) {
+    pState.skipped[aktuell.guid] = true;
+    saveAllState(allState);
+  }
   if (ziel >= activeCard.episodes.length) {
-    // Ende der Liste: anhalten statt von vorn beginnen.
+    // Ende der Liste: anhalten statt von vorn beginnen, Leiste schliessen.
     audio.pause();
     persistProgress();
+    activeEpisodeEnded = true;
+    renderCard(activeCard, SAMMLUNG_NAME, pState.currentIndex);
+    hidePlayerBar();
     return;
   }
   spieleSammlung(ziel);
@@ -2295,8 +2399,10 @@ function handleEpisodeEnd() {
         if (istSammlung(activeCard)) spieleSammlung(naechster);
       }, SAMMLUNG_PAUSE_MS);
     } else {
+      // Letzter Beitrag der Liste gehört: fertig, die Leiste schliesst sich.
       renderCard(karte, podcastName, pState.currentIndex);
       updateChapterUI();
+      hidePlayerBar();
     }
     updateEpisodeNavButtons();
     updateTransportUI();
@@ -2319,6 +2425,10 @@ function handleEpisodeEnd() {
     saveAllState(allState);
     renderCard(activeCard, podcastName, finishedIndex !== -1 ? finishedIndex : pState.currentIndex, { noOlder: true });
   }
+
+  // Folge zu Ende: die Leiste schliesst sich. Die Karte zeigt die nächste
+  // Folge; ein Tipp darauf öffnet die Leiste wieder und spielt sie.
+  hidePlayerBar();
 
   updateEpisodeNavButtons();
   updateTransportUI();

@@ -194,6 +194,10 @@ dem Handy zu klein und lassen sich nicht vergrössern):
   merkt sich die Wahl (`localStorage`). Die Liste steht als `SPEEDS` in `index.html`.
 - **Eigene Hintergrundfarbe** (`--player-bg`, deutlich heller als Seite und Kacheln)
   plus Schatten nach oben, damit die Leiste klar von der Podcast-Liste absteht.
+- **Folge zu Ende:** Die Leiste schliesst sich, sobald eine Folge zu Ende
+  gespielt ist (auch wenn man mit `Thema überspringen` ans Ende springt).
+  Die Karte zeigt die nächstältere Folge; ein Tipp darauf öffnet die Leiste
+  wieder und spielt sie.
 - **Ausblenden:** Wischt man nach oben (um einen anderen Podcast auszusuchen), fährt
   die Leiste weg - und bleibt weg, auch beim Weiterscrollen. Die Wiedergabe läuft
   dabei weiter.
@@ -375,7 +379,7 @@ Listen im Code (`PODCASTS` in `index.html`, `tools/podcasts.config.json`).
 
 ### Die Sammlung: eine Tagesliste
 
-Ganz unten steht eine Kachel, die sich wie ein Podcast verhält, deren
+Die dritte Kachel der Liste (nach den ersten beiden Podcasts der Tabelle) verhält sich wie ein Podcast, deren
 "Folgen" aber aus mehreren Feeds stammen: **alle** neuen Beiträge der
 Podcasts, die in der Tabelle in der Spalte *Sammlung* auf ja stehen. Eine
 Längengrenze gibt es nicht; was kurz genug ist, entscheidet die Auswahl der
@@ -395,6 +399,14 @@ Podcasts. Die Beiträge laufen nacheinander, mit zwei Sekunden Pause dazwischen.
   auch nicht am nächsten Tag, wenn es noch im Feed hängt. Das Gedächtnis
   dafür reicht zwei Wochen zurück. (DLF Audiobeiträge entfernt zusätzlich
   im Apps Script dasselbe Thema aus verschiedenen Sendungen.)
+- **Dasselbe Thema nur einmal.** Beim Aufnehmen werden Beiträge mit
+  ähnlichem Titel aussortiert, auch zwischen den Quellen (dieselbe Meldung
+  bei Tagesschau und DLF, der wiederholte Börsenbericht): Gemeinsam sind
+  mindestens drei längere Wörter (ab vier Buchstaben), und sie machen
+  mindestens 60 % des kürzeren Titels aus. Unter Doppelten bleibt der
+  längere Beitrag; was schon in der Liste steht, hat Vorrang. Die Regel ist
+  bewusst vorsichtig: Lieber ein Doppeltes zu viel als ein verschwundener
+  Beitrag. Dieselbe Geschichte mit ganz anderem Titel kommt durch.
 - **Angestossen** wird die Ergänzung beim Öffnen der App oder beim
   Aktualisieren, sobald ein neuer Abschnitt begonnen hat; dazwischen bleibt
   die Liste unverändert. Fehlt dabei ein Feed (nicht geladen, ausgefallen),
@@ -404,8 +416,16 @@ Podcasts. Die Beiträge laufen nacheinander, mit zwei Sekunden Pause dazwischen.
   Vorwärts-Taste am Bluetooth-Gerät; die Rückwärts-Taste geht einen Beitrag
   zurück. Beim Hören einer gewöhnlichen Folge bleiben diese Tasten wie
   bisher beim Blättern durch die Folgen.
-- **Die Stelle wird gemerkt.** War die Liste bis zum Ende gehört und kommt
-  Neues dazu, geht es beim ersten neuen Beitrag weiter.
+- **Wo es beim Antippen losgeht.** Ein Skip nach vorn zählt wie gehört:
+  Der Beitrag gilt als erledigt und kommt nicht wieder (ebenso, wenn man in
+  der Themenliste einen späteren Beitrag antippt, für die dazwischen). Ein
+  Tipp auf die Kachel beginnt beim ersten Beitrag, der weder gehört noch
+  übersprungen ist, und macht dort weiter, wo man aufgehört hat. Läuft oder
+  pausiert gerade einer, geht es bei dem weiter. Ist alles erledigt, beginnt
+  der nächste Tipp von vorn, mit zurückgesetzten Markierungen. Kommt Neues
+  dazu, hängt es hinten an.
+- **Die Leiste schliesst sich** nach dem letzten Beitrag der Liste, auch
+  wenn man ihn überspringt. Zwischen den Beiträgen bleibt sie offen.
 
 Warum die Liste im Browser entsteht und nicht im Lauf auf GitHub: DLF
 Audiobeiträge hat keinen gewöhnlichen Feed, sondern wird vom Apps Script
