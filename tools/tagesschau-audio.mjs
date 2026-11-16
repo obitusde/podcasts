@@ -163,3 +163,16 @@ try {
   eps.slice(0, 5).forEach((e) => console.log(`      ${e.pubDate} | ${e.duration}s | ${e.title} | ${e.audioUrl}`));
   if (eps.length) console.log('    ältester: ' + eps[eps.length - 1].pubDate);
 } catch (e) { console.log('    FEHLER ' + e.message); }
+
+// 9. Nur auf Wunsch (ANALYSE_TEST=1): Ruft den Analyse-Anstoss des Proxys auf
+// (?mode=analyse) - das stösst auf GitHub einen echten Lauf an. Prüft, ob das
+// Apps Script die neue Fassung hat und das Token stimmt. Kostet nur dann
+// etwas, wenn gerade eine Folge ohne Analyse offen ist.
+if (process.env.ANALYSE_TEST === '1') {
+  try {
+    const quelle = (await import('node:fs')).readFileSync('index.html', 'utf8');
+    const proxy = /const PROXY_URL = "([^"]+)"/.exec(quelle)[1];
+    const res = await fetch(proxy + '?mode=analyse', { redirect: 'follow' });
+    console.log(`\n### Proxy ?mode=analyse\n    HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  } catch (e) { console.log('    FEHLER ' + e.message); }
+}

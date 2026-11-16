@@ -9,6 +9,10 @@ on:
         description: 'Artikel mit Audiobeitrag (leer = Beispielartikel)'
         type: string
         default: ''
+      analyse:
+        description: 'Zusätzlich den Analyse-Anstoss des Proxys aufrufen (startet einen Lauf)'
+        type: boolean
+        default: false
 
 jobs:
   erkunden:
@@ -19,3 +23,5 @@ jobs:
         with:
           node-version: '20'
       - run: node tools/tagesschau-audio.mjs ${{ inputs.url }}
+        env:
+          ANALYSE_TEST: ${{ inputs.analyse && '1' || '0' }}
