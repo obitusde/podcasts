@@ -1,0 +1,16 @@
+# Prüft, was die Sammlung heute enthalten würde und ob es Doppelte gibt
+# (siehe tools/sammlung-pruefen.mjs). Ändert nichts. Von Hand starten.
+name: Sammlung prüfen
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node tools/sammlung-pruefen.mjs
