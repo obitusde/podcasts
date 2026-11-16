@@ -261,10 +261,10 @@ dadurch ohne Copy-Paste in den Apps-Script-Editor und ohne neue Bereitstellung.
 
 Ablauf:
 
-1. Die Action läuft morgens im Halbstundentakt (3:00-7:30 UTC) plus einmal
-   mittags - so lange, bis die Folge des Tages erschienen und analysiert ist.
-   Jeder weitere Lauf an dem Tag endet nach dem Feed-Abruf. Von Hand starten:
-   *Actions → Podcast-Analyse → Run workflow*; mit angehaktem "force" werden
+1. Die Action läuft **nur auf Anfrage** (siehe "Analyse auf Anfrage" weiter
+   unten): Die App fragt beim Öffnen, ob sie die Podcasts bearbeiten soll,
+   und stösst sie bei "Ja" an. Von Hand starten: *Actions → Podcast-Analyse →
+   Run workflow* mit angehaktem Feld "anfrage"; mit angehaktem "force" werden
    auch schon analysierte Folgen neu ausgewertet.
 2. `tools/analyze.mjs` liest die Feeds aus `tools/podcasts.config.json` und
    nimmt sich **nur die neueste Folge** (`episodes: 1`). Sie wird übersprungen,
@@ -584,52 +584,75 @@ anstossen; das Protokoll zeigt Werbeblöcke, Themen, Modell und Laufzeit.
   aktualisiert) greifen die festen Werte aus `PODCAST_TRIM` - sie werden intern
   in genau dieselben Werbebereiche umgerechnet.
 
-### Der Wecker: Google stösst die Analyse an
+### Analyse auf Anfrage: die App fragt, bevor sie etwas bezahlt
 
-GitHub startet geplante Läufe nur "nach Möglichkeit". Für dieses Repository
-kamen sie Stunden zu spät oder gar nicht: Am 4.11. ist zwischen 23:30 und
-9:00 keiner der 15 geplanten Morgenläufe gestartet. Dann fehlen Schnitt und
-Sprungmarken, und die App fällt auf ihre grobe Notlösung zurück (fester
-Bereich 0:38-1:43 beim Handelsblatt, kein Schnitt am Ende).
+Die Analyse kostet Geld (Transkription und Textmodell). Deshalb läuft sie
+nicht mehr nach Zeitplan, sondern nur, wenn man es in der App will:
 
-Ein von aussen angestossener Lauf (`workflow_dispatch`) startet dagegen
-sofort. `Wecker.gs` lässt deshalb Google-Zeitauslöser um 6:20, 7:00 und
-19:00 die Analyse anstossen. Die geplanten Läufe in `analyze.yml` bleiben
-als zusätzliches Netz.
+1. **Beim Öffnen** prüft die App, ob für einen Podcast, der die Analyse nutzt
+   (in der Tabelle *Werbung* oder *Sprungmarken* = ja), eine Folge von heute
+   (höchstens 14 Stunden alt) noch keine Analyse hat. Ist nichts offen, fragt
+   sie nicht.
+2. **Die Frage** füllt den ganzen Bildschirm, damit man sie im Auto lesen und
+   treffen kann: "Podcasts bearbeiten?", darunter die betroffenen Podcasts
+   und zwei riesige Knöpfe, **JA** und **NEIN**. Ohne Antwort gilt nach 15
+   Sekunden Nein.
+3. **Nein** (auch durch Zeitablauf): Es passiert nichts, alles bleibt wie
+   es ist; es kostet nichts. Nach einem Nein fragt die App frühestens nach 10
+   Minuten wieder.
+4. **Ja:** Die App ruft das Apps Script auf (`?mode=analyse`), das den Lauf auf
+   GitHub anstösst. Oben steht ein grosser Fortschrittsbalken ("Wird
+   bearbeitet … 1 von 2 fertig"). Die App sieht alle 15 Sekunden in
+   `data/analysis.json` nach. Sind alle Folgen da: grüner Hinweis **FERTIG**,
+   Signalton und Vibration. Klappt es nach 12 Minuten nicht, oder lehnt GitHub
+   ab, steht ein roter Hinweis mit den Knöpfen **NOCHMAL** und
+   **SCHLIESSEN**. Wird die App währenddessen geschlossen, beobachtet sie die
+   Analyse beim nächsten Öffnen weiter.
+5. **Gefragt wird, sooft etwas offen ist:** beim Start und bei der Rückkehr
+   in die App, aber nicht mitten im Hören. Läuft schon eine Analyse, wird
+   nicht noch einmal gefragt.
 
-**Der Morgenlauf wartet auf die Folge.** Die Uhrzeit im Feed sagt nicht,
-wann die Folge wirklich dort steht: HeuteMorgen trägt 6:00, war am 5.11.
-aber um 7:04 noch nicht im Feed. Läufe um 6:20 und 7:00 gingen ins Leere,
-und weil die geplanten Morgenläufe wieder ausfielen, kamen Sprungmarken
-erst um 13:13. Deshalb bleibt ein Lauf am Morgen (Montag bis Freitag)
-stehen und schaut alle vier Minuten in die Feeds, bis jede Morgensendung
-ihre Folge des Tages hat, längstens bis 10:00 (`tools/warten.mjs`).
-Morgensendung heisst: Die zuletzt analysierte Folge ist zwischen 4 und 10
-Uhr datiert. Nach jedem Durchgang wird gespeichert, eine fertige Folge ist
-also sofort in der App. Ein Durchgang ohne neue Folge ist nur ein
-Feed-Abruf und kostet nichts; eine Folge, deren Analyse zweimal scheitert,
-wird im selben Lauf nicht noch einmal bezahlt.
+Wer die Folge schon vor "Fertig" abspielt, bekommt die Originalfassung (beim
+Handelsblatt mit Werbung); die App rät nicht davon ab und wartet nicht.
 
-Die App lädt die Analyse neu, wenn man nach mehr als fünf Minuten in sie
-zurückkehrt. So kommen Schnitt und Sprungmarken auch an, wenn die App
-schon vor der Analyse offen war.
+**Es gibt keine Zeitpläne mehr.** In `analyze.yml` steht kein `schedule`, und
+der Lauf tut nur etwas, wenn die Eingabe `anfrage` gesetzt ist (die App setzt
+sie). Ein Aufruf ohne sie wird übersprungen und kostet nichts. Das fängt auch
+die alten Zeitauslöser des früheren Weckers ab, falls sie noch im Apps Script
+stehen. Von Hand startet man einen Lauf unter *Actions → Podcast-Analyse →
+Run workflow* mit angehaktem Feld *anfrage*.
 
-Einrichten, einmalig:
+Ein Aufruf von aussen (`workflow_dispatch`) startet ohne Warteschlange, im
+Gegensatz zu geplanten Läufen, die bei GitHub Stunden zu spät kamen oder
+ausfielen. Der Start dauert Sekunden. Bis die App "Fertig" zeigt, vergehen
+etwa 3 bis 5 Minuten: 1,5 bis 3 Minuten Analyse, danach kurz GitHub Pages,
+bis die neue `analysis.json` erreichbar ist.
 
-1. Auf GitHub einen Token anlegen: Settings → Developer settings →
-   Fine-grained tokens → nur Repository `obitusde/podcasts`, Berechtigung
-   *Actions: Read and write*, sonst nichts.
-2. Im Apps-Script-Projekt neben `Code.gs` eine neue Datei *Wecker*
-   anlegen und den Inhalt von `Wecker.gs` hineinkopieren.
-3. Projekteinstellungen → Script Properties → `GITHUB_TOKEN` mit dem Token.
-4. Oben die Funktion `weckerEinrichten` wählen und einmal ausführen. Sie
-   legt die Zeitauslöser an und stösst zur Probe einen Lauf an. Neu
-   bereitstellen ist nicht nötig.
+**ffmpeg** kommt als fertige Datei von GitHub (BtbN/FFmpeg-Builds) und ist
+in Sekunden da. Die frühere Installation über apt hat zweimal 15 bis 25
+Minuten gebraucht, weil die Paketquelle langsam war; apt bleibt nur als
+Ausweg, falls der Download nicht klappt.
+
+**Das Apps Script braucht das Token** (Script Property `GITHUB_TOKEN`, fein
+abgestuft: nur Repository `obitusde/podcasts`, *Actions: Read and write*),
+damit `Code.gs` die Analyse anstossen kann. Der Aufruf ist gegen Doppeltipps
+gesichert (höchstens einer pro Minute) und durch den Schalter im Workflow
+begrenzt: Analysiert wird nur, was noch keine Analyse hat.
+
+`Wecker.gs` ist nur noch zum Aufräumen da (`weckerEntfernen` löscht die
+alten Zeitauslöser) und kann danach aus dem Projekt gelöscht werden.
+
+Die frühere Werbe-Erkennung im Apps Script (`refreshAdMarks`) läuft nicht
+mehr beim DLF-Zeitauslöser mit. Sie hat jedes Mal die neueste
+Handelsblatt-Folge bezahlt, obwohl die App ihr Ergebnis gar nicht benutzt.
+Der DLF-Zeitauslöser selbst bleibt (er stellt die Liste der DLF
+Audiobeiträge zusammen und fragt dabei einmal ein Textmodell nach
+Dubletten, wenige Cent im Monat).
 
 ### Einmalige Schritte im Apps Script
 
-1. Script Properties prüfen: `OPENROUTER_API_KEY` muss gesetzt sein (wird schon
-   für die DLF-Dubletten benutzt).
+1. Script Properties prüfen: `OPENROUTER_API_KEY` (für die DLF-Dubletten) und
+   `GITHUB_TOKEN` (für die Analyse auf Anfrage) müssen gesetzt sein.
 2. Inhalt von `Code.gs` aus diesem Repo in den Apps-Script-Editor kopieren.
 3. Bereitstellen → Bereitstellungen verwalten → vorhandene Bereitstellung
    bearbeiten → Version "Neu" → Bereitstellen (so bleibt die `/exec`-URL gleich).

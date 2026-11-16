@@ -31,6 +31,16 @@ var DLF_AUDIO_MAX_DURATION_SECONDS = 300; // alles über 5 Min. wird verworfen
 var DLF_AUDIO_MODEL = 'google/gemini-3.1-flash-lite';
 var DLF_AUDIO_PROP_KEY = 'dlfAudioEpisodes_v1';
 
+// --- Analyse auf Anfrage (GitHub Actions) ---
+// Die Analyse der Podcasts (Transkription + Textmodell) kostet Geld und läuft
+// deshalb nur, wenn man in der App "Ja" tippt: Die App ruft ?mode=analyse
+// auf, und dieses Skript stösst den Lauf auf GitHub an. Das Token steht in
+// den Script Properties (GITHUB_TOKEN, fein abgestuft: nur dieses Repository,
+// Berechtigung "Actions: Read and write") und verlässt das Skript nie.
+var ANALYSE_REPO = 'obitusde/podcasts';
+var ANALYSE_WORKFLOW = 'analyze.yml';
+var ANALYSE_SPERRE_SEKUNDEN = 60;   // Doppeltipps und zweite Geräte lösen keinen zweiten Lauf aus
+
 // --- Tagesschau Audiobeiträge ---
 // tagesschau.de listet seine kurzen Audiobeiträge (Korrespondenten,
 // Börse, Hintergrund) auf einer eigenen Seite. Einen Feed MIT Tondateien
@@ -74,6 +84,10 @@ function doGet(e) {
 
   if (params.mode === 'tagesschau') {
     return handleTagesschauAudio();
+  }
+
+  if (params.mode === 'analyse') {
+    return handleAnalyseAnfrage();
   }
 
   var feedUrl = params.feed;
@@ -633,14 +647,11 @@ function refreshDlfAudioCache() {
 
   saveDlfAudioResult({ podcastTitle: 'DLF Audiobeiträge', episodes: episodes, lastUpdated: new Date().toISOString() });
 
-  // Werbe-Erkennung im selben Trigger-Lauf mitnehmen, damit kein zweiter
-  // Zeit-Trigger eingerichtet werden muss. Fehler hier dürfen den
-  // DLF-Teil nicht nachträglich kaputtmachen.
-  try {
-    refreshAdMarks();
-  } catch (err) {
-    Logger.log('Werbe-Erkennung fehlgeschlagen: ' + err);
-  }
+  // Die frühere Werbe-Erkennung hier (refreshAdMarks) läuft NICHT mehr mit.
+  // Sie hat bei jedem Trigger-Lauf die neueste Handelsblatt-Folge
+  // transkribiert und bezahlt, obwohl die App ihr Ergebnis seit der Analyse
+  // auf GitHub gar nicht mehr benutzt. Die Analyse läuft jetzt nur noch auf
+  // Anfrage aus der App (handleAnalyseAnfrage).
 }
 
 // Fragt OpenRouter, welche Beiträge im Pool dasselbe Thema behandeln.
@@ -710,6 +721,51 @@ function handleDlfAudioForFrontend() {
     });
   }
   return jsonResponse(JSON.parse(stored), true);
+}
+
+/**
+ * Stösst die Analyse auf GitHub an. Antwort an die App:
+ *   {ok: true, gestartet: <Zeit>}              Lauf angestossen
+ *   {ok: true, schonAngefordert: true}         vor weniger als einer Minute schon geschehen
+ *   {ok: false, error: <Text>}                 Token fehlt oder GitHub lehnt ab
+ * Der Lauf selbst ist durch den Schalter "anfrage" im Workflow geschützt und
+ * analysiert nur Folgen, die noch keine Analyse haben - mehrfaches Anstossen
+ * kostet also nichts extra.
+ */
+function handleAnalyseAnfrage() {
+  var token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
+  if (!token) return jsonResponse({ ok: false, error: 'GITHUB_TOKEN fehlt in den Script Properties' });
+
+  var cache = CacheService.getScriptCache();
+  if (cache.get('analyse_angestossen')) return jsonResponse({ ok: true, schonAngefordert: true });
+
+  var res;
+  try {
+    res = UrlFetchApp.fetch(
+      'https://api.github.com/repos/' + ANALYSE_REPO + '/actions/workflows/' + ANALYSE_WORKFLOW + '/dispatches',
+      {
+        method: 'post',
+        contentType: 'application/json',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28'
+        },
+        payload: JSON.stringify({ ref: 'main', inputs: { anfrage: 'true' } }),
+        muteHttpExceptions: true
+      }
+    );
+  } catch (err) {
+    return jsonResponse({ ok: false, error: 'GitHub nicht erreichbar: ' + err.message });
+  }
+
+  var code = res.getResponseCode();
+  if (code !== 204) {
+    // 401: Token falsch oder abgelaufen. 403/404: Token darf "Actions" nicht.
+    return jsonResponse({ ok: false, error: 'GitHub antwortet mit HTTP ' + code });
+  }
+  try { cache.put('analyse_angestossen', '1', ANALYSE_SPERRE_SEKUNDEN); } catch (e) {}
+  return jsonResponse({ ok: true, gestartet: new Date().toISOString() });
 }
 
 /**

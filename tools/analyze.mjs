@@ -1,7 +1,7 @@
 /**
  * Werbe- und Themen-Erkennung für Podcast-Folgen
  * ---------------------------------------------------------------------------
- * Läuft als GitHub Action (.github/workflows/analyze.yml), zweimal täglich.
+ * Läuft als GitHub Action (.github/workflows/analyze.yml), nur auf Anfrage aus der App.
  * Für jede neue Folge der in tools/podcasts.config.json eingetragenen
  * Podcasts:
  *
@@ -168,8 +168,7 @@ const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
 // neuer Eintrag ausprobieren lässt, ohne die anderen neu zu analysieren.
 const ONLY = (process.env.ONLY || '').trim().toLowerCase();
 
-// Am Morgen fragt die Action den Feed mehrmals ab, bis die Folge des Tages
-// da ist (siehe tools/warten.mjs). Zwischen den Durchgängen merkt sich
+// Zwischen mehreren Durchgängen in einem Lauf merkt sich
 // diese Datei, wie neu die neueste Folge im Feed war und welche Folgen
 // beim Analysieren gescheitert sind. Ohne STAND_DATEI ändert sich nichts.
 const STAND_DATEI = process.env.STAND_DATEI || '';
