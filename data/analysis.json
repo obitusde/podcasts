@@ -1,6 +1,100 @@
 {
-  "updatedAt": "2026-11-15T17:43:41.477Z",
+  "updatedAt": "2026-11-16T05:20:59.248Z",
   "episodes": {
+    "1685bcc0cfee3989652fd6018425d14d": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Nvidia: Gerüchte über ein Comeback des Gründers / SPD: Vorwärts, Genossen, in die Vergangenheit",
+      "pubDate": "Mon, 16 Nov 2026 04:52:54 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2640055-m-24c2e48e2335b5a6cb45a7f71d653a17.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/1685bcc0cfee3989652fd6018425d14d.mp3",
+        "file": "1685bcc0cfee3989652fd6018425d14d.mp3",
+        "durationSeconds": 516,
+        "chapters": [
+          {
+            "start": 4.6,
+            "title": "Themenübersicht"
+          },
+          {
+            "start": 35.9,
+            "title": "Nvidia-Skandal"
+          },
+          {
+            "start": 192.2,
+            "title": "SPD-Machtkampf"
+          },
+          {
+            "start": 264.88,
+            "title": "Steuererklärung"
+          },
+          {
+            "start": 333.6,
+            "title": "Geopolitik"
+          },
+          {
+            "start": 380.4,
+            "title": "KI-Zukunft Europas"
+          },
+          {
+            "start": 451.65,
+            "title": "SpaceX Starship"
+          },
+          {
+            "start": 475.88,
+            "title": "Frankfurter Highline"
+          }
+        ]
+      },
+      "feedDurationSeconds": 515,
+      "adRanges": [
+        [
+          35.9,
+          96.3
+        ],
+        [
+          576.1,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 4.6,
+          "title": "Themenübersicht"
+        },
+        {
+          "start": 96.28362800000001,
+          "title": "Nvidia-Skandal"
+        },
+        {
+          "start": 252.6,
+          "title": "SPD-Machtkampf"
+        },
+        {
+          "start": 325.275215,
+          "title": "Steuererklärung"
+        },
+        {
+          "start": 394,
+          "title": "Geopolitik"
+        },
+        {
+          "start": 440.8,
+          "title": "KI-Zukunft Europas"
+        },
+        {
+          "start": 512.0499090000001,
+          "title": "SpaceX Starship"
+        },
+        {
+          "start": 536.2826980000001,
+          "title": "Frankfurter Highline"
+        }
+      ],
+      "durationSeconds": 610,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-16T05:20:58.457Z"
+    },
     "d84941a4-b073-3f30-9112-225e9de599ac": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -198,45 +292,7 @@
       "title": "Warum Mercedes nicht mehr an Deutschland glaubt",
       "pubDate": "Fri, 13 Nov 2026 04:57:54 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2640054-m-20cf733d19e634034c9c1ef3fbc380ff.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/6ede3bc02db92e981dea872f603b54a1.mp3",
-        "file": "6ede3bc02db92e981dea872f603b54a1.mp3",
-        "durationSeconds": 519,
-        "chapters": [
-          {
-            "start": 4.6,
-            "title": "Themen der Sendung"
-          },
-          {
-            "start": 32.34,
-            "title": "Investitionsstopp bei Mercedes"
-          },
-          {
-            "start": 148,
-            "title": "Skandal um Nvidia-Chef"
-          },
-          {
-            "start": 240,
-            "title": "DAX auf Rekordhoch"
-          },
-          {
-            "start": 289.7,
-            "title": "Streit zwischen CDU und CSU"
-          },
-          {
-            "start": 364.5,
-            "title": "Neuer EZB-Chefvolkswirt"
-          },
-          {
-            "start": 419.9,
-            "title": "Das neue Altersvorsorgedepot"
-          },
-          {
-            "start": 509.2,
-            "title": "Erfolg für die Deutsche Bahn"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 520,
       "adRanges": [
         [
