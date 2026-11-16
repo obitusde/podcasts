@@ -1,6 +1,33 @@
 {
-  "updatedAt": "2026-11-16T05:20:59.248Z",
+  "updatedAt": "2026-11-16T05:29:32.289Z",
   "episodes": {
+    "a36d4056-61a1-38e4-8a5e-78b0ea8afae9": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "UNO-Klimakonferenz: 35 Prozent Strom bis 2035?",
+      "pubDate": "Mon, 16 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261116_NR_0058_ff1fa0d7b32142d39cc55f81e0f4a9d0.mp3?d=ap&amp;assetId=a36d4056-61a1-38e4-8a5e-78b0ea8afae9",
+      "clean": null,
+      "feedDurationSeconds": 500,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 4.3873750000000005,
+          "title": "Weltklimakonferenz"
+        },
+        {
+          "start": 364.902292,
+          "title": "Flugchaos in den USA"
+        },
+        {
+          "start": 433.1,
+          "title": "Tennis: Sieg für Andreeva"
+        }
+      ],
+      "durationSeconds": 499,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-16T05:29:30.949Z"
+    },
     "1685bcc0cfee3989652fd6018425d14d": {
       "podcastId": "handelsblatt",
       "podcast": "Handelsblatt Morning Briefing",
