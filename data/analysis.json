@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T05:29:32.289Z",
+  "updatedAt": "2026-11-16T09:02:53.786Z",
   "episodes": {
     "a36d4056-61a1-38e4-8a5e-78b0ea8afae9": {
       "podcastId": "heutemorgen",
@@ -13,20 +13,20 @@
       "chapters": [
         {
           "start": 4.3873750000000005,
-          "title": "Weltklimakonferenz"
+          "title": "Weltklimakonferenz: Ziel 35 % Strom"
         },
         {
           "start": 364.902292,
-          "title": "Flugchaos in den USA"
+          "title": "Flugprobleme in den USA"
         },
         {
           "start": 433.1,
-          "title": "Tennis: Sieg für Andreeva"
+          "title": "WTA-Finals: Mira Andreeva siegt"
         }
       ],
       "durationSeconds": 499,
       "model": "openai/whisper-large-v3",
-      "detectedAt": "2026-11-16T05:29:30.949Z"
+      "detectedAt": "2026-11-16T09:02:53.252Z"
     },
     "1685bcc0cfee3989652fd6018425d14d": {
       "podcastId": "handelsblatt",
