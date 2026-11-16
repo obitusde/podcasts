@@ -1077,7 +1077,8 @@ async function findAdsAndChaptersFromBlocks(blocks, structure, endMarker, durati
  * aus die Folge.
  *
  * Gesucht wird nach dem letzten genannten Thema ein Satz, der mit
- * "Börsendaten"/"Börsenkurse" beginnt (höchstens fünf Wörter davor), und
+ * "Börsendaten"/"Börsenkurse" beginnt (höchstens acht Wörter davor: am
+ * 16.11. hiess es "Und zu guter Letzt noch die Börsendaten von SIX"), und
  * zwar nur in den letzten 90 Sekunden - so löst ein Börsenbericht mitten
  * in einer Sendung nichts aus. Liefert die Zeit des Satzanfangs oder null.
  * `vorWerbung`: ab dieser Zeit liegt Werbung/Abspann; der Block muss davor stehen.
@@ -1093,7 +1094,7 @@ function findBoersenSchluss(words, letztesThemaStart, vorWerbung) {
     if (vorWerbung !== null && vorWerbung !== undefined && w.start >= vorWerbung) break;
     if (!/^börsen(daten|kurse|bericht)$/.test(normWord(w.text))) continue;
     const satz = sentenceStartIndex(words, i);
-    if (i - satz > 5) continue;
+    if (i - satz > 8) continue;   // "Und zu guter Letzt noch die Börsendaten" sind sechs Wörter davor
     if (words[satz].start < letztesThemaStart + MIN_CHAPTER_GAP_LATER) continue;
     return words[satz].start;
   }
