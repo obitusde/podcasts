@@ -1,6 +1,100 @@
 {
-  "updatedAt": "2026-11-16T10:12:57.239Z",
+  "updatedAt": "2026-11-17T07:44:01.369Z",
   "episodes": {
+    "5f35fff3d77125046bd18bf59b39ff6b": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Auto: Elon Musk sieht, was deutsche Autobauer nicht sehen",
+      "pubDate": "Tue, 17 Nov 2026 04:57:00 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2645669-m-2d5aba94412118b105dd612b93f467ee.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/5f35fff3d77125046bd18bf59b39ff6b.mp3",
+        "file": "5f35fff3d77125046bd18bf59b39ff6b.mp3",
+        "durationSeconds": 536,
+        "chapters": [
+          {
+            "start": 0,
+            "title": "Themenüberblick"
+          },
+          {
+            "start": 41.65,
+            "title": "Tesla-Investition in Grünheide"
+          },
+          {
+            "start": 155.79,
+            "title": "Skeptischer Blick auf KI-Aktien"
+          },
+          {
+            "start": 232.9,
+            "title": "Stromnetz bremst Industrie aus"
+          },
+          {
+            "start": 294.64,
+            "title": "Kritik am Haushaltskompromiss"
+          },
+          {
+            "start": 354,
+            "title": "Dobrindts Ruandamanöver"
+          },
+          {
+            "start": 427.47,
+            "title": "Russlandgeschäfte von DB Cargo"
+          },
+          {
+            "start": 495.21,
+            "title": "Neuer James Bond besetzt"
+          }
+        ]
+      },
+      "feedDurationSeconds": 562,
+      "adRanges": [
+        [
+          39.7,
+          102.6
+        ],
+        [
+          599.2,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 104.553878,
+          "title": "Tesla-Investition in Grünheide"
+        },
+        {
+          "start": 218.690091,
+          "title": "Skeptischer Blick auf KI-Aktien"
+        },
+        {
+          "start": 295.8,
+          "title": "Stromnetz bremst Industrie aus"
+        },
+        {
+          "start": 357.537302,
+          "title": "Kritik am Haushaltskompromiss"
+        },
+        {
+          "start": 416.9,
+          "title": "Dobrindts Ruandamanöver"
+        },
+        {
+          "start": 490.365329,
+          "title": "Russlandgeschäfte von DB Cargo"
+        },
+        {
+          "start": 558.110952,
+          "title": "Neuer James Bond besetzt"
+        }
+      ],
+      "durationSeconds": 661,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-17T07:43:59.934Z"
+    },
     "a36d4056-61a1-38e4-8a5e-78b0ea8afae9": {
       "podcastId": "heutemorgen",
       "podcast": "HeuteMorgen",
@@ -38,45 +132,7 @@
       "title": "Nvidia: Gerüchte über ein Comeback des Gründers / SPD: Vorwärts, Genossen, in die Vergangenheit",
       "pubDate": "Mon, 16 Nov 2026 04:52:54 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2640055-m-24c2e48e2335b5a6cb45a7f71d653a17.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/1685bcc0cfee3989652fd6018425d14d.mp3",
-        "file": "1685bcc0cfee3989652fd6018425d14d.mp3",
-        "durationSeconds": 516,
-        "chapters": [
-          {
-            "start": 4.6,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 35.9,
-            "title": "Nvidia-Skandal"
-          },
-          {
-            "start": 192.2,
-            "title": "SPD-Machtkampf"
-          },
-          {
-            "start": 264.88,
-            "title": "Steuererklärung"
-          },
-          {
-            "start": 333.6,
-            "title": "Geopolitik"
-          },
-          {
-            "start": 380.4,
-            "title": "KI-Zukunft Europas"
-          },
-          {
-            "start": 451.65,
-            "title": "SpaceX Starship"
-          },
-          {
-            "start": 475.88,
-            "title": "Frankfurter Highline"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 515,
       "adRanges": [
         [
