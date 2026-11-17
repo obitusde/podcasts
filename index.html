@@ -662,8 +662,8 @@
 <div id="analyse-dialog" role="alertdialog" aria-labelledby="analyse-titel" hidden>
   <h2 id="analyse-titel">Podcasts bearbeiten?</h2>
   <p class="analyse-liste" id="analyse-liste"></p>
-  <p class="analyse-hinweis">Schnitt und Themenliste · dauert etwa 3 bis 5 Minuten</p>
-  <button type="button" class="analyse-knopf analyse-ja" id="analyse-ja">JA<br>bearbeiten</button>
+  <p class="analyse-hinweis">Gilt für heute und alle Podcasts, auch was später kommt · Schnitt und Themenliste · etwa 3 bis 5 Minuten</p>
+  <button type="button" class="analyse-knopf analyse-ja" id="analyse-ja">JA<br>alles bearbeiten</button>
   <button type="button" class="analyse-knopf analyse-nein" id="analyse-nein">NEIN<br>so lassen</button>
   <p class="analyse-hinweis" id="analyse-zaehler"></p>
 </div>
@@ -1186,6 +1186,13 @@ async function loadAnalysisFile() {
    in 15 Sekunden: alles bleibt, wie es ist. Gefragt wird, sooft etwas offen
    ist - beim Start und bei der Rückkehr in die App (nicht mitten im Hören),
    nach einem "Nein" frühestens nach 10 Minuten wieder.
+
+   Ein "Ja" gilt für den GANZEN Tag und für ALLE Podcasts: Es wird nicht pro
+   Podcast neu gefragt. Erscheint eine Sendung erst später (HeuteMorgen kam am
+   17.11. erst nach 9 Uhr in den Feed), startet die App die Analyse dafür von
+   selbst, ohne Frage - solange sie offen ist alle 3 Minuten nachgesehen, sonst
+   beim nächsten Öffnen. Der Tag endet um 3 Uhr nachts. Das Fortschrittsband
+   oben sperrt nichts: Man kann währenddessen andere Podcasts hören.
    ------------------------------------------------------------------ */
 const ANALYSE_FRAGE_SEKUNDEN = 15;       // ohne Antwort gilt Nein
 const ANALYSE_ABFRAGE_SEKUNDEN = 15;     // wie oft nachgesehen wird, ob die Analyse da ist
@@ -1193,6 +1200,9 @@ const ANALYSE_MAX_MINUTEN = 12;          // danach gilt sie als nicht fertig gew
 const ANALYSE_NEIN_PAUSE_MINUTEN = 10;   // nach Nein so lange nicht erneut fragen
 const ANALYSE_MAX_ALTER_STUNDEN = 14;    // wie in tools/analyze.mjs: ältere Folgen werden nicht analysiert
 const ANALYSE_VERSUCH_STUNDEN = 3;       // eine trotz Lauf ausgebliebene Folge nicht gleich wieder anbieten
+const ANALYSE_UEBERWACHUNG_SEKUNDEN = 180;   // wie oft nach später erscheinenden Folgen gesehen wird
+const ANALYSE_TAGESWECHSEL_STUNDE = 3;       // ein "Ja" gilt bis 3 Uhr nachts
+const ANALYSE_ERLAUBT_KEY = 'podcastAnalyseErlaubt_v1';
 const ANALYSE_JOB_KEY = 'podcastAnalyseJob_v1';
 const ANALYSE_VERSUCHT_KEY = 'podcastAnalyseVersucht_v1';
 
@@ -1245,15 +1255,52 @@ function namenListe(offen) {
   return Array.from(new Set(offen.map((o) => o.name))).join(' · ');
 }
 
+// Ein "Ja" gilt bis zum nächsten Tageswechsel (3 Uhr nachts).
+function analyseErlaubt() {
+  try { return Date.now() < Number(localStorage.getItem(ANALYSE_ERLAUBT_KEY)); } catch (e) { return false; }
+}
+function erlaubeAnalyseHeute() {
+  const bis = new Date();
+  bis.setHours(ANALYSE_TAGESWECHSEL_STUNDE, 0, 0, 0);
+  if (bis.getTime() <= Date.now()) bis.setDate(bis.getDate() + 1);
+  try { localStorage.setItem(ANALYSE_ERLAUBT_KEY, String(bis.getTime())); } catch (e) {}
+}
+
 function fragenWennOffen(grund) {
   if (analyseJob || analyseDialogOffen) return;
+  const offen = offeneAnalysen();
+  if (offen.length === 0) return;
+  // Heute schon mit Ja beantwortet: nicht noch einmal fragen, einfach loslegen.
+  if (analyseErlaubt()) {
+    starteAnalyse(offen);
+    return;
+  }
   if (Date.now() < analyseNeinBis) return;
   // Bei der Rückkehr in die App nicht mitten im Hören dazwischenfunken.
   if (grund === 'rueckkehr' && audio.src && !audio.paused) return;
-  const offen = offeneAnalysen();
-  if (offen.length === 0) return;
   zeigeAnalyseFrage(offen);
 }
+
+// Nach einem "Ja" sehen, ob später erschienene Folgen (HeuteMorgen kommt
+// manchmal erst gegen 9 Uhr) dazugekommen sind. Nur die Kacheln der
+// Podcasts mit Analyse, und still: Ein Fehler lässt die Kachel unberührt.
+async function ueberwacheAnalyse() {
+  if (!analyseErlaubt() || analyseJob || analyseDialogOffen) return;
+  const karten = Array.from(grid.children).filter((c) => c.podcast && c.podcast.analyse && c.episodes);
+  await Promise.all(karten.map(async (card) => {
+    try {
+      const res = await fetch(feedUrl(card.podcast));
+      const data = await res.json();
+      const neueste = data && data.episodes && data.episodes[0];
+      if (neueste && (!card.episodes[0] || neueste.guid !== card.episodes[0].guid)) {
+        await loadPodcast(card.podcast, card);   // neue Folge: Kachel ganz neu aufbauen
+      }
+    } catch (e) { /* nächster Versuch in 3 Minuten */ }
+  }));
+  await loadAnalysisFile();
+  fragenWennOffen('ueberwachung');
+}
+setInterval(ueberwacheAnalyse, ANALYSE_UEBERWACHUNG_SEKUNDEN * 1000);
 
 function zeigeAnalyseFrage(offen) {
   const dialog = document.getElementById('analyse-dialog');
@@ -1271,7 +1318,11 @@ function zeigeAnalyseFrage(offen) {
     analyseDialogOffen = false;
     dialog.hidden = true;
   };
-  document.getElementById('analyse-ja').onclick = () => { schliessen(); starteAnalyse(offen); };
+  document.getElementById('analyse-ja').onclick = () => {
+    schliessen();
+    erlaubeAnalyseHeute();   // gilt für heute und alle Podcasts, auch später erscheinende
+    starteAnalyse(offen);
+  };
   document.getElementById('analyse-nein').onclick = () => {
     schliessen();
     analyseNeinBis = Date.now() + ANALYSE_NEIN_PAUSE_MINUTEN * 60000;
@@ -1344,14 +1395,22 @@ function zeigeAnalyseFortschritt() {
   if (!analyseJob) return;
   const fertig = analyseJob.guids.filter((g) => EPISODE_ANALYSIS[g]).length;
   const gesamt = analyseJob.guids.length;
+  // Je Podcast ein Haken, damit man sieht, woran es noch hängt.
+  const eintraege = analyseJob.eintraege || [];
+  const stand = analyseJob.namen.map((name) => {
+    const meine = eintraege.filter((e) => e.name === name);
+    const da = meine.length > 0 && meine.every((e) => EPISODE_ANALYSIS[e.guid]);
+    return name + (da ? ' ✓' : ' …');
+  }).join(' · ');
   zeigeBanner('', 'Wird bearbeitet … ' + fertig + ' von ' + gesamt + ' fertig' +
-    '<span class="klein">' + analyseJob.namen.join(' · ') + ' · seit ' + minutenText(Date.now() - analyseJob.gestartet) + '</span>');
+    '<span class="klein">' + stand + ' · seit ' + minutenText(Date.now() - analyseJob.gestartet) + '</span>');
 }
 
 async function starteAnalyse(offen) {
   analyseJob = {
     gestartet: Date.now(),
     guids: offen.map((o) => o.guid),
+    eintraege: offen.map((o) => ({ guid: o.guid, name: o.name })),
     namen: Array.from(new Set(offen.map((o) => o.name)))
   };
   speichereAnalyseJob();
@@ -1414,9 +1473,12 @@ function analyseAbbruch(titel, grund, offen) {
   analyseJob = null;
   speichereAnalyseJob();
   const guids = offen.map((o) => o.guid);
+  // Sofort merken: Gilt heute schon ein "Ja", würde die App sonst von selbst
+  // immer wieder neu starten. Neu versucht wird nur über NOCHMAL.
+  merkeAnalyseVersucht(guids);
   zeigeBanner('fehler', titel + '<span class="klein">' + grund + '</span>', [
     { text: 'NOCHMAL', haupt: true, tut: () => { verbergeBanner(); starteAnalyse(offen); } },
-    { text: 'SCHLIESSEN', tut: () => { merkeAnalyseVersucht(guids); verbergeBanner(); } }
+    { text: 'SCHLIESSEN', tut: verbergeBanner }
   ]);
   analyseSignal();
 }
@@ -1702,17 +1764,22 @@ function createCard(podcast) {
   return card;
 }
 
+// Adresse, unter der der Proxy die Folgen eines Podcasts liefert.
+function feedUrl(podcast) {
+  // Sonderfälle ohne eigenen Feed: Der Proxy stellt die Liste zusammen.
+  return podcast.type === 'dlf_audio'
+    ? PROXY_URL + '?mode=dlfaudio'
+    : podcast.type === 'tagesschau_audio'
+    ? PROXY_URL + '?mode=tagesschau'
+    : PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
+      (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '') +
+      (podcast.titleContains ? '&titleContains=' + encodeURIComponent(podcast.titleContains) : '') +
+      (podcast.titleExcludes ? '&titleExcludes=' + encodeURIComponent(podcast.titleExcludes) : '');
+}
+
 async function loadPodcast(podcast, card) {
   try {
-    // Sonderfälle ohne eigenen Feed: Der Proxy stellt die Liste zusammen.
-    const url = podcast.type === 'dlf_audio'
-      ? PROXY_URL + '?mode=dlfaudio'
-      : podcast.type === 'tagesschau_audio'
-      ? PROXY_URL + '?mode=tagesschau'
-      : PROXY_URL + '?feed=' + encodeURIComponent(podcast.feed) +
-        (podcast.minDurationSeconds ? '&minDuration=' + podcast.minDurationSeconds : '') +
-        (podcast.titleContains ? '&titleContains=' + encodeURIComponent(podcast.titleContains) : '') +
-        (podcast.titleExcludes ? '&titleExcludes=' + encodeURIComponent(podcast.titleExcludes) : '');
+    const url = feedUrl(podcast);
     const res = await fetch(url);
     const data = await res.json();
 

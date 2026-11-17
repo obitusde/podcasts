@@ -600,17 +600,30 @@ nicht mehr nach Zeitplan, sondern nur, wenn man es in der App will:
 3. **Nein** (auch durch Zeitablauf): Es passiert nichts, alles bleibt wie
    es ist; es kostet nichts. Nach einem Nein fragt die App frühestens nach 10
    Minuten wieder.
-4. **Ja:** Die App ruft das Apps Script auf (`?mode=analyse`), das den Lauf auf
-   GitHub anstösst. Oben steht ein grosser Fortschrittsbalken ("Wird
-   bearbeitet … 1 von 2 fertig"). Die App sieht alle 15 Sekunden in
-   `data/analysis.json` nach. Sind alle Folgen da: grüner Hinweis **FERTIG**,
-   Signalton und Vibration. Klappt es nach 12 Minuten nicht, oder lehnt GitHub
-   ab, steht ein roter Hinweis mit den Knöpfen **NOCHMAL** und
-   **SCHLIESSEN**. Wird die App währenddessen geschlossen, beobachtet sie die
-   Analyse beim nächsten Öffnen weiter.
-5. **Gefragt wird, sooft etwas offen ist:** beim Start und bei der Rückkehr
-   in die App, aber nicht mitten im Hören. Läuft schon eine Analyse, wird
-   nicht noch einmal gefragt.
+4. **Ja gilt für den ganzen Tag und für alle Podcasts.** Es wird nicht pro
+   Podcast neu gefragt. Das war der Fehler am 17.11.: Das Handelsblatt war
+   um 8:43 da, HeuteMorgen stand erst gegen 9:30 im Feed, und die App fragte
+   ein zweites Mal. Jetzt merkt sich die App das Ja bis 3 Uhr nachts. Solange
+   sie offen ist, sieht sie alle 3 Minuten in den Feeds der Podcasts mit
+   Analyse nach und startet die Analyse einer später erschienenen Folge von
+   selbst, ohne Frage; beim nächsten Öffnen geschieht dasselbe. Das Ja kostet
+   also auch für Folgen, die du am Ende nicht hörst; das ist der Preis dafür,
+   nur einmal gefragt zu werden.
+5. **Der Ablauf nach Ja:** Die App ruft das Apps Script auf (`?mode=analyse`),
+   das den Lauf auf GitHub anstösst. Oben steht ein grosser Fortschrittsbalken
+   ("Wird bearbeitet … 1 von 2 fertig") mit einem Haken je Podcast
+   ("HeuteMorgen ✓ · Handelsblatt …"). **Er sperrt nichts:** Währenddessen kann
+   man andere Podcasts hören, die Sammlung abspielen und blättern; der Balken
+   bleibt oben sichtbar. Die App sieht alle 15 Sekunden in `data/analysis.json`
+   nach. Sind alle Folgen da: grüner Hinweis **FERTIG**, Signalton und
+   Vibration. Klappt es nach 12 Minuten nicht, oder lehnt GitHub ab, steht ein
+   roter Hinweis mit den Knöpfen **NOCHMAL** und **SCHLIESSEN**; die App
+   startet dann nicht von selbst neu (das geht nur über NOCHMAL), sonst gäbe es
+   eine Endlosschleife. Wird die App währenddessen geschlossen, beobachtet sie
+   die Analyse beim nächsten Öffnen weiter.
+6. **Gefragt wird** (solange noch kein Ja gilt), sooft etwas offen ist: beim
+   Start und bei der Rückkehr in die App, aber nicht mitten im Hören. Läuft
+   schon eine Analyse, wird nicht noch einmal gefragt.
 
 Wer die Folge schon vor "Fertig" abspielt, bekommt die Originalfassung (beim
 Handelsblatt mit Werbung); die App rät nicht davon ab und wartet nicht.
