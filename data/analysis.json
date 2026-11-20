@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-11-18T05:45:59.252Z",
+  "updatedAt": "2026-11-20T20:37:49.764Z",
   "episodes": {
+    "dd61a6d0-e58e-3c5e-84fb-19202d75a12d": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "Bundesratswahlen: Thomas Aeschi auf SVP-Ticket",
+      "pubDate": "Fri, 20 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261120_RS_0047_2f0e632044dd457bbe7f3720e49d1e89-1.mp3?d=ap&amp;assetId=dd61a6d0-e58e-3c5e-84fb-19202d75a12d",
+      "clean": null,
+      "feedDurationSeconds": 2377,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "SVP-Bundesratsticket"
+        },
+        {
+          "start": 313.737771,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 624.5,
+          "title": "Grossbritannien-EU-Gipfel"
+        },
+        {
+          "start": 1092.3381040000002,
+          "title": "Generalstreik in Italien"
+        },
+        {
+          "start": 1364.1,
+          "title": "Jugendstreik in der Schweiz"
+        },
+        {
+          "start": 1773.320708,
+          "title": "Schweiz am Weltklimagipfel"
+        },
+        {
+          "start": 2050.7,
+          "title": "Nationale Austauschwoche"
+        }
+      ],
+      "durationSeconds": 2377,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-20T20:37:49.104Z"
+    },
     "7708a6bf-16f0-3d3e-8037-5799433ff750": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
