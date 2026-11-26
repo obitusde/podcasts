@@ -1,6 +1,187 @@
 {
-  "updatedAt": "2026-11-20T20:37:49.764Z",
+  "updatedAt": "2026-11-26T05:51:52.145Z",
   "episodes": {
+    "d8323c69-ecd0-3c7b-9a6c-1500e28c45e7": {
+      "podcastId": "echo-der-zeit",
+      "podcast": "Echo der Zeit",
+      "title": "USA planen weitere Zölle gegen Handelspartner",
+      "pubDate": "Wed, 25 Nov 2026 18:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/Echo_der_Zeit_radio/2026/11/Echo_der_Zeit_radio_AUDI20261125_RS_0050_1cf35506a8e947acb237ebc238083b4b.mp3?d=ap&amp;assetId=d8323c69-ecd0-3c7b-9a6c-1500e28c45e7",
+      "clean": null,
+      "feedDurationSeconds": 2416,
+      "adRanges": [],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 21.5,
+          "title": "US-Zölle gegen die Schweiz"
+        },
+        {
+          "start": 278.016542,
+          "title": "Nachrichtenübersicht"
+        },
+        {
+          "start": 601.6,
+          "title": "Regeln zur Konzernverantwortung"
+        },
+        {
+          "start": 1130.866625,
+          "title": "EU-Parlament zum Vertragspaket"
+        },
+        {
+          "start": 1369.3721460000002,
+          "title": "US-Militärabkommen mit Venezuela"
+        },
+        {
+          "start": 1761.8,
+          "title": "Kita für beeinträchtigte Kinder"
+        },
+        {
+          "start": 2077.934667,
+          "title": "Museumspreis für Ballenberg"
+        }
+      ],
+      "durationSeconds": 2416,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-26T05:51:51.222Z"
+    },
+    "836903cfeef14ef5509818773ea91963": {
+      "podcastId": "handelsblatt",
+      "podcast": "Handelsblatt Morning Briefing",
+      "title": "Regierung: Der große Reformbasar / Rüstung: Helsing greift nach dem Krimbrücken-Waffenbauer",
+      "pubDate": "Thu, 26 Nov 2026 04:48:08 +0000",
+      "audioUrl": "https://audio.podigee-cdn.net/2652052-m-f2b0ca01f30585b01fc201c4c3ef2b1f.mp3?source=feed",
+      "clean": {
+        "url": "https://github.com/obitusde/podcasts/releases/download/audio/836903cfeef14ef5509818773ea91963.mp3",
+        "file": "836903cfeef14ef5509818773ea91963.mp3",
+        "durationSeconds": 463,
+        "chapters": [
+          {
+            "start": 0,
+            "title": "Themenüberblick"
+          },
+          {
+            "start": 37.74,
+            "title": "Haushaltsstreit und Rentenreform"
+          },
+          {
+            "start": 166.5,
+            "title": "Übernahme von Destinus durch Helsing"
+          },
+          {
+            "start": 209.1,
+            "title": "Möglicher KfW-Einstieg bei Amprion"
+          },
+          {
+            "start": 274.5,
+            "title": "SpaceX-Satellitennetzwerk StarMind"
+          },
+          {
+            "start": 346.6,
+            "title": "Kupferabbau in Nordhessen"
+          },
+          {
+            "start": 414.57,
+            "title": "KI-Startup Ankerkern"
+          }
+        ]
+      },
+      "feedDurationSeconds": 462,
+      "adRanges": [
+        [
+          35.7,
+          99.3
+        ],
+        [
+          526.9,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themenüberblick"
+        },
+        {
+          "start": 101.343107,
+          "title": "Haushaltsstreit und Rentenreform"
+        },
+        {
+          "start": 230.1,
+          "title": "Übernahme von Destinus durch Helsing"
+        },
+        {
+          "start": 272.7,
+          "title": "Möglicher KfW-Einstieg bei Amprion"
+        },
+        {
+          "start": 338.1,
+          "title": "SpaceX-Satellitennetzwerk StarMind"
+        },
+        {
+          "start": 410.2,
+          "title": "Kupferabbau in Nordhessen"
+        },
+        {
+          "start": 478.168685,
+          "title": "KI-Startup Ankerkern"
+        }
+      ],
+      "durationSeconds": 562,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-26T05:50:26.849Z"
+    },
+    "7d9b3a3f-86ec-3837-a8ad-35e0fb5da8e6": {
+      "podcastId": "heutemorgen",
+      "podcast": "HeuteMorgen",
+      "title": "Neue Trump-Zölle: Wie geht es jetzt weiter?",
+      "pubDate": "Thu, 26 Nov 2026 06:00:00 +0100",
+      "audioUrl": "https://download-media.srf.ch/world/audio/HeuteMorgen_radio/2026/11/HeuteMorgen_radio_AUDI20261126_NR_0060_d773c33d16e549bdb9bbcde601b208a7.mp3?d=ap&amp;assetId=7d9b3a3f-86ec-3837-a8ad-35e0fb5da8e6",
+      "clean": null,
+      "feedDurationSeconds": 595,
+      "adRanges": [
+        [
+          576.5,
+          999999
+        ]
+      ],
+      "chapters": [
+        {
+          "start": 0,
+          "title": "Themen der Sendung"
+        },
+        {
+          "start": 54.6,
+          "title": "Neue US-Einfuhrzölle"
+        },
+        {
+          "start": 296.5,
+          "title": "Migranten auf den Kanaren"
+        },
+        {
+          "start": 343.381021,
+          "title": "KI-Cyberangriffe in der Schweiz"
+        },
+        {
+          "start": 485.8845,
+          "title": "Kritik am SVP-Bundesratsticket"
+        },
+        {
+          "start": 531.2,
+          "title": "Tod von Duran-Duran-Gitarrist"
+        },
+        {
+          "start": 561.5,
+          "title": "Börse und Kurse"
+        }
+      ],
+      "durationSeconds": 595,
+      "model": "openai/whisper-large-v3",
+      "detectedAt": "2026-11-26T05:49:36.464Z"
+    },
     "dd61a6d0-e58e-3c5e-84fb-19202d75a12d": {
       "podcastId": "echo-der-zeit",
       "podcast": "Echo der Zeit",
@@ -101,45 +282,7 @@
       "title": "Nvidia: Wachstum ohne Ende? / Deutsche Bank: Reputationsrisiko für Deutschland .",
       "pubDate": "Wed, 18 Nov 2026 04:59:12 +0000",
       "audioUrl": "https://audio.podigee-cdn.net/2645670-m-b63502d6d9145beeca46f32aef064a8f.mp3?source=feed",
-      "clean": {
-        "url": "https://github.com/obitusde/podcasts/releases/download/audio/9ce1ac740be978cda64da0d839e8ec98.mp3",
-        "file": "9ce1ac740be978cda64da0d839e8ec98.mp3",
-        "durationSeconds": 515,
-        "chapters": [
-          {
-            "start": 4.6,
-            "title": "Themenübersicht"
-          },
-          {
-            "start": 40.59,
-            "title": "Quartalszahlen von Nvidia"
-          },
-          {
-            "start": 166.3,
-            "title": "Datenleck bei Deutscher Bank"
-          },
-          {
-            "start": 251.9,
-            "title": "Börsengang von Anthropic"
-          },
-          {
-            "start": 336,
-            "title": "EZB-Chefvolkswirt Markus Brunnermeier"
-          },
-          {
-            "start": 381.04,
-            "title": "Ukrainischer Angriff auf Krim-Brücke"
-          },
-          {
-            "start": 436.3,
-            "title": "Millionen-Exit von Gründerin Pueyo"
-          },
-          {
-            "start": 464.38,
-            "title": "Herbert Grönemeyer erhält Kunstpreis"
-          }
-        ]
-      },
+      "clean": null,
       "feedDurationSeconds": 534,
       "adRanges": [
         [
